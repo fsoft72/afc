@@ -1,0 +1,303 @@
+WIDGET REFERENCE
+
+NAME/K 
+SPACE/K 
+BORDER/K 
+TIP/K 
+LONGTIP/K 
+EXPAND/S 
+FILL/S 
+KEYEVENTS/K
+INFO/K 
+TABTITLE/K 
+TABICON/K 
+
+----------------------------------------------------------------------------------------------------------------------------------------
+button
+
+  attrs:
+	TEXT		- Text inside the button
+	ICON		- Default icon
+	SELICON		- Icon to show when the mouse is over the button
+	TEXTPOS		- Text position (values: TOP, BOTTOM, LEFT, RIGHT)
+	RELIEF		- Button relief (values: HALF, NONE)
+
+  function(s):
+	ACTION		- Function to be called when the button is pressed
+			  Function: int ( * EasyguiSignalFunc ) ( DynamicClass * dc, EasyguiContext * context );
+
+  method(s):
+	change_text	- Changes the Button's label
+
+----------------------------------------------------------------------------------------------------------------------------------------
+checkbutton
+
+  attrs:
+	TEXT		- Text of the checkbutton
+	ICON		- CB Icon
+	TEXTPOS		- Text position (values: TOP, BOTTOM, LEFT, RIGHT)
+	CHECKED/S	- If TRUE, the cb is checked by default
+
+  function(s):
+	ACTION		- Function to be called when the cb is pressed
+			  Function: int ( * EasyguiCheckSignalFunc ) ( DynamicClass * dc, EasyguiContext * context, short status );
+
+  method(s):
+	set_value	- Sets the checkbutton with the desired state (true or false)
+	get_value	- Sets dynamic_class->result with the current cb value (true or false)
+----------------------------------------------------------------------------------------------------------------------------------------
+clist
+
+  attrs:
+	COLUMNS/A	- Label on columns, separated by "|", eg. "First|Second|Third"
+	SELMODE		- Selection mode. Valid values: SINGLE, BROWSE, MULTI
+	NOTITLES/S	- If set, column titles will be hidden
+	ALIGNMENT	- Text alignment for all columns, separated by "|", eg. "LEFT|RIGHT|LEFT".
+			  Valid values: LEFT, RIGHT, CENTER
+	SIZES		- Size of all columns, separated by "|". eg. "100|50|80"
+
+  function(s):
+	ACTIVATED	- Called when the user double clicks on a CList row
+			  Function: int ( * EasyguiCListSignalFunc ) ( DynamicClass * dc, EasyguiContext * context, void * info );
+	CHANGED		- Called when a CList row is selected or unselected
+			  Function: void ( * EasyguiCListSelectSignalFunc ) ( DynamicClass * dc, EasyguiContext * context, short selected, void * info );
+
+	CLICKCOLUMN	- Called when the user clicks on a column label.
+			  Function:  void ( * EasyguiCListColumnClickedFunc ) ( DynamicClass * dc, EasyguiContext * context, int column, void * info ); 
+
+  method(s):
+	add		- Adds a row in the CList. The number of params must be equal to the number of columns in the CList.
+			  NOTE: the last parameter (before AFC_EASYGUI_ARG_END) is ALWAYS the "info" field (related to the row you
+				are adding).  If you do not want to pass it, set it to NULL.
+
+	add_fast	- Like add, but you must lock the list using "block" and "unblock" methods.
+
+	set_titles	- Changes the CList columns titles. The number of titles must be equal to the number of column in the CList.
+			  
+	clear		- Empties the CList
+
+	set_fore_color  - Sets the foreground color for all rows that will be added later. Format is R, G, B.
+
+	set_back_color	- Sets the background color for all rows that will be added later. Format is R, G, B.
+
+	select		- Select or unselect one single row or all CList. Params are:
+			
+				row	- The row number to select/unselect or AFC_EASYGUI_CLIST_ALL_ROWS for all rows
+				mode	- AFC_EASYGUI_CLIST_SELECT or AFC_EASYGUI_CLIST_UNSELECT
+
+	get_attr	- Gets an attribute
+
+	set_attr	- Sets an attribute
+
+	block		- Blocks clist list	(to be used with add_fast)
+	unblock		- Unblocks clist lis	(to be used with add_fast)
+
+----------------------------------------------------------------------------------------------------------------------------------------
+cols / eqcols / rows / eqrows
+
+  attrs:
+	NONE
+
+  function(s):
+	NONE
+
+  method(s):
+	add		- Adds a widget to the current col
+----------------------------------------------------------------------------------------------------------------------------------------
+combo
+
+  attrs:
+	ITEMS		- Items of the combo, separated by "|". Eg. "Item 1|Item 2|Item 3"
+
+  function(s):
+	ACTIVATE	- Called when a combo item is selected
+			  Function: int ( * EasyguiComboSignalFunc ) ( DynamicClass * dc, EasyguiContext * context, const char * entry );
+
+  method(s):
+	add		- Adds a new string to the Combo list
+	show		- Refresh the combo
+	unique		- Adds a string if it is not already present in the Combo list. Params:
+				
+				string		- Text to add
+				case		- T/F. If T, comparison is case sensitive
+
+	set_text	- Set the current text in the combo field. Params:
+
+				text		- Text to set in the combo field.
+				add		- T/F. If T, the text is also added in the combo list (with unique and TRUE)
+----------------------------------------------------------------------------------------------------------------------------------------
+entry
+
+  attrs:
+	MAXLEN		- Max length of the string in the entry
+	FIXED/S		- If set the entry cannot be modified
+	PASSWORD/S	- If set the entry will show "*" in place of each char inserted.
+
+  function(s):
+	ACTIVATED	- Called when the user presses the "Enter" key
+			  Function: int ( * EasyguiEntrySignalFunc ) ( DynamicClass * dc, EasyguiContext * context, const char * entry );
+
+	INSERTED	- Called whenever a new chunk of text is inserted
+			  Function: short ( * EasyguiEntryInsertTextSignalFunc ) ( DynamicClass * dc, EasyguiContext * context, char * entry, int len );
+	
+  method(s):
+	get_attr
+
+	set_attr
+
+	get_value	- Get the text contained inside the entry widget. Result is in dc->result.
+			  NOTE: make a copy of the string returned before working on it!
+
+	set_value	- Set the text in the entry widget. Params:
+			
+					text	- Text to set in the entry widget.
+
+----------------------------------------------------------------------------------------------------------------------------------------
+eventbox
+
+  attrs:
+	NONE
+
+  function(s):
+	NONE
+
+  method(s):
+	add
+----------------------------------------------------------------------------------------------------------------------------------------
+frame
+
+  attrs:
+	TITLE		- Frame title
+	SHADOW		- Shadow type. Valid values: IN, OUT, EIN, EOUT
+
+  function(s):
+	NONE
+
+  method(s):
+	add
+----------------------------------------------------------------------------------------------------------------------------------------
+label
+
+  attrs:
+	TEXT		- Label Text
+	WRAP/S		- If set the label can span multiple lines when needed.
+
+  function(s):
+	NONE
+
+  method(s):
+	set_text	- Set the new label text
+----------------------------------------------------------------------------------------------------------------------------------------
+menu
+
+  attrs:
+	TEXT
+	ICON
+	TEXTPOS
+
+  function(s):
+	NONE
+
+  method(s):
+	add
+----------------------------------------------------------------------------------------------------------------------------------------
+menubar
+
+  attrs:
+	NONE
+
+  function(s):
+	NONE
+
+  method(s):
+	add
+----------------------------------------------------------------------------------------------------------------------------------------
+radiobutton
+
+  attrs:
+	GROUP/A		- Group name to which this radiobutton belongs
+	TEXT
+	VALUE		- The identifier of the widget in the group (it is passed as "value" param in the callback)
+
+  function(s):
+	ACTION		- 
+			  Function: int ( * EasyguiRadioSignalFunc ) ( DynamicClass * dc, EasyguiContext * context, short active, char * value );
+
+  method(s):
+	set_value	- Set the value to 1 or 0
+	get_value	- Get the value of this radio
+----------------------------------------------------------------------------------------------------------------------------------------
+scrolledwindow
+	
+  attrs:
+	HSCROLL		- Values: ALWAYS or AUTOMATIC
+	VSCROLL
+
+  function(s):
+	NONE
+
+  method(s):
+	add
+----------------------------------------------------------------------------------------------------------------------------------------
+separator
+
+  attrs:
+	NONE
+
+  function(s):
+	NONE
+
+  method(s):
+	NONE
+----------------------------------------------------------------------------------------------------------------------------------------
+tabs
+
+  attrs:
+	NONE
+
+  function(s):
+	NONE
+
+  method(s):
+	add
+----------------------------------------------------------------------------------------------------------------------------------------
+tclist
+
+	WIDGET NOT COMPLETED
+----------------------------------------------------------------------------------------------------------------------------------------
+toolbar
+
+  attrs:
+	NONE
+
+  function(s):
+	NONE
+
+  method(s):
+	add
+----------------------------------------------------------------------------------------------------------------------------------------
+window
+
+  attrs:
+	TITLE		- Title of the window
+	BORDERLESS/S	- If set, the window will have no decorations
+	MAINWIN/S	- If set, the window will be the "main" one: by closing this, the app will end
+	
+  function(s):
+	DELETE		- 
+			  Function: int ( * EasyguiSignalFunc ) ( DynamicClass * dc, EasyguiContext * context );
+	DESTROY		- 
+			  Function: int ( * EasyguiSignalFunc ) ( DynamicClass * dc, EasyguiContext * context );
+
+  method(s):
+	add
+
+	set_title	- Changes the title of the window. Params:
+			
+				title	- New title to be set
+----------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+

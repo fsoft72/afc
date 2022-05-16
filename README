@@ -1,0 +1,17 @@
+README
+------
+
+Welcome to Advanced Foundation Classes (AFC).
+AFC are a suite of C classes aimed to ease project developement.
+Please, read INSTALL to know how to install AFC libraries on your system.
+Please, refer to docs/ dir for other info.
+
+
+
+COPYRIGHT
+---------
+
+This version of AFC is released unser GNU GPL v2.
+If you want to use AFC in a commercial product, please contact me for a commercial license.
+
+See AUTHOR for more info on how to contact me.

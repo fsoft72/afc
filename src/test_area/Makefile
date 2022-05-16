@@ -1,0 +1,37 @@
+#
+#
+#
+
+CC=gcc
+CFLAGS=-g -Wall
+
+DIRS=dir_array_master dir_string dir_readargs dir_nodemaster dir_hash_master
+
+all: test_utils.o $(DIRS)
+
+dir_array_master:
+	@cd array_master; make
+
+dir_string:
+	@cd string; make
+
+dir_readargs:
+	@cd readargs; make
+
+dir_nodemaster:
+	@cd nodemaster; make
+
+dir_hash_master:
+	@cd hash_master; make
+
+%.o : %.c
+	@echo "Building: $@"
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+test: test_utils
+
+test_utils: test_utils.c
+	$(CC) $(CFLAGS) -DTEST_CLASS -o test_utils test_utils.c
+
+clean:
+	@rm *_test

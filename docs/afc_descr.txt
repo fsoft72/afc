@@ -1,0 +1,102 @@
+WHAT IS WHAT
+
+:Array Master:
+
+	This class handles arrays of undefined size. It dynamically allocates new memory when needed. 
+  	You can also approach the array elements like they were inside a list. Features custom sorting.
+
+:CGI Manager:
+
+	This class helps you develop CGI applications. Handler both GET and POST request and supports cookies.
+
+:CmdParser:
+	
+	This class lets you define a custom language inside your own application. The syntax will be Scheme-like.
+
+:DateHandler:
+
+	This class helps you work with dates. You can check for date validity and add/remove days from a given date.
+
+:DBI Manager:
+
+	This class abstracts various DB interfaces and let you work with DBs with a standard API.
+
+:Dictionary:
+
+  	This class handles dictionaries, something like Python dictionaries, if you know how 
+  	they are. Mainly, it is an Hash Table that binds a special string (key) to any kind 
+  	of data you want. Very useful if you want to implement, ie., associative arrays.
+
+:Dir Master:
+
+  	This class scans a directory and gathers all info about the files contained in it.
+  	It is able to tell if a symlink is pointing to a directory or a file.
+  	It has been build on Node Master class.
+  	You can know everything about a dir entry looking inside the Dir Master's FileInfo structure.
+
+:Dynamic Class / Master:
+
+	These are the AFC solution to programs *plugins*. See docs for more info.
+
+:File Operations:
+
+	Helps you working with files on local file systems. You can copy, delete, rename, chmod
+	and chown your files in a breeze.
+
+:Hash Master:
+
+  	This class handles hash tables. It should be considered as a building block (foundation block)
+  	for more specialized hash tables handlers. Please, see the Dictionary class for an example of
+  	Hash Master specialization. Features dicothomic research algo.
+
+:Inet Client:
+	
+	This is a very basic class to help you develop your TCP/IP clients.
+
+:Inet Server:
+
+	This is a very basic class to help you develop your TCP/IP servers.
+
+:MD5:
+	
+	Computes MD5 values from memory and files.
+
+:MemTracker:
+
+	This class helps you keeping track of your mmemory. It helps you discover mem-leaks in your code.
+	It will free leaked memory for you on exit.
+
+:Node Master:
+
+  	This class handles lists. You can do whatever you want with list elements (items). 
+  	This class should be considered a foundation block for more specialized class.
+  	Supports custom sorting.
+
+:PyConnector:
+
+	This class help you to extend Python language (using AFC Dynamic Classes), and embed Python
+	in your own applications.
+
+:ReadArgs:
+
+  	This class parses string using special patterns (templates). Very useful for structrued text
+  	parsing or command line-like argument parsing.
+
+:RegExp:
+
+  	This class exploits the Regular Expressions power to the developer. Featuring a "sed like"
+  	replace command (s/(pattern)/(replace)/(global)).
+
+:String:
+
+	A very powerful string implementation which is backward compatible with standard C strings, but
+	features bound checking and many improvements and APIs for manipulation.
+
+:String Node:
+
+  	This class is a specialized version of Node Master build to create lists of strings.
+
+:Threader:
+
+	A class to help you write multi-threaded applications.
+  

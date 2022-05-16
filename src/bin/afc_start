@@ -1,0 +1,407 @@
+#!/usr/bin/env python
+
+import string, os, sys
+
+class afc_starter:
+	def __init__ ( self ):
+		self.vals = { "class_name" : "",
+			     "base" : "0x1000",
+			     "authors" : [],
+			     "func_prefix" : "afc" }
+
+
+		self.classes = [ [ "ArrayMaster", 	"afc_array_master", 		"array_master" ],
+				 [ "Base64",	  	"afc_base64",			"base64" ],
+				 [ "BinTree",	  	"afc_bin_tree",			"bin_tree" ],
+				 [ "CGIManager",  	"afc_cgi_manager",		"cgi_manager" ],
+				 [ "CmdParser",	  	"afc_cmd_parser",		"cmd_parser" ],
+				 [ "DateHandler", 	"afc_date_handler",		"date_handler" ],
+				 [ "DBIManager",  	"afc_dbi_manager", 		"dbi_manager" ],
+				 [ "Dictionary",  	"afc_dictionary", 		"dictionary" ],
+				 [ "DirMaster",   	"afc_dirmaster",		"dirmaster" ],
+				 [ "DynamicClassMaster","afc_dynamic_class_master",	"dynamic_class_master" ],
+				 [ "FileOperations",	"afc_fileops",			"file_operations" ],
+				 [ "HashMaster",	"afc_hash_master",		"hash_master" ],
+				 [ "InetClient",	"afc_inet_client",		"inet_client" ],
+				 [ "InetServer",	"afc_inet_server",		"inet_server" ],
+				 [ "MD5",		"afc_md5",			"md5" ],
+				 [ "MemTracker",	"afc_mem_tracker",		"mem_tracker" ],
+				 [ "NodeMaster",	"afc_nodemaster",		"nodemaster" ],
+				 [ "POP3",		"afc_pop3",			"pop3" ],
+				 [ "ReadArgs",		"afc_readargs",			"readargs" ],
+				 [ "RegExp",		"afc_regexp",			"regexp" ],
+				 [ "StringNode",	"afc_stringnode",		"stringnode" ],
+				 [ "Threader",		"afc_threader",			"threader" ]
+				]
+
+	def get_data ( self ):
+		self._get_line  ( "Class Name", 	"class_name" )
+		self.vals [ "capitalized" ] = self._capitalize ( self.vals [ "class_name" ] )
+		self._get_line ( "Class Name Capitalized", "capitalized" )
+
+		self.vals [ "constant" ] = self._constantize ( self.vals [ "class_name" ] )
+		self._get_line ( "Constant Name", "constant" )
+		self._get_line  ( "Function Prefix", 	"func_prefix" )
+
+		self.vals [ "function" ] = self._functionize ( self.vals [ "class_name" ] )
+		self._get_line ( "Function Name", "function" )
+
+		self.vals [ "varname" ] = self._varnemize ( self.vals [ "class_name" ] )
+		self._get_line ( "Var Name", "varname" )
+
+		self.vals [ "file_name" ] = self.vals [ "function" ] 
+		self._get_line ( "File Name", "file_name" )
+
+		self.vals [ "magicv" ] = self.vals [ "constant" ][:4]
+		self._get_line ( "Magic Value", "magicv" )
+
+		self._get_line  ( "Class Base", 	"base" )
+		self._get_lines ( "Author [Format: Name Surname - email]", "authors" )
+		self._get_classes ()
+
+
+
+
+		if ( ( self.vals [ "func_prefix" ] ) and ( len ( self.vals [ "func_prefix" ] ) ) ):
+			self.vals [ "func_name" ] = self.vals [ "func_prefix" ] + "_" + self.vals [ "function" ]
+			self.vals [ "const_name" ] = self.vals [ "func_prefix" ].upper() + "_" + self.vals [ "constant" ]
+		else:
+			self.vals [ "func_name" ] = self.vals [ "function" ]
+			self.vals [ "const_name" ] = self.vals [ "constant" ]
+
+		mv = self.vals [ "magicv" ]
+		self.vals [ "magic" ] = "( '%c' << 24 | '%c' << 16 | '%c' << 8 | '%c' )" % ( mv [ 0 ], mv [ 1 ], mv [ 2 ], mv [ 3 ] )
+
+
+
+	def create ( self ):
+		self._mk_c ()
+		self._mk_h ()
+
+
+
+	def _get_line ( self, descr, field_name = 0 ):
+		if ( field_name ): 
+			defval = self.vals.get ( field_name )
+		else:
+			defval = 0
+
+		if ( defval ):
+			print "%s [%s]: " % ( descr, defval ),
+		else:
+			print "%s: " % descr,
+
+		line = sys.stdin.readline ().strip()
+		if ( ( len ( line ) == 0 ) and ( defval ) ): line = defval
+		if ( line == '-' ): line = 0
+
+		print ""
+		if ( field_name ): self.vals [ field_name ] = line
+
+		return ( line )
+
+	def _get_lines ( self, descr, field_dest ):
+		lines = []
+
+		line = self._get_line ( descr + " [INVIO per terminare]" )
+		while ( len ( line ) ):
+			lines.append ( line )
+			line = self._get_line ( descr + " [INVIO per terminare]" )
+
+		self.vals [ field_dest ] = lines
+
+		return ( lines )
+
+	def _capitalize ( self, str ):
+		parts = str.split ()
+		res = ""
+		for f in parts:
+			res += f[0].upper() + f[1:]
+
+		return ( res )
+
+	def _constantize ( self, str ):
+		parts = str.split ()
+		res = ""
+		c = 0
+		for f in parts:
+			if ( c ): res += "_"
+			res += f.upper()
+			c = c + 1
+
+		return ( res )
+
+	def _functionize ( self, str ):
+		parts = str.split ()
+		res = ""
+		c = 0
+		for f in parts:
+			if ( c ): res += "_"
+			res += f.lower()
+			c = c + 1
+
+		return ( res )
+
+	def _varnemize ( self, str ):
+		parts = str.split ()
+		res = ""
+		for f in parts:
+			res += f[0].lower()
+
+		return ( res )
+
+	def _get_classes ( self ):
+		classes = []
+
+		while ( 1 ):
+			self._dump_classes ()
+
+			print "Class Number [ RETURN to exit ]: ",
+			cla = sys.stdin.readline ().strip()
+			if ( len ( cla ) == 0 ): break
+
+			print "Instance Name for %s [ RETURN to redo ]: " % ( self.classes [ int ( cla ) ][0] ),
+			inst = sys.stdin.readline().strip()
+
+			if ( len ( inst ) == 0 ): continue
+
+			classes.append ( [ inst, self.classes [ int ( cla ) ] ] )
+
+		self.vals [ "classes" ] = classes
+
+	def _dump_classes ( self ):
+		cont = 0
+		for c in self.classes:
+			print "%2.2d - %s" % ( cont, c [ 0 ] )
+			cont = cont + 1			
+
+	def _create_classes ( self, f ):
+		for c in self.vals [ "classes" ]:
+			f.write ( "	if ( ( %s->%s = %s_new () ) == NULL ) RAISE_FAST_RC ( AFC_ERR_NO_MEMORY, \"%s\", NULL );\n" % ( self.vals [ "varname" ], c [ 0 ], c [ 1 ] [ 1 ], c [ 0 ] ) )
+
+	def _del_classes ( self, f ):
+		for c in self.vals [ "classes" ]:
+			f.write ( "	%s_delete ( %s->%s );\n" % ( c [ 1 ] [ 1 ], self.vals [ "varname" ], c [ 0 ] ) );
+
+	def _clear_classes ( self, f ):
+		for c in self.vals [ "classes" ]:
+			f.write ( "	%s_clear ( %s->%s );\n" % ( c [ 1 ] [ 1 ], self.vals [ "varname" ], c [ 0 ] ) );
+
+	def _dump_instances ( self, f ):
+		for c in self.vals [ "classes" ]:
+			f.write ( "	%s * %s;\n" % ( c [ 1 ] [ 0 ], c [ 0 ] ) )
+
+	def _dump_includes ( self, f ):
+		cn = {}
+
+		for c in self.vals [ "classes" ]:
+			cn [ c [ 1 ] [ 2 ] ] = 1
+
+		for k in cn.keys ():			
+			f.write ( "#include \"%s.h\"\n" % k )
+
+	def _mk_c ( self ):
+		f = open ( self.vals [ "file_name" ] + ".c", "w" )
+		f.write ( '#include "%(file_name)s.h"\n\n' % self.vals )
+		f.write ( '/*\n@config\n	TITLE:   %(capitalized)s\n	VERSION: 1.0\n' % self.vals )
+		for a in self.vals [ "authors" ]:
+			f.write ( '	AUTHOR:  %s\n' % a )
+		f.write ( '''@endnode
+*/
+
+// {{{ docs
+/*
+@node quote
+	*Put the quote here*
+
+	Quote Author
+@endnode
+
+@node intro
+	%(capitalized)s documentation introduction should go here.
+	Use the reST syntax to create docs.
+@endnode
+*/
+// }}}
+
+static const char class_name[] = "%(capitalized)s";
+
+// {{{ %(func_name)s_new ()   
+/*
+@node %(func_name)s_new
+
+                 NAME: %(func_name)s_new ()    - Initializes a new %(capitalized)s instance.
+
+             SYNOPSIS: %(capitalized)s * %(func_name)s_new ()
+
+          DESCRIPTION: This function initializes a new %(capitalized)s instance.
+
+                INPUT: NONE
+
+              RESULTS: a valid inizialized %(capitalized)s instance. NULL in case of errors.
+
+             SEE ALSO: - %(func_name)s_delete()
+                       - %(func_name)s_clear()
+@endnode
+*/
+%(capitalized)s * %(func_name)s_new ()
+{
+TRY ( %(capitalized)s * )
+
+        %(capitalized)s * %(varname)s = afc_malloc ( sizeof ( %(capitalized)s ) );
+
+        if ( %(varname)s == NULL ) RAISE_FAST_RC ( AFC_ERR_NO_MEMORY, "%(varname)s", NULL );
+        %(varname)s->magic = %(const_name)s_MAGIC;
+''' % self.vals )
+
+		self._create_classes ( f )
+
+		f.write ( '''
+
+        RETURN ( %(varname)s );
+
+EXCEPT
+        %(func_name)s_delete ( %(varname)s );
+
+FINALLY
+
+ENDTRY
+}
+// }}}
+''' % self.vals  )
+
+		f.write ( '''// {{{ %(func_name)s_delete ( %(varname)s )
+/*
+@node %(func_name)s_delete 
+
+                 NAME: %(func_name)s_delete ( %(varname)s ) - Dispose a %(capitalized)s instance.
+
+             SYNOPSIS: int %(func_name)s_delete ( %(capitalized)s * %(varname)s )
+
+          DESCRIPTION: Use this method to delete an object's instance.
+
+                INPUT: - %(varname)s - Pointer to a *valid* %(capitalized)s instance.
+
+              RESULTS: - AFC_ERR_NO_ERROR on success.
+
+             SEE ALSO: %(func_name)s_new()
+@endnode
+*/
+int _%(func_name)s_delete ( %(capitalized)s * %(varname)s )
+{
+        int res;
+
+        if ( ( res = %(func_name)s_clear ( %(varname)s ) ) != AFC_ERR_NO_ERROR ) return ( res );
+''' % self.vals )
+
+		self._del_classes ( f )
+
+		f.write ( '''
+        afc_free ( %(varname)s );
+
+        return ( AFC_ERR_NO_ERROR );
+}
+// }}}
+''' % self.vals )
+
+		f.write ( '''// {{{ %(func_name)s_clear ( %(varname)s )
+/*
+@node %(func_name)s_clear 
+
+                 NAME: %(func_name)s_clear ( %(varname)s ) - Frees all unused memory
+
+             SYNOPSIS: int %(func_name)s_clear ( %(capitalized)s * %(varname)s )
+
+          DESCRIPTION: This method clears all data inside the %(capitalized)s instance, 
+                       except the main classes. 
+
+                INPUT: - %(varname)s   - Pointer to a *valid* %(capitalized)s instance.
+
+              RESULTS: - AFC_ERR_NO_ERROR on success.
+
+             SEE ALSO: - %(func_name)s_new()
+		       - %(func_name)s_delete()
+@endnode
+*/
+int %(func_name)s_clear ( %(capitalized)s * %(varname)s )
+{
+        if ( %(varname)s == NULL ) return ( AFC_LOG_FAST ( AFC_ERR_NULL_POINTER ) );
+        if ( %(varname)s->magic != %(const_name)s_MAGIC ) return ( AFC_LOG_FAST ( AFC_ERR_INVALID_POINTER ) );
+''' % self.vals )
+
+		self._clear_classes ( f )
+
+		f.write ( '''
+
+        return ( AFC_ERR_NO_ERROR );
+}
+// }}}
+
+// {{{ TEST_CLASS
+#ifdef TEST_CLASS
+int main ( int argc, char * argv [] )
+{
+        AFC * afc;
+        %(capitalized)s * %(varname)s;
+
+        afc = afc_new ();
+        afc_track_mallocs ( afc );
+        afc_set_tags ( afc, AFC_TAG_LOG_LEVEL, AFC_LOG_WARNING, AFC_TAG_END );
+
+        %(varname)s = %(func_name)s_new ();
+
+        %(func_name)s_delete ( %(varname)s );
+        afc_delete ( afc );
+        return  ( 0 );
+}
+#endif
+// }}}
+
+''' % self.vals )
+
+
+		f.close ()
+
+	def _mk_h ( self ):
+		f = open ( self.vals [ "file_name" ] + ".h", "w" )
+		f.write ( '''#ifndef %(const_name)s_H
+#define %(const_name)s_H
+
+#include "base.h"
+#include "exceptions.h"
+''' % self.vals )
+
+		self._dump_includes ( f )
+
+		f.write ( '''
+
+#define %(const_name)s_MAGIC	%(magic)s
+#define %(const_name)s_BASE	%(base)s
+
+struct %(func_name)s
+{
+	unsigned long magic;
+
+''' % self.vals )
+
+		self._dump_instances ( f )
+
+		f.write ( '''
+};
+
+typedef struct %(func_name)s %(capitalized)s;
+
+%(capitalized)s * %(func_name)s_new ();
+int _%(func_name)s_delete ( %(capitalized)s * %(varname)s );
+int %(func_name)s_clear   ( %(capitalized)s * %(varname)s );
+#define %(func_name)s_delete(%(varname)s)	if ( %(varname)s ) { _%(func_name)s_delete ( %(varname)s ); %(varname)s = NULL; }
+
+#endif
+''' % self.vals )
+			
+
+
+c = afc_starter ()
+
+c.get_data ()
+c.create ()

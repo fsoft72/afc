@@ -1,0 +1,81 @@
+=========
+USING DBI
+=========
+
+Here there is a quick example of DBI.
+
+
+First of all, you need an instance of DBI Manager class.  Simply do::
+
+	DBIManager * dbi;		// DBI Manager 
+        DynamicClass * dc;		// Database Class Instance
+
+ 	dbi = afc_dbi_manager_new();
+
+        if ( dbi == NULL ) 
+        {
+                fprintf ( stderr, "Init of class DBIManager failed.\n" );
+                return ( 1 );
+        }
+
+Then you need a DB module instance. You just do this::
+
+        dc = afc_dbi_manager_new_instance ( dbi, "mysql", "./modules/mysql.so" );
+
+where "mysql" is the name of the module and "./modules/mysql.so" is the name of the
+Dynamic Class library containing the module. 
+
+If "dc" is not null, you have to init it, with::
+
+        DBI_INIT ( dc );
+
+From now on, all you have to do is to connect to the database, using this macro::
+
+        DBI_CONNECT ( dc, "127.0.0.1", "dbname", "db_user", "db_passwd" );
+
+where:
+	- `127.0.0.1` is the location (eg. "localhost" or any valid internet address)
+	- `dbname`    is the database name
+	- `db_user`   is the user name
+	- `db_passwd` is the user password
+
+To query the database, simply do::
+	
+        DBI_QUERY ( dc, sql );
+
+where:
+	- `sql` 	is the SQL Query
+
+NOTE: each time you do the DBI_QUERY, the old query is deleted and memory is freed.
+
+To fetch the results you can use::
+
+        DBI_FETCH ( dc );
+
+the fetch result is stored in the::
+
+	dc->result
+
+and it is a dictionary with field name as key and the value as the string returned by the fetch.
+If dc->result is NULL, then the Recordset is terminated. A "standard" way of fetching all rows is
+the following::
+
+	DBI_FETCH ( dc );
+
+        while ( dc->result )
+        {
+		[ ... work on the dc->result here ... ]
+                DBI_FETCH ( dc );
+        }
+
+When you have finished with a "dc", you can free it with::
+
+	DBI_CLOSE ( dc );
+
+
+at the end of your program do not forget::
+
+        afc_dbi_manager_delete ( dbi );
+
+That's all folks!! :-)
+

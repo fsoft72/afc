@@ -1,0 +1,332 @@
+==================
+PCRE RegExp in AFC
+==================
+
+Introduction
+============
+
+Since version 2.0, AFC implements the PCRE library statically.
+Many thanks to PCRE author Philip Hazel for granting the permission of including his
+wonderful library.
+
+PCRE has been implementend inside the standard AFC class RegExp and all the "old" methods
+of this class have been rewritten to work with PCRE. As a result, you now have the opportunity
+to grasp the power of PCRE in your AFC programs.
+
+Regular Expressions (and PCRE in particular) are a powerful tool for pattern matching and 
+text manipulation, they provide a deep syntax for handling tasks like text munging.
+
+RegEx Basics
+============
+
+The power of regular expressions is in matching complext patterns that cannot be identified
+using straightforward text-search functions like `strstr()`. The basic components of a
+regular expression pattern are:
+
+- Character Classes: 
+			Patterns rarely consist of specified letters, but classes of letters.
+			For example: *any number* instead of a particular number, or
+			*any letter* instead of a particular letter.
+
+- Grouping:
+
+			Grouping allows for changing the precedence of operations as well as
+			providing a means to extract the text you matched with a pattern.
+
+- Enumerations:
+
+			Enumerations allow you to specify how many times a character class or
+			sub-pattern appears. This allows for convenient expression of fixed
+			length patterns like *a US zipcode is 5 digits*, as well as variable
+			length pattern such as *a domain is a number of alphanumeric characters
+			separated by dots*.
+
+- Alternations:
+
+			Alternations allow for multiple patterns to be combined. Unlike character classes,
+			which allow for a position to match multiple characters, alternations allow for
+			entire patterns to be alternatively matched. For example, a valid workday can
+			be Monday, Tuesdat, Wednesday, Thursday of Friday.
+
+- Positional Anchors:
+
+			Anchors allow you to require your pattern to start matching at a specific location 
+			in the search text, for example at the beginning of end of a line.
+
+- Global Pattern Modifiers:
+
+			Global Pattern Modifiers allow you to change the basic behaviour of a regular 
+			expression, for example rendering it case-insensitive.
+
+
+Character Classes
+=================
+
+Regular Expressions come handy when you need to be able to match a particular type of substring
+inside a larger string. To do this, PCRE supplies *character classes*, that allow a specific
+character in a search text to be matched against a range of possible characters.
+
+Here you'll find to tables summarizing the PCRE supported character classes.
+
+========   ==============================================================================
+    Basic Character Classes
+-----------------------------------------------------------------------------------------
+char       Description
+========   ==============================================================================
+ .         Matches any character                                                        
+ ``\w``    An alphanumeric character or the underscore character.                        
+ ``\W``    Anything not a \\w
+ ``\d``    A digit                                                                      
+ ``\D``    A non-digit                                                                  
+ ``\s``    Any whitespace. This includes spaces, tabs, new-lines and control characters 
+ ``\S``    A non-whitespace character.                                                  
+ ``\b``    Boundary match.
+========   ==============================================================================
+
+
+============  ==============================================================================
+    POSIX Style Character Classes
+--------------------------------------------------------------------------------------------
+definition    Description
+============  ==============================================================================
+``:alpha:``   Any Letter
+``:alnum:``   Any alphanumeric character
+``:ascii:``   Any ASCII character
+``:cntrl:``   Any Control Character
+``:digit:``   Any digit (same as ``\d``)
+``:graph:``   Any alphanumeric or punctuation character
+``:lower:``   Any lowercase letter
+``:print:``   Any printable character
+``:space:``   Any whitespace character (same as ``\s``)
+``:upper:``   Any uppercase character
+``:xdigit:``  Any hexadecimal *digit*
+============  ==============================================================================
+
+For example, a date in the international format is composed of four digits year, a two digits
+month and a two digit day of month, commonly delimited by a '-'. To match this pattern you could
+use a regular expression like the following::
+
+	\d\d\d\d-\d\d-\d\d
+
+As you can see, we have used a lot of ``\d`` which rappresents a single digit (as you can see from the first table above).
+In regular expressions, any character or character class matches one **one single character**, unless you use an enumerator
+(which we'll cover later) to attach a quantity to it.
+
+Please, remember that a regular expression matches against *any* part of your text, so if your text contains the following lines::
+
+	"the secret code is 12345-34-333" said Mister X to James Bond.
+	"Great", replied the agent. "I'll get there on 2004-12-25 as expected".
+
+both lines matches the pattern, but you don't want the first line to match. Please, also note that the first line shows us another problem:
+if the date is something like::
+
+	2004-33-55
+
+the expression would match it without complaining.
+There are a couple of things you can do to avoid these kinds of problems. And we'll see them right now.
+
+If the date might be contained in text, you might try to fix the pattern by having the numbers have at least one
+character of leading and trailing whitespace, using a pattern like::
+
+	\s\d\d\d\d-\d\d-\d\d\s
+
+As you can see from the first table above, the ``\s`` specifier is another character class for all whitespace. Anyway, this pattern does
+not work on all situations, since if the text begins with the date, you'll be unable to match the leading ``\s``. To handle this case,
+PCRE supports ``\b`` a boundary condition that matches the border (or boundary) between a *word* and a *non-word*. ``\b`` is actually not
+a character clas, but what is known as a *'zero-width assertion'*; this means that the ``\b`` specifier does nit actually match the character 
+on the other side of the boundary, but only ensures that such a boundary exists. Using ``\b`` in our pattern, we can refine it in this way::
+
+	\b\d\d\d\d-\d\d-\d\d\b
+
+The ``[]`` operator
+-------------------
+
+Now we should try to fix the second problem (bad numbers in date). We need to be able to restrict the numbers to the allowed set, defining 
+our own character classes. In PCRE, you can do this by filling a set of brackets (``[]``) with the characters we want to match. To match the
+month part of the date (where valid values range from ``01`` to ``12``), we can create two character classes (one for the first digit, and
+one for the second one). The first can be like this::
+
+	[01]
+
+because the first digit can only be a ``0`` or a ``1``. The second one can range from ``0`` to ``9`` so we can define that in this way::
+
+	[0123456789]
+
+usually shortened using a range operator in this way::
+
+	[0-9]
+
+so, the resulting pattern to match the month is::
+
+	[01][0-9]
+
+As you may notice, we can still have problems on the month, since we can get a ``13`` or ``19`` month. We can improve it more, but for this 
+kind of example, this is actually enough. Let's now do the same for the part of the matching string which will match the day::
+
+	[0-3][0-9]
+
+Lets put all the pieces together. The final pattern is now::
+
+	\b[0-9][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9]\b
+
+whoa! This is quite a pattern :-)
+Please, remember that we are just at the beginning.
+
+
+Grouping and Sub-Patterns
+=========================
+
+Matching sub-patterns
+---------------------
+
+Usually, you will not only want to match a pattern, but exctract data from it as well.
+For example, to capture each part of the date pattern, you would add parentheses as follows::
+
+	\b([0-9][0-9][0-9][0-9])-([01][0-9])-([0-3][0-9])\b
+
+Patterns fragments grouped in this fashion are called *sub-patterns*. Patterns are numbered left-to-right and
+outside-to-inside. So in the pattern above, the entire date is offset 0, the year is offset 1, the month is offset 2
+and the day is offset 3.
+
+Here there is a complete working example of PCRE regular expression used by the AFC RegExp class, using ``afc_regexp_sub_string()`` to get 
+the various sub-patterns::
+
+	#include <afc/afc.h>
+
+
+	int main ()
+	{
+        	AFC * afc = afc_new ();
+		RegExp * re;
+        	char * dest = afc_string_new ( 100 );
+
+        	if ( afc == NULL ) return ( 1 );
+
+        	re = afc_regexp_new ();
+
+        	afc_regexp_compile ( re, "\\b([0-9][0-9][0-9][0-9])-([01][0-9])-([0-3][0-9])\\b" );
+        	afc_regexp_match ( re, "the current date is 2004-04-17 and it is a good period.", 0 );
+
+        	afc_regexp_get_sub_string ( re, dest, 1 );
+        	printf ( "Year: %s\n", dest );
+
+        	afc_regexp_get_sub_string ( re, dest, 2 );
+        	printf ( "Month: %s\n", dest );
+
+        	afc_regexp_get_sub_string ( re, dest, 3 );
+        	printf ( "Day: %s\n", dest );
+
+        	afc_regexp_get_sub_string ( re, dest, 0 );
+        	printf ( "Full: %s\n", dest );
+
+		afc_string_delete ( dest );
+        	afc_regexp_delete ( re );
+        	afc_delete ( afc );
+
+        	return ( 0 );
+	}
+
+Replacing a sub-pattern
+-----------------------
+
+Sub-patterns are also extremely useful in substitutions, since they allow us access to the matched sub-patterns
+when performing the replacement. A captured sub-pattern can be accessed in the ``afc_regexp_replace()`` function
+by referencing its offset as ``\N`` (where ``N`` is the sub-pattern number). Here there is an example that
+replace a date in international format into the Italian format (``dd-mm-yyyy``)::
+
+	afc_regexp_replace ( re, dest, "the current date is 2004-04-17 and it is a good period.", "\\b([0-9][0-9][0-9][0-9])-([01][0-9])-([0-3][0-9])\\b", "\\3-\\2-\\1", TRUE );
+
+Enumerations
+============
+
+Another important feature in pattern matching is the ability to match variable-length patterns. In the date example, even though the digits of the date were unknown, the length
+of the pattern was fixed: it always has a four digits year, two digits month and two digits day. On the other hand, if we were matching email adresses, we don't *a priori* know
+the length of the address.
+
+PCRE supports a number of enumeration methods for specifying that a character or character class should be matched multiple times, as you can see by the following table:
+
+
+=========   ===========================================================================
+     Enumerations Modifiers
+---------------------------------------------------------------------------------------
+character   Meaning
+=========   ===========================================================================
+``*``       Zero or more instances of the character (or character class) it applies to.
+``+``       One or more instances of the character (or character class) it applies to.
+``?``       Zero or one instance of the character (or character class) it applies to.
+``{m}``     Match exactly ``m`` times.
+``{m,n}``   Matches between ``m`` and ``n`` times.
+``{m,}``    Matches at least ``m`` times.
+``{,n}``    Matches between ``0`` and ``n`` times.
+=========   ===========================================================================
+
+Enumerations modifiers can be applied not only to characters and character classes, but to sub-patterns as well. This allows for some pretty complex
+pattern generation, which is, after all, one of the best features of regular expressions (at least when you can understand what they do).
+
+Please note that ``+`` and ``*`` operators are both *greedy* matching as long a sub-pattern as possible. This is not always the way you want your patterns to behave.
+For example, you could need to match HTML tags inside a text to remove them. The first regexp to match HTML code you could think of could be::
+
+	<[a-zA-Z]+>
+
+expecting it to match correctly, but if your text is like this::
+
+	The <b>cat</b> is sitting on the <b>mat</b>.
+
+you'll be surprised to see the pattern matching almost the whole string (from the ``<`` of the ``<b>cat`` to the ``>`` of ``mat</b>``) at once.
+That's because the *One or More instances of the character* behaviour does not stop on the first ``>`` it encounters. 
+To correctly match HTML tags you should try something similar to::
+
+	<[^>]*>
+
+which means: *match an open brachet, then anything not a closing bracket and then the first close brachet you can find. This stops as expected.
+
+Alternation
+===========
+
+The last but not least basic regular expression syntactical element is *alternation*. Where character classes let us match a single character
+against a set of allowed characters, alternations allow for matching a string against  multiple sub-patterns. For example, we might want to
+identify all HTTP and FTP addresses in a document. We could do this with two regular expressions::
+
+	https?://\S+
+	ftp://\S+
+
+but this would require the document to be completely scanned twice. A more elegant approach is to combine them using an alternation, as follows::
+
+	(https?|ftp)://\S+
+
+the alternation operator ``|`` means that the sub-pattern ``(https?|ftp)`` matches either ``https?`` (the *'http'* with an optional *'s'*) or *ftp*.
+To use this to automatically create anchor tags for all linked content, we can use a replacement like this::
+
+	afc_regexp_replace ( re, dest, "([^'\"])((https?|ftp)://\\S+)([:punct:])", "\\1<a href=\"\\2\">\2</a>", TRUE );
+
+please, note that the ``\\`` is needed in place of a single ``\`` because in C it is a special character and must be escaped.
+This expression may look to complex for the work, but it avoids text munging when the link was already part of a real anchor.
+For example::
+
+	You can have more info <a href="http://www.infosite.com?info=123">here</a>
+
+In our expression, we are requiring our URL not to be preceded by a quote (both single or double). In this way, we should catch
+the most cases (but not all, anyway).
+
+Positional Anchors
+==================
+
+Sometimes we have to be sure our match is the only part of the text we are currently interested in, 
+without any trailing nor leading components. *Positional Anchors* help solve this problem.
+
+=======  ====================================================================
+  Positional Anchors
+-------  --------------------------------------------------------------------
+Char        Meaning
+=======  ====================================================================
+^	 If used as the first char inside a pattern, ensures that the pattern 
+         is matching at the beginning of the text.
+
+$        If used as the last char inside a pattern, ensures that the pattern
+         is matching at the ending of the text.
+=======  ====================================================================
+
+Please, do not counfuse the ``^`` operator with the negated character class
+operator``[^]``, since the anchor is not a character class and it has no meaning
+inside a character class.
+

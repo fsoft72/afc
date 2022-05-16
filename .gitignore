@@ -1,0 +1,11 @@
+*.o
+.*.swp
+*.a
+*.so
+*.old
+*.orig
+libafc.*
+*.test
+
+src/test_area/mem_tracker/test_[0-9][0-9]
+src/test_area/string/test_[0-9][0-9]

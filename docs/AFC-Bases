@@ -1,0 +1,22 @@
+==================
+Official AFC Bases
+==================
+
+- `0x01000` NodeMaster 	
+- `0x02000` String Node 	
+- `0x04000` Dir Master 	
+- `0x05000` ReadArgs		
+- `0x06000` RexExp		
+- `0x07000` Hash Master	
+- `0x08000` Array Master	
+- `0x09000` String Splitter  
+- `0x0A000` Dictionary 	
+- `0x0B000` CGI Manager
+- `0x0C000` Dynamic Class
+- `0x0D000` Dynamic Class Master
+- `0x0E000` FSTree
+- `0x0F000` CmdParser
+- `0x10000` EasyGUI
+- `0x11000` PyConnector
+- `0x12000` Threader
+

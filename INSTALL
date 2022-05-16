@@ -1,0 +1,30 @@
+HOW TO INSTALL AFC
+
+At the moment, AFC project isn't using "autoconf", "automake" and the
+other GNU tools, simply because we have not read the documentation yet.
+If you want to contribute, please, feel free to send us the right scripts.
+
+To compile the AFC, you simply write:
+
+make
+
+in the command line, then (as root):
+
+make install.
+
+By default, AFC install into 
+
+/usr/local/lib
+
+and the "binaries" install into
+
+/usr/local/bin
+
+You can change these targets editing the Makefile.
+
+**** NOTE ****
+Even if AFC come with full C++ bindings, they are not
+compiled nor installed by default. 
+To install the AFC++ bindings, you have to write:
+
+make cpp_install

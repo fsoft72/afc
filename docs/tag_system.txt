@@ -1,0 +1,64 @@
+==================
+AFC Tagging System
+==================
+
+The TAG system
+==============
+	
+As mentioned above, the tagging system is what makes AFC very
+expandible, without having to change the APIs every day. The tagging system is flexible and
+offers also better code readability, since all values you'll pass using tagging system are
+preceded by the attribute name.
+	
+To better understand its features, suppose you have a function like this one::
+			
+	int draw_3d_sphere ( Env3D * env, int faces, int slices, float radius, Color * color, int xpos, int ypos );
+			
+it is a very complex function, with a lot of parameters. Almost for sure, each time you'll have to use it
+you'll go for the function prototype or for a line in your code already using that function for a quick help
+reminding all params and their right order. And there's more: once you realized that you also need the
+zpos parameter in you function call, you'll have to add yet another param, breaking
+compatibility with old code. (Please, keep in mind that this is just an example...)
+	
+Using the tagging system, you should have a function prototype like this one::
+		
+	int draw_3d_sphere ( Env3D * env, ... );
+
+well... it is much better. But how would you pass all the parameters to the new function? The answer is simple:
+by using tagging system.
+	
+All you have to do pass all parameters followed by their value and separated by commas, one at a time, like this::
+		
+  draw_3d_sphere ( env,  SPHERE_TAG_SLICES,   10,
+                         SPHERE_TAG_RADIUS,    5,
+                         SPHERE_TAG_COLOR,  &col,
+                         SPHERE_TAG_XPOS,      x,
+                         SPHERE_TAG_YPOS,      y,
+                         SPHERE_TAG_ZPOS,      z,
+                         AFC_TAG_END );
+		
+As you can see there are many advantages:
+		
+- Tags can be specified in any order
+				
+	You do not have to follow the standard order of a function call, since each parameter is 
+	processed by its own.
+				
+- Some tags (parameters) can be omitted
+				
+	You do not have to pass all params everytime (unless the documentation of a particular TAG is saying so).
+	The tagging system is like a state machine and it will use the
+        last valid value inserted for all following calls to draw_3d_sphere.
+				
+- Tags can be added without break old code
+				
+	As you should notice, we have used a tag to specify the z-position of our 3D sphere. As our old function
+        prototype remind us, we didn't design the z-pos attribute at the very early stage of library design, but
+	using the tagging system we can always add new tags when there is need to: without
+	breaking old code compatibility.
+				
+- Tags enhance code readability
+				
+	Last but not least, tagging system enhance code readability because you can see
+	what a particular variable is actually setting in a function call.
+

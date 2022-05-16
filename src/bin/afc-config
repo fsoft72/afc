@@ -1,0 +1,140 @@
+#!/bin/bash
+
+#
+# $VER: afc-config 0.1.1 - By Fabio Rotondo ( fsoft@sourceforge.net )
+#
+# This is just a small tool to help developers getting the right flags
+# for the C compiler and AFC version.
+#
+# It has been written after gtk-config tool
+#
+# This is FREE Software, under the standard GPL License.
+# Please see LICENSE for more info or visit http://www.gnu.org
+#
+
+#
+# HISTORY:
+#
+# 0.1 - (Fabio Rotondo) - Initial Release
+#
+# 0.1.1 - ADD: Support for user-defined dirs
+# 
+
+# --
+# IMPORTANT
+#
+# Modify this section anytime it is required!!!
+#
+# --
+
+# --
+# AFC Version
+#
+# NOTE: odd versions are developement, while even ones are stable
+# --
+version="2.1.0"
+
+# --
+# AFC C Flags
+# --
+cflags="-I/usr/local/include -Wno-unused-label"
+
+# -------------------------------------------------------------------------------------------------------
+# DO NOT EDIT BELOW!!
+#
+# YOU SHOULD NOT MODIFY THE SCRIPT BELOW THIS LINE!!!
+# -------------------------------------------------------------------------------------------------------
+
+# --
+# This function just prints out the valid afc-config options
+# --
+function show_usage()
+{
+  echo "Usage: afc-config [options]"
+	echo "Options:"
+	echo "        --libs       - GCC options to link the AFC library"
+	echo "        --static     - GCC option to link AFC library statically"
+  	echo "        --cflags     - Standard GCC flags for AFC lib"
+	echo "        --easygui    - Enable EasyGUI support (use with --libs)"
+	echo "        --cpp        - Flags for C++ compilation"
+	echo ""
+	echo "        --version    - Print the AFC library version information and exit"
+	echo ""
+	echo "        --authors    - Print the authors names and exit"
+	echo "        --contrib    - Print the contributors names and exit"
+}
+
+if [ $# -eq 0 ]
+then
+	show_usage
+	exit 1
+fi
+
+requested_libs=0
+requested_cflags=0
+
+for opt in $*
+do
+  case $opt in
+		"--cpp")
+			if [ -z $requested_libs ]
+			then
+				requested_cpp=1
+			else
+				echo -n " -lafcpp "
+			fi
+		;;
+		"--libs")
+			echo -n " "
+			echo -n "-L/usr/local/lib -lafc -ldl -lpthread"
+			if [ -z $requested_cpp ]
+			then
+				requested_libs=1
+			else
+				echo -n " -lafcpp "
+			fi
+			echo -n " "
+		;;
+		"--cflags")
+			requested_cflags=1
+			echo -n " "
+			echo -n $cflags
+			echo -n " "
+		;;
+		"--version")
+			echo -n $version
+		;;
+		"--static")
+			echo -n " -static "
+		;;
+		"--thread")
+			echo -n " -lpthread "
+		;;
+		"--easygui")
+			if (( $requested_libs == 1 ))
+			then
+				echo -n " -lafc_easygui -L /usr/X11R6/lib `pkg-config gtk+-2.0 --libs` `pkg-config gmodule-2.0 --libs`"
+			fi
+			if (( $requested_cflags == 1 ))
+			then
+				echo -n " `pkg-config gtk+-2.0 --cflags` `pkg-config gmodule-2.0 --cflags`"
+			fi
+		;;
+		"--authors")
+			echo "Authors: "
+			echo "  Fabio Rotondo     ( fsoft@sourceforge.net )"
+			echo "  Paolo Ciampanelli ( paolo.ciampanelli@os3.it )"
+			exit 0
+		;;
+		"--contrib")
+			echo "Contributors:"
+			echo "  Massimo Tantignone ( tanti@intercom.it ) "
+			exit 0
+		;;
+		*)
+			show_usage
+			exit 0
+		;;
+	esac
+done
+echo ""

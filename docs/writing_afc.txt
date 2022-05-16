@@ -1,0 +1,177 @@
+===================
+WRITING AFC CLASSES
+===================
+
+Writing a valid AFC Class means to adhere to some standards, internally called *AFC Standards*.
+These standards will force you follow some rules that, at the beginning, may seem just a waste of time,
+but that in the end will result in a very coherent structure.
+
+Since all standard AFCs are written in this way, you should consider following the rules to have much more
+chances to see your class included inside the standard AFC distribution.
+
+WRITING AFC CLASSES WITH `afc_start`
+====================================
+
+The easiest way to start a new AFC class is by using the provided Python script `afc_start`_.
+
+This script will ask you some simple questions and generate the bulky "*.c" and "*.h" for you.
+
+Please refer to the `AFC Support Programs`_ documentation for more info about `afc_start`.
+
+WRITING AFC CLASSES FROM SCRATCH
+================================
+
+This is a brief white paper on writing an AFC class.
+For example purposes, we are going to create a class named "silly_example"
+which will include two string values and a NodeMaster.
+
+If you want to write a new AFC class, you have to follow these rules:
+
+CLASS NAME
+==========
+
+- The class name must start with `afc_`.
+- All the class name must be in lower case.
+- Class name must *not* contain words like "new", "class", "delete" ecc..
+- A class name composed by more than one single word must have all words separated by "_".
+  This rule can be overcomed if you give your class a "special" (nick) name.
+  Valid names are (for eg.):
+
+    - afc_silly_foo
+    - afc_starlight
+    - afc_star_solarizer
+
+- Our class name, is "afc_silly_example"
+
+CLASS STRUCTURE
+===============
+
+- Every AFC class must have a corresponding C struct. The name of the C structure is the same of the class name.
+- The structure MUST contain has the first attribute the unsigned long 'magic' where the 'magic number' of the AFC class will be stored (see below).
+- You should also create a typedef for the struct you just created with the name of the class without spaces and with capital letters on every beginning
+  of the words composing the afc class name.
+
+- Our class structure will be defined as follows::
+
+  	struct afc_silly_example
+  	{
+    		unsigned long magic;	// The Magic Value. It is UNIQUE for each AFC class.
+
+    		NodeMaster * node;	// We'll have a NodeMaster instance
+    		char * name;		// And two strings
+    		char * email;
+  	};
+
+  	typedef struct afc_silly_example SillyExample;
+
+CLASS CONSTANTS
+===============
+
+Class related constants all starts with "AFC_(CLASS_NAME)_" (the class name is in capital letters)
+
+- The MAGIC value
+
+  	The MAGIC value is the unsigned long value that identifies the AFC class among the others. It is created joining
+  	four "chars" inside a long variable. 
+
+  	For our class, we will store the "word" 'SILL' in the magic constant in this way::
+
+  		#define AFC_SILLY_EXAMPLE_MAGIC  ( 'S'<<24 | 'I'<<16 | 'L' << 8 | 'L' )
+
+- The BASE value
+  
+  	The BASE value is an hexadecimal number used as the minumum value for all AFC_(CLASS_NAME)_ constants. 
+  	It is manually assigned and it cannot be the same of another AFC class.
+
+  	For our class, the BASE walue will be::
+
+  		#define AFC_SILLY_EXAMPLE_BASE 0x9000
+
+CLASS CONSTRUCTOR
+=================
+
+- The class constructor MUST have the special name "afc_(class_name)_new" 
+- The constructor cannot receive any input param.
+- The constructor should mind about any initialization and, in case of any error, it MUST call the class destructor and then return NULL.
+- On successful init, the method returns a pointer to a valid afc_(class_name) struct.
+- You should use afc_malloc() instead of malloc() calls, and afc_free() against free() calls.
+
+Our class constructor will be defined as follows::
+
+  	SillyExample * afc_silly_example_new ()
+  	{
+    		SillyExample * si = ( SillyExample * ) afc_malloc ( sizeof ( SillyExample ) );  
+
+    		if ( si == NULL ) return ( NULL );
+
+    		si->magic = AFC_SILLY_EXAMPLE_MAGIC;  /* We set the 'magic' number for this class */
+
+    		if ( ( si->node = afc_nodemaster_new () ) == NULL ) /* In case of errors, we free all resources and return NULL */
+    		{
+      			afc_silly_example_delete ( si );
+      			return ( NULL );
+    		}
+
+    		if ( ( si->name = String ( 80 ) ) == NULL ) 
+    		{
+      			afc_silly_example_delete ( si );
+      			return ( NULL );
+    		}
+    
+    		if ( ( si->email = String ( 50 ) ) == NULL )
+    		{
+      			afc_silly_example_delete ( si );
+      			return ( NULL );
+    		}
+
+    		return ( si );    /* Everything went fine, so we can return the structure inited */
+  	}
+
+CLASS DESTRUCTOR
+================
+
+- The destructor name has the special name "afc_(class_name)_delete"
+- The destructor gets just one input parameter: a pointer to a valid afc_(class_name) structure.
+- The destructor minds about freeing all resources and then freeing the structure itself.
+- It is a good practice to call the "afc_(class_name)_clear" method before freeing all resources.
+- NOTE: we are using afc_free() instead of free(), because we alloc'd memory using afc_malloc() call.
+
+Our example destructor is defined in this way::
+
+  	int afc_silly_example_delete ( SillyExample * si )
+  	{
+    		int res;
+
+    		if ( ( res = afc_silly_example_clear ( si ) ) != AFC_SILLY_EXAMPLE_ERR_NO_ERROR ) return ( res );
+
+    		if ( node )  afc_nodemaster_delete ( node );
+    		if ( name )  DisposeLink ( name );
+    		if ( email ) DisposeLink ( email );
+
+    		afc_free ( si );
+
+    		return ( AFC_ERR_NO_ERROR );
+  	}
+
+CLEAR METHOD
+============
+
+The clear method minds about freeing temporary resources used by the class. It does *NOT* free classes created in the constructor.
+It should check for class validity before proceed in call clear methods.
+
+- The clear method has the special name "afc_(class_name)_clear"
+- The clear method takes just one argument: a pointer to a valid afc_(class_name) structure.
+
+Our example clear method is::
+
+  	int afc_silly_example_clear ( SillyExample * silly_example ) 
+  	{
+    		if ( silly_example == NULL ) return ( AFC_ERR_NULL_POINTER );
+ 
+    		if ( silly_example->magic != AFC_SILLY_EXAMPLE_MAGIC ) return ( AFC_ERR_INVALID_POINTER );
+
+    		if ( silly_example->node ) afc_nodemaster_clear ( silly_example->node );
+
+    		return ( AFC_ERR_NO_ERROR );
+  	}
+

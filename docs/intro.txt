@@ -1,0 +1,95 @@
+*************************************
+AFC - The Advanced Foundation Classes
+*************************************
+
+.. contents::
+.. raw:: latex
+
+  \tableofcontents
+
+============
+Introduction
+============
+
+Welcome to AFC
+==============
+
+Welcome to AFC! Formerly known as *Amiga Foundation Classes*, are now
+**Advanced Foundation Classes** since we are no longer supporting Amiga, but the Linux and Open Source community.
+
+AFC are a suite of classes aimed to ease development of any kind of application in a variety
+of languages. Currently AFC supports both *C* and *C++* programming languages. AFC should be considered like the *building blocks* for
+your applications, since they provide simple but needed services for your application development.
+
+------------
+AFC Features
+------------
+
+We cannot describe here all AFC classes, also because they are continuing to evolve and new classes
+are added often, but we can highlight the main features common to all AFC classes.
+
+API Standardization
+-------------------
+
+AFC classes API calls are as much standardized as possible. For example, if you need to add an item to a list,
+the call would be `afc_(class_name)_add`. So the `NodeMaster` (which is a list handler class) has the 
+`afc_nodemaster_add` method, and the `ArrayMaster` (which is a dynamic array handler class) has the `afc_array_master_add` method.
+
+Tag System
+----------
+
+AFC uses a programming approach for passing parameters called **tagging**.
+This technique, allows the developer to extend the library without changing the API. 
+
+You'll see later in detail how *tags* work in `The TAG System`_ section. For now, just remember that it is a very handy way to handle parameters.
+
+Detailed Documentation
+----------------------
+As you can see by this huge manual, AFC are deeply documented. And this is a great feature you should not understimate.
+Too many times we have used great libs that come with few lines for the API description, or not at all. 
+AFC are well documented. All important features are documented, all the public APIs are documented and so the source is.
+
+Support
+-------
+AFC are constantly developed, and of course also supported. At the time of this writing, there are five different mailing list
+for AFC users and developers. 
+The AFC users mailing list is aimed to help all programmers using AFC libs and having problems with them, 
+while the AFC developer mailing list is for the active AFC developers who are contributing to the project. 
+So, if you think just to use the AFC in your projects, but do not intend to help developing AFC, then just subscribe 
+to the afc-user mailing list in case you need help.
+
+
+Here there are two URLs to subscribe to AFC lists:
+
+	- afc-user mailing list: 	http://lists.sourceforge.net/mailman/listinfo/afc-user
+	- afc-devel mailing list: 	http://lists.sourceforge.net/mailman/listinfo/afc-devel
+	- afc-ita-user mailing list: 	http://lists.sourceforge.net/mailman/listinfo/afc-ita-user
+	- afc-ita-devel mailing list: 	http://lists.sourceforge.net/mailman/listinfo/afc-ita-devel
+
+How to use AFCs
+===============
+
+This section is aimed to help you start up using AFC in your own *C* projects. As you'll see, it is very simple.
+For compilation and installation, please refer to *INSTALL*/*README* files inside the AFC distribution.
+
+-----------------------------
+Inclusion in your Source Code
+-----------------------------
+
+To start writing AFC-based source, you have to add this single line to your `#include` directives::
+
+	#include <afc/afc.h>
+
+If you are going to write <emphasis>C++</emphasis> code, then the line above should be replaced by the following::
+	
+	#include <afc/afcpp.h>
+
+It is *that* simple.
+
+--------------
+Use afc-config
+--------------
+
+A script is provided to help you compile your program. The script is called `afc-config`. 
+Please, refer to `afc-config`_ manual section for more info.
+

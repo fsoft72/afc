@@ -1,0 +1,6 @@
+make --dry-run --keep-going --print-directory
+make: Entering directory '/ramdisk/src/afc'
+make: Leaving directory '/ramdisk/src/afc'
+ 
+make: *** No targets specified and no makefile found.  Stop.
+

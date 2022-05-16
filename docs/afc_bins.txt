@@ -1,0 +1,129 @@
+====================
+AFC Support Programs
+====================
+
+afc_start
+=========
+
+This is a small script written in Python that will help you starting a new AFC class.
+Just type afc_start, and the program will ask you some things:
+
+- Class Name
+
+	This is the name of the class you are going to create.
+       	You should pass a descriptive name with words space separated.
+
+       	For eg: *string splitter*.
+
+
+- Class Name Capitalized
+
+	The class name will be automatically capitalized by the *afc_start* script.
+  	If you don't like capitalization, just change it here in the way you like it.
+
+	For eg, if your class is "sql connector", auto capitalization will be
+  	"SqlConnector", but you may prefer "SQLConnector".
+
+- Constant Name
+
+	This is the base string that will be used to create class constants.
+  	If you don't like the default naming scheme, change the string here.
+
+  	Please note that the default scheme adhere with the *AFC Standards*.
+
+- Function Prefix
+
+	This is a small string that will be added to *all* function names in your new class.
+  	By default, this is the *afc* string, but you can also change this to be able to create
+  	AFC-like classes outside AFC namespace.
+
+	For eg: *afc*
+
+- Function Name
+  
+	This is the name that will be used to prefix all class methods.
+  	Usually you should not change this, because it is strictly conforming to the *AFC Standards*.
+  	There may be some exceptions, anyway. Suppose you are creating a very long-named class, 
+  	ie. "FTP File Operations", the function name base would be: "ftp_file_operations", which is 
+  	actually quite long. Here you have the opportunity to change this, for example in "ftp_fileops".
+
+- Var Name
+  
+	This is the var name rappresenting your class instance inside default functions. By default, this
+  	is the first char of each word in your class name. Ie., if your class name is "SQL Connector", 
+  	the var name will be "sc".
+  	You can change it anyway you like it.
+
+- File Name
+  
+	This is the file name base that will be used to create your class files. You should not change it
+  	because it follows the *AFC Standards*.
+
+- Magic Value
+  	This is a special 4 bytes long word identifying your class in an unique way.
+  	You can change it, if you want, but remember to give it:
+
+		1. 4 chars name
+		2. uppercase chars only
+
+- Class Base
+  
+	Each AFC class has a "starting value" called *base*.
+  	This number is used as reference when creating constants such as
+  	error codes or tags.
+  	AFC classes should not have colliding (ie. equal) bases, to avoid confusion.
+
+  	The value should be an hexadecimal value with *at least* the last three numbers as zeros.
+  	For eg: 0x1000
+
+  	Please refer to the file *AFC-Bases* for a list of the official supported bases.
+
+- Author Name Surname - Email
+
+  	Here you should pass the class author. The format is: "Name Surname - email"
+  	This is a *multiple* question field. To terminate insertion, just press ENTER.
+
+  	For eg.: *Fabio Rotondo - fsoft@sourceforge.net*
+
+- Adding existing classes to your new class
+
+  	Very often a new class will need some functions from other already avaible classes.
+  	In this step, you can select existing AFC classes to be instantiated inside your own class.
+  	You'll be prompted with a list of existing AFC classes, each class will be preceded by a two digits number.
+  	Just insert the number of the class you are interested in, and the program will prompt for the instance name.
+  	This is a *multiple* question field. To terminate insertion, just press ENTER.
+
+
+Once you have answered all these questions, the program will generate two files:
+
+    *afc_(class_name).c*
+
+    *afc_(class_name).h*
+
+Please, note that you have to place the new files inside AFC main source directory ( "afc/") because all includes are defined relative
+to the AFC main source dir.
+
+afc-config
+==========
+
+This program will ease your compilation tasks by passing the right parameters to the GCC compiler.
+
+Syntax::
+
+    afc-config [--libs] [--cflags] [--static] [--easygui] [--cpp] 
+               [--authors] [--contrib] [--version]
+
+Parameters:
+
+    - `--libs`:    	add the "-l" flags to link AFC libs to the current program
+    - `--static`:	Link the AFC lib statically (may not work if not compiled correctly)
+    - `--cflags`:  	add the GCC flags to compile the AFC program
+    - `--easygui`:	Enable EasyGUI support (use with `--libs`)
+
+    - `--cpp`:		Flags for C++ compilation (**experimental**)
+
+    - `--authors`:	Print the authors names and exit
+    - `--contrib`:	Print the contributors names and exit
+
+    - `--version`: 	prints AFC classes version
+
