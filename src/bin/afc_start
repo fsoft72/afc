@@ -10,7 +10,7 @@ class afc_starter:
 			     "func_prefix" : "afc" }
 
 
-		self.classes = [ [ "ArrayMaster", 	"afc_array", 		"array" ],
+		self.classes = [ [ "Array", 	"afc_array", 		"array" ],
 				 [ "Base64",	  	"afc_base64",			"base64" ],
 				 [ "BinTree",	  	"afc_bin_tree",			"bin_tree" ],
 				 [ "CGIManager",  	"afc_cgi_manager",		"cgi_manager" ],

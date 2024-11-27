@@ -50,7 +50,7 @@ extern "C"
 	{
 		unsigned long magic;
 
-		ArrayMaster *am;
+		Array *am;
 
 		int (*func_clear)(struct afc_hash_master *, void *);
 

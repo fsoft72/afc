@@ -22,7 +22,7 @@
 
 /*
 @config
-	TITLE:     ArrayMaster
+	TITLE:     Array
 	VERSION:   1.30
 	AUTHOR:    Fabio Rotondo - fabio@rotondo.it
 @endnode
@@ -38,7 +38,7 @@
 
 @node intro
 
-ArrayMaster is a class that handles arrays, like the name said. But it has some more advantages
+Array is a class that handles arrays, like the name said. But it has some more advantages
 to standard arrays:
 
 - It automatically enlarges array size when new space is needed
@@ -48,7 +48,7 @@ to standard arrays:
 - It offers a customizable, lightspeed fast sort routine.
   See afc_array_sort() for more info
 
-Like all AFC classes, you can instance a new  ArrayMaster by calling afc_array_new (), and free it with afc_array_delete ().
+Like all AFC classes, you can instance a new  Array by calling afc_array_new (), and free it with afc_array_delete ().
 
 To add elements to the array, use afc_array_add (); to delete all elements call afc_array_clear(),
 and to delete just one of them there is afc_array_del() .
@@ -64,20 +64,20 @@ and to delete just one of them there is afc_array_del() .
 
 static const char class_name[] = "Array Master";
 
-static int afc_array_internal_double_array(ArrayMaster *);
-static int afc_array_internal_insert(ArrayMaster *, void *);
+static int afc_array_internal_double_array(Array *);
+static int afc_array_internal_insert(Array *, void *);
 #ifdef MINGW
 static void quick_sort(void *base, size_t num_items, size_t width, int (*compare)(const void *, const void *));
 static void rqsort(char *low, char *high, size_t width, int (*compare)(const void *, const void *));
 #endif
 
-// {{{ ArrayMaster * afc_array_new ()
+// {{{ Array * afc_array_new ()
 /*
 @node afc_array_new
 
 			 NAME: afc_array_new ()    - Initializes a new afc_array instance.
 
-		 SYNOPSIS: ArrayMaster * afc_array_new ( )
+		 SYNOPSIS: Array * afc_array_new ( )
 
 	  DESCRIPTION: This function initializes a new afc_array instance.
 
@@ -97,11 +97,11 @@ static void rqsort(char *low, char *high, size_t width, int (*compare)(const voi
 
 @endnode
 */
-ArrayMaster *_afc_array_new(const char *file, const char *func, const unsigned int line)
+Array *_afc_array_new(const char *file, const char *func, const unsigned int line)
 {
-	TRY(ArrayMaster *)
+	TRY(Array *)
 
-	ArrayMaster *array = _afc_malloc(sizeof(struct afc_array), file, func, line);
+	Array *array = _afc_malloc(sizeof(struct afc_array), file, func, line);
 
 	if (array == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "array", NULL);
@@ -129,13 +129,13 @@ ArrayMaster *_afc_array_new(const char *file, const char *func, const unsigned i
 	ENDTRY
 }
 // }}}
-// {{{ int afc_array_delete ( ArrayMaster * array )
+// {{{ int afc_array_delete ( Array * array )
 /*
 @node afc_array_delete
 
 			 NAME: afc_array_delete ( array )  - Disposes a valid array instance.
 
-		 SYNOPSIS: int afc_array_delete (ArrayMaster * array)
+		 SYNOPSIS: int afc_array_delete (Array * array)
 
 	  DESCRIPTION: This function frees an already alloc'd afc_array structure.
 
@@ -150,7 +150,7 @@ ArrayMaster *_afc_array_new(const char *file, const char *func, const unsigned i
 @endnode
 
 */
-int _afc_array_delete(ArrayMaster *array)
+int _afc_array_delete(Array *array)
 {
 	int afc_res;
 
@@ -163,13 +163,13 @@ int _afc_array_delete(ArrayMaster *array)
 	return (AFC_ERR_NO_ERROR);
 }
 // }}}
-// {{{ int afc_array_clear ( ArrayMaster * array )
+// {{{ int afc_array_clear ( Array * array )
 /*
 @node afc_array_clear
 
 			 NAME: afc_array_clear ( array )  - Clears all stored data
 
-		 SYNOPSIS: int afc_array_clear ( ArrayMaster * array)
+		 SYNOPSIS: int afc_array_clear ( Array * array)
 
 	  DESCRIPTION: Use this command to clear all stored data in the current array instance.
 			   If the clear function has been set, items are also cleared from memory.
@@ -183,7 +183,7 @@ int _afc_array_delete(ArrayMaster *array)
 
 @endnode
 */
-int afc_array_clear(ArrayMaster *am)
+int afc_array_clear(Array *am)
 {
 	unsigned int t;
 
@@ -205,13 +205,13 @@ int afc_array_clear(ArrayMaster *am)
 	return (AFC_ERR_NO_ERROR);
 }
 // }}}
-// {{{ int afc_array_init ( ArrayMaster * am, unsigned long int size )
+// {{{ int afc_array_init ( Array * am, unsigned long int size )
 /*
 @node afc_array_init
 
 			 NAME: afc_array_init ( array, size )  - Inits the Array size
 
-		 SYNOPSIS: int afc_array_init ( ArrayMaster * array, unsigned long int size )
+		 SYNOPSIS: int afc_array_init ( Array * array, unsigned long int size )
 
 	  DESCRIPTION: Use this command to set a new initail dimension for the array.
 
@@ -227,7 +227,7 @@ int afc_array_clear(ArrayMaster *am)
 		 SEE ALSO:
 @endnode
 */
-int afc_array_init(ArrayMaster *am, unsigned long int size)
+int afc_array_init(Array *am, unsigned long int size)
 {
 	if ((am->mem = afc_realloc(am->mem, sizeof(void *) * size)) == NULL)
 		return (AFC_ERR_NO_MEMORY);
@@ -239,13 +239,13 @@ int afc_array_init(ArrayMaster *am, unsigned long int size)
 	return (AFC_ERR_NO_ERROR);
 }
 // }}}
-// {{{ int afc_array_add ( ArrayMaster * am, void * data, int mode )
+// {{{ int afc_array_add ( Array * am, void * data, int mode )
 /*
 @node afc_array_add
 
 			 NAME: afc_array_add ( array, data, mode )  - Adds a new element to the array
 
-		 SYNOPSIS: int afc_array_add ( ArrayMaster * array, void * data, int mode )
+		 SYNOPSIS: int afc_array_add ( Array * array, void * data, int mode )
 
 	  DESCRIPTION: This function adds a new element to the array. If the array is full and you are trying a new
 				   element that is after the (internal) size limit of the array, the array will double its size
@@ -268,7 +268,7 @@ int afc_array_init(ArrayMaster *am, unsigned long int size)
 				   - afc_array_item()
 @endnode
 */
-int afc_array_add(ArrayMaster *am, void *data, int mode)
+int afc_array_add(Array *am, void *data, int mode)
 {
 	switch (mode)
 	{
@@ -296,13 +296,13 @@ int afc_array_add(ArrayMaster *am, void *data, int mode)
 	return (AFC_ERR_NO_ERROR);
 }
 // }}}
-// {{{ void * afc_array_item ( ArrayMaster * am, unsigned long item )
+// {{{ void * afc_array_item ( Array * am, unsigned long item )
 /*
 @node afc_array_item
 
 			 NAME: afc_array_item ( array, item )  - Returns the desired element in the Array
 
-		 SYNOPSIS: void * afc_array_item ( ArrayMaster * array, unsigned long item )
+		 SYNOPSIS: void * afc_array_item ( Array * array, unsigned long item )
 
 	  DESCRIPTION: This function returns the desired element from the array. If the item number you are specifying is
 				   out of array bounds, you will get a NULL value.
@@ -318,7 +318,7 @@ int afc_array_add(ArrayMaster *am, void *data, int mode)
 				   - afc_array_next()
 @endnode
 */
-void *afc_array_item(ArrayMaster *am, unsigned long item)
+void *afc_array_item(Array *am, unsigned long item)
 {
 	if (item >= am->num_items)
 		return NULL;
@@ -326,13 +326,13 @@ void *afc_array_item(ArrayMaster *am, unsigned long item)
 	return (am->mem[am->current_pos = item]);
 }
 // }}}
-// {{{ void * afc_array_first ( ArrayMaster * am )
+// {{{ void * afc_array_first ( Array * am )
 /*
 @node afc_array_first
 
 			 NAME: afc_array_first ( array )  - Returns the first element in the array
 
-		 SYNOPSIS: void * afc_array_first ( ArrayMaster * array )
+		 SYNOPSIS: void * afc_array_first ( Array * array )
 
 	  DESCRIPTION: This function returns the first element in the array.
 
@@ -345,7 +345,7 @@ void *afc_array_item(ArrayMaster *am, unsigned long item)
 				   - afc_array_next()
 @endnode
 */
-void *afc_array_first(ArrayMaster *am)
+void *afc_array_first(Array *am)
 {
 	am->before_first = FALSE;
 
@@ -356,13 +356,13 @@ void *afc_array_first(ArrayMaster *am)
 	return (am->mem[0]);
 }
 // }}}
-// {{{ void * afc_array_next ( ArrayMaster * am )
+// {{{ void * afc_array_next ( Array * am )
 /*
 @node afc_array_next
 
 			 NAME: afc_array_next ( array )  - Returns the next element in the array
 
-		 SYNOPSIS: void * afc_array_next ( ArrayMaster * array )
+		 SYNOPSIS: void * afc_array_next ( Array * array )
 
 	  DESCRIPTION: This function returns the next element in the array.
 
@@ -377,7 +377,7 @@ void *afc_array_first(ArrayMaster *am)
 				   - afc_array_prev()
 @endnode
 */
-void *afc_array_next(ArrayMaster *am)
+void *afc_array_next(Array *am)
 {
 	if (am->before_first)
 		return (afc_array_first(am));
@@ -388,13 +388,13 @@ void *afc_array_next(ArrayMaster *am)
 	return (NULL);
 }
 // }}}
-// {{{ void * afc_array_prev ( ArrayMaster * am )
+// {{{ void * afc_array_prev ( Array * am )
 /*
 @node afc_array_prev
 
 			 NAME: afc_array_prev ( array )  - Returns the previous element in the array
 
-		 SYNOPSIS: void * afc_array_prev ( ArrayMaster * array )
+		 SYNOPSIS: void * afc_array_prev ( Array * array )
 
 	  DESCRIPTION: This function returns the previous element in the array.
 
@@ -408,7 +408,7 @@ void *afc_array_next(ArrayMaster *am)
 				   - afc_array_next()
 @endnode
 */
-void *afc_array_prev(ArrayMaster *am)
+void *afc_array_prev(Array *am)
 {
 	if (am->current_pos > 0)
 		return (am->mem[--am->current_pos]);
@@ -416,13 +416,13 @@ void *afc_array_prev(ArrayMaster *am)
 	return (NULL);
 }
 // }}}
-// {{{ void * afc_array_last ( ArrayMaster * am )
+// {{{ void * afc_array_last ( Array * am )
 /*
 @node afc_array_last
 
 			 NAME: afc_array_last ( array )  - Returns the last element in the array
 
-		 SYNOPSIS: void * afc_array_last ( ArrayMaster * array )
+		 SYNOPSIS: void * afc_array_last ( Array * array )
 
 	  DESCRIPTION: This function returns the last element in the array.
 
@@ -437,7 +437,7 @@ void *afc_array_prev(ArrayMaster *am)
 		 - afc_array_prev()
 @endnode
 */
-void *afc_array_last(ArrayMaster *am)
+void *afc_array_last(Array *am)
 {
 	if (am->num_items == 0)
 		return (NULL);
@@ -447,13 +447,13 @@ void *afc_array_last(ArrayMaster *am)
 	return (am->mem[am->current_pos]);
 }
 // }}}
-// {{{ void * afc_array_obj ( ArrayMaster * am )
+// {{{ void * afc_array_obj ( Array * am )
 /*
 @node afc_array_obj
 
 			 NAME: afc_array_obj ( array )  - Returns the current element in the array
 
-		 SYNOPSIS: void * afc_array_obj ( ArrayMaster * array )
+		 SYNOPSIS: void * afc_array_obj ( Array * array )
 
 	  DESCRIPTION: This function returns the current element pointed in the array.
 
@@ -467,7 +467,7 @@ void *afc_array_last(ArrayMaster *am)
 				   - afc_array_next()
 @endnode
 */
-void *afc_array_obj(ArrayMaster *am)
+void *afc_array_obj(Array *am)
 {
 	if (am->num_items == 0)
 		return (NULL);
@@ -475,13 +475,13 @@ void *afc_array_obj(ArrayMaster *am)
 	return (am->mem[am->current_pos]);
 }
 // }}}
-// {{{ short afc_array_is_first ( ArrayMaster * am )
+// {{{ short afc_array_is_first ( Array * am )
 /*
 @node afc_array_is_first
 
 			 NAME: afc_array_is_first ( array )  - Checks if you are on the first element
 
-		 SYNOPSIS: short afc_array_is_first ( ArrayMaster * array )
+		 SYNOPSIS: short afc_array_is_first ( Array * array )
 
 	  DESCRIPTION: This function checks if you are on the first element of the Array Master.
 
@@ -494,18 +494,18 @@ void *afc_array_obj(ArrayMaster *am)
 		 - afc_array_is_empty()
 @endnode
 */
-short afc_array_is_first(ArrayMaster *am)
+short afc_array_is_first(Array *am)
 {
 	return (am->current_pos == 0);
 }
 // }}}
-// {{{ short afc_array_is_last ( ArrayMaster * am )
+// {{{ short afc_array_is_last ( Array * am )
 /*
 @node afc_array_is_last
 
 			 NAME: afc_array_is_last ( array )  - Checks if you are on the last element
 
-		 SYNOPSIS: short afc_array_is_last ( ArrayMaster * array )
+		 SYNOPSIS: short afc_array_is_last ( Array * array )
 
 	  DESCRIPTION: This function checks if you are on the last element of the Array Master.
 
@@ -518,18 +518,18 @@ short afc_array_is_first(ArrayMaster *am)
 		 - afc_array_is_empty()
 @endnode
 */
-short afc_array_is_last(ArrayMaster *am)
+short afc_array_is_last(Array *am)
 {
 	return (am->current_pos == (am->num_items - 1));
 }
 // }}}
-// {{{ short afc_array_is_empty ( ArrayMaster * am )
+// {{{ short afc_array_is_empty ( Array * am )
 /*
 @node afc_array_is_empty
 
 			 NAME: afc_array_is_empty ( array )  - Checks if the array is empty
 
-		 SYNOPSIS: short afc_array_is_last ( ArrayMaster * array )
+		 SYNOPSIS: short afc_array_is_last ( Array * array )
 
 	  DESCRIPTION: This function checks if the array is empty or not.
 
@@ -542,18 +542,18 @@ short afc_array_is_last(ArrayMaster *am)
 		 - afc_array_is_empty()
 @endnode
 */
-short afc_array_is_empty(ArrayMaster *am)
+short afc_array_is_empty(Array *am)
 {
 	return (am->num_items == 0);
 }
 // }}}
-// {{{ void * afc_array_del ( ArrayMaster * am )
+// {{{ void * afc_array_del ( Array * am )
 /*
 @node afc_array_del
 
 			 NAME: afc_array_del ( array )  - Deletes the current element from the array
 
-		 SYNOPSIS: void * afc_array_del ( ArrayMaster * array )
+		 SYNOPSIS: void * afc_array_del ( Array * array )
 
 	  DESCRIPTION: This function deletes the current element in the array. Like you were using a list,
 				   all other elements are shift to fill the gap, so ie. if you are deleteing element
@@ -569,7 +569,7 @@ short afc_array_is_empty(ArrayMaster *am)
 			- afc_array_set_clear_func()
 @endnode
 */
-void *afc_array_del(ArrayMaster *am)
+void *afc_array_del(Array *am)
 {
 	void *dest;
 	void *src;
@@ -612,13 +612,13 @@ void *afc_array_del(ArrayMaster *am)
 	return (am->mem[am->current_pos]);
 }
 // }}}
-// {{{ void * afc_array_sort ( ArrayMaster * am, int ( *comp ) ( const void *, const void * ) )
+// {{{ void * afc_array_sort ( Array * am, int ( *comp ) ( const void *, const void * ) )
 /*
 @node afc_array_sort
 
 			 NAME: afc_array_sort ( array, comp_routine )  - Sorts the elements in the array
 
-		 SYNOPSIS: void * afc_array_sort ( ArrayMaster * array, int (*comp) ( const void *, const void * ) )
+		 SYNOPSIS: void * afc_array_sort ( Array * array, int (*comp) ( const void *, const void * ) )
 
 	  DESCRIPTION: This function sorts all elements in the array using the provided comparison function.
 		 The comparison function must return an integer less  than,
@@ -635,7 +635,7 @@ void *afc_array_del(ArrayMaster *am)
 		 SEE ALSO:
 @endnode
 */
-void *afc_array_sort(ArrayMaster *am, int (*comp)(const void *, const void *))
+void *afc_array_sort(Array *am, int (*comp)(const void *, const void *))
 {
 	am->custom_sort(am->mem, am->num_items, sizeof(void **), comp);
 	am->current_pos = 0;
@@ -644,13 +644,13 @@ void *afc_array_sort(ArrayMaster *am, int (*comp)(const void *, const void *))
 	return (am->mem[0]);
 }
 // }}}
-// {{{ unsigned long int afc_array_pos ( ArrayMaster * am )
+// {{{ unsigned long int afc_array_pos ( Array * am )
 /*
 @node afc_array_pos
 
 			 NAME: afc_array_pos ( array )  - Returns the current ordinal position
 
-		 SYNOPSIS: void * afc_array_pos ( ArrayMaster * array )
+		 SYNOPSIS: void * afc_array_pos ( Array * array )
 
 	  DESCRIPTION: This function returns the current ordinal position of the currently selected element
 				   in the array.
@@ -663,23 +663,23 @@ void *afc_array_sort(ArrayMaster *am, int (*comp)(const void *, const void *))
 @endnode
 */
 /*
-unsigned long int afc_array_current_pos ( ArrayMaster * am )
+unsigned long int afc_array_current_pos ( Array * am )
 {
 	return ( am->current_pos );
 }
 */
 // }}}
-// {{{ unsigned long int afc_array_len ( ArrayMaster * am )
+// {{{ unsigned long int afc_array_len ( Array * am )
 /*
 @node afc_array_len
 
 		 NAME: afc_array_len(am) - Returns the number of items in list
 
-			 SYNOPSIS: unsigned long afc_array_len (ArrayMaster * am)
+			 SYNOPSIS: unsigned long afc_array_len (Array * am)
 
 		DESCRIPTION: Use this command to know how many items are added to the list.
 
-		INPUT: - am	- Pointer to a valid ArrayMaster class.
+		INPUT: - am	- Pointer to a valid Array class.
 
 	RESULTS: items	- Number of items in this list.
 
@@ -687,18 +687,18 @@ unsigned long int afc_array_current_pos ( ArrayMaster * am )
 		 - afc_array_del()
 @endnode
 */
-unsigned long int afc_array_len(ArrayMaster *am)
+unsigned long int afc_array_len(Array *am)
 {
 	return (am ? am->num_items : 0);
 }
 // }}}
-// {{{ int afc_array_set_clear_func ( ArrayMaster * am, int ( * func ) ( void * )  )
+// {{{ int afc_array_set_clear_func ( Array * am, int ( * func ) ( void * )  )
 /*
 @node afc_array_set_clear_func
 
 	   NAME: afc_array_set_clear_func(am, func) - Sets the clear func
 
-   SYNOPSIS: int afc_array_set_clear_func (ArrayMaster * am, int ( *func ) ( void * ) )
+   SYNOPSIS: int afc_array_set_clear_func (Array * am, int ( *func ) ( void * ) )
 
 	  SINCE: 1.10
 
@@ -706,7 +706,7 @@ DESCRIPTION: Use this command to set a clear function. The function will be call
 		 item is being deleted from the list with afc_array_del() or afc_array_clear().
 		 To remove this function, pass a NULL value as function pointer.
 
-	  INPUT: - am	- Pointer to a valid ArrayMaster class.
+	  INPUT: - am	- Pointer to a valid Array class.
 		 - func	- Function to be called in clearing operations.
 
 	RESULTS: AFC_ERR_NO_ERROR
@@ -715,31 +715,31 @@ DESCRIPTION: Use this command to set a clear function. The function will be call
 		 - afc_array_clear()
 @endnode
 */
-int afc_array_set_clear_func(ArrayMaster *am, int (*func)(void *))
+int afc_array_set_clear_func(Array *am, int (*func)(void *))
 {
 	am->func_clear = func;
 
 	return (AFC_ERR_NO_ERROR);
 }
 // }}}
-// {{{ int afc_array_for_each ( ArrayMaster * am, int ( * func ) ( ArrayMaster * am, void *, void *  ), void * info  )
+// {{{ int afc_array_for_each ( Array * am, int ( * func ) ( Array * am, void *, void *  ), void * info  )
 /*
 @node afc_array_set_clear_func
 
 	   NAME: afc_array_set_clear_func(am, func) - Sets the clear func
 
-   SYNOPSIS: int afc_array_set_clear_func (ArrayMaster * am, int ( *func ) ( ArrayMaster * am, int pos, void * v, void * info ) )
+   SYNOPSIS: int afc_array_set_clear_func (Array * am, int ( *func ) ( Array * am, int pos, void * v, void * info ) )
 
 	  SINCE: 1.10
 
-DESCRIPTION: Use this command to traverse all elements inside the ArrayMaster.
+DESCRIPTION: Use this command to traverse all elements inside the Array.
 		 The function called must return AFC_ERR_NO_ERROR when the traverse succeded and
 		 a valid error otherwise. In case of error, the traverse is stopped and the error
 		 returned.
 
-	  INPUT: - am	- Pointer to a valid ArrayMaster class.
+	  INPUT: - am	- Pointer to a valid Array class.
 		 - func	- Function to be called in the traverse.
-			  Function prototype: int func ( ArrayMaster * am, int pos, void * v, void * info );
+			  Function prototype: int func ( Array * am, int pos, void * v, void * info );
 		 - info	- Additional param passed to the /func/ being called.
 
 	RESULTS: AFC_ERR_NO_ERROR
@@ -748,7 +748,7 @@ DESCRIPTION: Use this command to traverse all elements inside the ArrayMaster.
 		 - afc_array_next()
 @endnode
 */
-int afc_array_for_each(ArrayMaster *am, int (*func)(ArrayMaster *am, int pos, void *v, void *info), void *info)
+int afc_array_for_each(Array *am, int (*func)(Array *am, int pos, void *v, void *info), void *info)
 {
 	unsigned int t;
 	int res;
@@ -760,26 +760,26 @@ int afc_array_for_each(ArrayMaster *am, int (*func)(ArrayMaster *am, int pos, vo
 	return (AFC_ERR_NO_ERROR);
 }
 // }}}
-// {{{ int afc_array_set_custom_sort ( ArrayMaster * am, void ( * f ) ( void * base, size_t n, size_t size, int ( *com ) ( const void *, const void *) ) )
+// {{{ int afc_array_set_custom_sort ( Array * am, void ( * f ) ( void * base, size_t n, size_t size, int ( *com ) ( const void *, const void *) ) )
 /*
 @node afc_array_set_clear_func
 
 	   NAME: afc_array_set_clear_func(am, func) - Sets the clear func
 
-   SYNOPSIS: int afc_array_set_custom_sort ( ArrayMaster * am, void ( * func )  ( void * base, size_t nmemb, size_t size, int ( *compar ) ( const void *, const void *) ) )
+   SYNOPSIS: int afc_array_set_custom_sort ( Array * am, void ( * func )  ( void * base, size_t nmemb, size_t size, int ( *compar ) ( const void *, const void *) ) )
 
 	  SINCE: 1.20
 
 DESCRIPTION: Use this command to set a sort routine different to glibc qsort. You should use this function only if you
 		 know what you are doing and your glibc implementation of qsort is buggy.
 
-	  INPUT: - am	- Pointer to a valid ArrayMaster class.
+	  INPUT: - am	- Pointer to a valid Array class.
 		 - func	- Function to be called in sort operations.
 
 	RESULTS: AFC_ERR_NO_ERROR
 @endnode
 */
-int afc_array_set_custom_sort(ArrayMaster *am, void (*func)(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *)))
+int afc_array_set_custom_sort(Array *am, void (*func)(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *)))
 {
 	am->custom_sort = func;
 
@@ -787,7 +787,7 @@ int afc_array_set_custom_sort(ArrayMaster *am, void (*func)(void *base, size_t n
 }
 // }}}
 // {{{ afc_array_before_first ( am ) **************
-int afc_array_before_first(ArrayMaster *am)
+int afc_array_before_first(Array *am)
 {
 	am->before_first = TRUE;
 
@@ -798,8 +798,8 @@ int afc_array_before_first(ArrayMaster *am)
 /* ===============================================================================================================
 	INTERNAL FUNCTIONS
 =============================================================================================================== */
-// {{{ int afc_array_internal_double_array ( ArrayMaster * am )
-static int afc_array_internal_double_array(ArrayMaster *am)
+// {{{ int afc_array_internal_double_array ( Array * am )
+static int afc_array_internal_double_array(Array *am)
 {
 	unsigned long int m = ((sizeof(void *)) * (am->max_items * 2));
 
@@ -811,8 +811,8 @@ static int afc_array_internal_double_array(ArrayMaster *am)
 	return (AFC_ERR_NO_ERROR);
 }
 // }}}
-// {{{ int afc_array_internal_insert ( ArrayMaster * am, void * data )
-static int afc_array_internal_insert(ArrayMaster *am, void *data)
+// {{{ int afc_array_internal_insert ( Array * am, void * data )
+static int afc_array_internal_insert(Array *am, void *data)
 {
 	register unsigned long t;
 
@@ -923,7 +923,7 @@ void do_switch(const void *v1, const void *v2)
 	*c1 = *tmp;
 }
 
-int dump_all(ArrayMaster *am)
+int dump_all(Array *am)
 {
 	int i = afc_array_len(am);
 	int t;
@@ -937,7 +937,7 @@ int dump_all(ArrayMaster *am)
 	return (AFC_ERR_NO_ERROR);
 }
 
-int dump_list(ArrayMaster *am)
+int dump_list(Array *am)
 {
 	char *s;
 	int i = 0;
@@ -954,7 +954,7 @@ int dump_list(ArrayMaster *am)
 	return (AFC_ERR_NO_ERROR);
 }
 
-int dump_list_reverse(ArrayMaster *am)
+int dump_list_reverse(Array *am)
 {
 	char *s;
 	int i = 0;
@@ -1008,7 +1008,7 @@ void custom_sort(void *base, size_t nmemb, size_t size, int (*compar)(const void
 int main(void)
 {
 	AFC *afc = afc_new();
-	ArrayMaster *am = afc_array_new();
+	Array *am = afc_array_new();
 	int t = 0;
 	char *buf;
 

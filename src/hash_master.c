@@ -306,7 +306,7 @@ void *afc_hash_master_del(HashMaster *hm)
 	if (hm->func_clear)
 		hm->func_clear(hm, hd->data); // Free associated data (if clear func exists)
 
-	afc_free(hd); // Free the HashData added to the ArrayMaster
+	afc_free(hd); // Free the HashData added to the Array
 
 	hd = afc_array_del(hm->am);
 	return (hd ? hd->data : NULL);

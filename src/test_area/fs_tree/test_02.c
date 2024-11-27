@@ -21,7 +21,7 @@
 
 void dump_dir(FSTree *fst, char *path)
 {
-	ArrayMaster *am = afc_fstree_list(fst, path);
+	Array *am = afc_fstree_list(fst, path);
 	FSTData *data;
 
 	data = afc_array_first(am);

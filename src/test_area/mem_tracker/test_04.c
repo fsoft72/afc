@@ -32,7 +32,7 @@ int clear_func(void *data)
 int main()
 {
 	AFC *afc = afc_new();
-	ArrayMaster *am;
+	Array *am;
 	Dictionary *d;
 	int t;
 

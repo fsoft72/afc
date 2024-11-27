@@ -24,7 +24,7 @@
 
 int elements = 0;
 
-ArrayMaster *am;
+Array *am;
 
 int count = 0;
 

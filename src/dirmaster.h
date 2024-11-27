@@ -152,7 +152,7 @@ extern "C"
 	{
 		unsigned long magic; /* AFC DirMaster Magic Number */
 
-		ArrayMaster *am;		 /* Pointer to our super-class */
+		Array *am;				 /* Pointer to our super-class */
 		unsigned long errorcode; /* Last error code */
 
 		char *current_dir; // Current directory in memory

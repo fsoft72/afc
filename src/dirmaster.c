@@ -89,7 +89,7 @@ static int afc_dirmaster_internal_parse_tags(DirMaster *dm, int first_tag, va_li
 /*
 @node afc_dirmaster_new
 
-		 NAME: afc_dirmaster_new () - Initializes a new ArrayMaster object.
+		 NAME: afc_dirmaster_new () - Initializes a new Array object.
 
 			 SYNOPSIS: DirMaster * afc_dirmaster_new ( afc )
 
@@ -97,7 +97,7 @@ static int afc_dirmaster_internal_parse_tags(DirMaster *dm, int first_tag, va_li
 
 		INPUT: - NONE
 
-	RESULTS: an initialized ArrayMaster structure.
+	RESULTS: an initialized Array structure.
 
 			 SEE ALSO: afc_dirmaster_delete()
 @endnode

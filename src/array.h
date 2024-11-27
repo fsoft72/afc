@@ -70,7 +70,7 @@ extern "C"
 		void (*custom_sort)(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *));
 	};
 
-	typedef struct afc_array ArrayMaster;
+	typedef struct afc_array Array;
 
 #define afc_array_new(am) _afc_array_new(__FILE__, __FUNCTION__, __LINE__)
 #define afc_array_delete(am)   \
@@ -83,20 +83,20 @@ extern "C"
 	struct afc_array *_afc_array_new(const char *file, const char *func, const unsigned int line);
 	int _afc_array_delete(struct afc_array *);
 	int afc_array_clear(struct afc_array *);
-	int afc_array_init(ArrayMaster *, unsigned long);
-	int afc_array_add(ArrayMaster *, void *, int);
-	void *afc_array_item(ArrayMaster *, unsigned long);
-	void *afc_array_first(ArrayMaster *);
-	void *afc_array_next(ArrayMaster *);
-	void *afc_array_prev(ArrayMaster *);
-	void *afc_array_last(ArrayMaster *);
-	void *afc_array_obj(ArrayMaster *);
-	short afc_array_is_first(ArrayMaster *);
-	short afc_array_is_last(ArrayMaster *);
-	short afc_array_is_empty(ArrayMaster *);
-	void *afc_array_del(ArrayMaster *);
-	void *afc_array_sort(ArrayMaster *am, int (*comp)(const void *, const void *));
-// unsigned long int afc_array_current_pos ( ArrayMaster *  );
+	int afc_array_init(Array *, unsigned long);
+	int afc_array_add(Array *, void *, int);
+	void *afc_array_item(Array *, unsigned long);
+	void *afc_array_first(Array *);
+	void *afc_array_next(Array *);
+	void *afc_array_prev(Array *);
+	void *afc_array_last(Array *);
+	void *afc_array_obj(Array *);
+	short afc_array_is_first(Array *);
+	short afc_array_is_last(Array *);
+	short afc_array_is_empty(Array *);
+	void *afc_array_del(Array *);
+	void *afc_array_sort(Array *am, int (*comp)(const void *, const void *));
+// unsigned long int afc_array_current_pos ( Array *  );
 #define afc_array_pos(am) (am ? am->current_pos : 0)
 #define afc_array_current_pos(am) (am ? am->current_pos : 0)
 #define afc_array_succ(am) afc_array_next(am)
@@ -104,11 +104,11 @@ extern "C"
 #define afc_array_add_tail(am, itm) afc_array_add(am, itm, AFC_ARRAY_ADD_TAIL)
 #define afc_array_add_head(am, itm) afc_array_add(am, itm, AFC_ARRAY_ADD_HEAD)
 #define afc_array_insert(am, itm) afc_array_add(am, itm, AFC_ARRAY_ADD_HERE)
-	unsigned long int afc_array_len(ArrayMaster *);
-	int afc_array_set_clear_func(ArrayMaster *am, int (*func)(void *));
-	int afc_array_for_each(ArrayMaster *am, int (*func)(ArrayMaster *am, int pos, void *v, void *info), void *info);
-	int afc_array_set_custom_sort(ArrayMaster *am, void (*func)(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *)));
-	int afc_array_before_first(ArrayMaster *am);
+	unsigned long int afc_array_len(Array *);
+	int afc_array_set_clear_func(Array *am, int (*func)(void *));
+	int afc_array_for_each(Array *am, int (*func)(Array *am, int pos, void *v, void *info), void *info);
+	int afc_array_set_custom_sort(Array *am, void (*func)(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *)));
+	int afc_array_before_first(Array *am);
 
 #ifdef __cplusplus
 }

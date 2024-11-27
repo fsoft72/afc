@@ -8,7 +8,7 @@
 			afc_regexp_replace() no longer returns an empty string if the
 			giver regex pattern is not found on the source string.
 
-		ADD:	ArrayMaster / List / StringNode		Status: STABLE
+		ADD:	Array / List / StringNode		Status: STABLE
 
 			Added: afc_*_add_tail(), afc_*_add_head() and afc_*_insert()
 			to add items at the end, head and current position respectively.
@@ -108,7 +108,7 @@
 26 Oct  2003:   ENH:	function: afc_*_before_first()			Status: STABLE
 
 			Added the new afc_*_before_first() method to all classes that
-			allow iteration (List / ArrayMaster / StringNode /
+			allow iteration (List / Array / StringNode /
 			Dictionary and HashMaster) so it is now possible to simplify
 			while() loops.
 
@@ -182,8 +182,8 @@
 			Added afc_dictionary_for_each() function.
 
 
-11 Feb 2003:	ADD:	ArrayMaster					Status: STABLE
-			Added afc_array_set_clear_func() function. Now ArrayMaster
+11 Feb 2003:	ADD:	Array					Status: STABLE
+			Added afc_array_set_clear_func() function. Now Array
 			is able to delete by itself all items in the list.
 
 			Added afc_array_for_each() function.
@@ -221,7 +221,7 @@
 			- afc_dynamic_class_add_method() has a new parameter "params" used to
 			  specify the method params types.
 
-18 Jun 2002:	ENH:	ArrayMaster / AFC_ARRAY_SORT_ELEMENT     Status: STABLE
+18 Jun 2002:	ENH:	Array / AFC_ARRAY_SORT_ELEMENT     Status: STABLE
 			This is a simple macro to help defining sort elements.
 
 18 Jun 2002:	ADD: 	ReadArgs / afc_readargs_parse_cmd_line()	Status: STABLE
@@ -396,7 +396,7 @@
 			This is a class that handles trees of lists in a way very close
 			to the file system paradigm. In fact, you can use methods like
 			mkdir() to create "directories" of lists.
-			Based on ArrayMaster, it should not be considered stable, even if
+			Based on Array, it should not be considered stable, even if
 			it is already used in a big project.
 
 04 Jan 2002:	ENH:	StringNode					Status: Stable

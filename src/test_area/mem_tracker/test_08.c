@@ -35,7 +35,7 @@ int _clean_func(void *mem)
 int main()
 {
 	AFC *afc = afc_new();
-	ArrayMaster *d;
+	Array *d;
 	int t;
 	char buf[1024];
 

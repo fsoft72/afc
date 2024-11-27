@@ -171,7 +171,7 @@ int afc_dictionary_clear(struct afc_dictionary *dictionary)
 
 	if (dictionary->hash)
 	{
-		afc_array_before_first(dictionary->hash->am); // Move through all ArrayMaster items
+		afc_array_before_first(dictionary->hash->am); // Move through all Array items
 		while ((hd = afc_array_next(dictionary->hash->am)))
 		{
 			ddata = hd->data; // Get the DictionaryData inside

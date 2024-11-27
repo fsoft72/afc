@@ -72,7 +72,7 @@ struct afc_threader
 	unsigned long magic; /* Threader Magic Value */
 	Dictionary *threads;
 	Dictionary *mutex;
-	ArrayMaster *thread_stack;
+	Array *thread_stack;
 };
 
 typedef struct afc_threader Threader;
@@ -81,7 +81,7 @@ struct afc_threader_data
 {
 	Threader *th; /* Pointer to the main Threader class */
 
-	ArrayMaster *locks; // List of all locks by this thread
+	Array *locks; // List of all locks by this thread
 
 	pthread_t thread;
 	void *info;

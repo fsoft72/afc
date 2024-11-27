@@ -338,7 +338,7 @@ int afc_dynamic_class_execute_vars(DynamicClass *dc, const char *name, va_list a
 
 	func = dcmd->func;
 
-	// Parses the args and dispose them inside the ArrayMaster dc->args
+	// Parses the args and dispose them inside the Array dc->args
 	if (args != NULL)
 		afc_dynamic_class_internal_parse_args(dc, args);
 

@@ -51,7 +51,7 @@ struct afc_dynamic_class
 {
 	unsigned long magic; /* DynamicClass Magic Value */
 
-	ArrayMaster *args; // Store the args from a method call
+	Array *args; // Store the args from a method call
 
 	Dictionary *vars;
 	Dictionary *methods;

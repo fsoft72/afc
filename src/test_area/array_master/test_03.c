@@ -29,7 +29,7 @@ int my_sort(const void *v1, const void *v2)
 
 #define ITEMS 2
 
-int dump_all(ArrayMaster *am)
+int dump_all(Array *am)
 {
 	int i = afc_array_len(am);
 	int t;
@@ -43,7 +43,7 @@ int dump_all(ArrayMaster *am)
 	return (AFC_ERR_NO_ERROR);
 }
 
-int dump_list(ArrayMaster *am)
+int dump_list(Array *am)
 {
 	char *s;
 	int i = 0;
@@ -60,7 +60,7 @@ int dump_list(ArrayMaster *am)
 	return (AFC_ERR_NO_ERROR);
 }
 
-int dump_list_reverse(ArrayMaster *am)
+int dump_list_reverse(Array *am)
 {
 	char *s;
 	int i = 0;
@@ -79,7 +79,7 @@ int dump_list_reverse(ArrayMaster *am)
 int main()
 {
 	AFC *afc = afc_new();
-	ArrayMaster *am = afc_array_new();
+	Array *am = afc_array_new();
 	int t = 0;
 	char *buf;
 

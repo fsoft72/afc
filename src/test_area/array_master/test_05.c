@@ -19,7 +19,7 @@
  */
 #include "../test_utils.h"
 
-int dump_all(ArrayMaster *am, int c)
+int dump_all(Array *am, int c)
 {
 	int t;
 
@@ -34,7 +34,7 @@ int dump_all(ArrayMaster *am, int c)
 int main()
 {
 	AFC *afc = afc_new();
-	ArrayMaster *am = afc_array_new();
+	Array *am = afc_array_new();
 	int t;
 
 	for (t = 1; t <= 10; t++)

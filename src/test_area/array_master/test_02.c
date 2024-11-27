@@ -20,7 +20,7 @@
 #include "../test_utils.h"
 
 AFC *afc;
-ArrayMaster *am;
+Array *am;
 
 void add_three()
 {

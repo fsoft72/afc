@@ -34,7 +34,7 @@ int clear_func(void *data)
 int main()
 {
 	AFC *afc = afc_new();
-	ArrayMaster *am;
+	Array *am;
 	int t;
 
 	afc_track_mallocs(afc);
