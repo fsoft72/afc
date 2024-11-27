@@ -25,7 +25,7 @@ static const char class_name[] = "DynamicClassMaster";
 // static int afc_dynamic_class_master_internal_clear_instances ( DynamicClassMaster * dcm );
 
 static int afc_dynamic_class_master_internal_clear_class(void *c);
-static int afc_dynamic_class_master_internal_clear_instance(HashMaster *hm, void *d);
+static int afc_dynamic_class_master_internal_clear_instance(Hash *hm, void *d);
 
 // {{{ docs
 /*
@@ -93,10 +93,10 @@ DynamicClassMaster *afc_dynamic_class_master_new()
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "classes", NULL);
 	afc_dictionary_set_clear_func(dcm->classes, afc_dynamic_class_master_internal_clear_class);
 
-	if ((dcm->instances = afc_hash_master_new()) == NULL)
+	if ((dcm->instances = afc_hash_new()) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "instances", NULL);
 
-	afc_hash_master_set_clear_func(dcm->instances, afc_dynamic_class_master_internal_clear_instance);
+	afc_hash_set_clear_func(dcm->instances, afc_dynamic_class_master_internal_clear_instance);
 
 	RETURN(dcm);
 
@@ -139,7 +139,7 @@ int _afc_dynamic_class_master_delete(DynamicClassMaster *dcm)
 		return (afc_res);
 
 	afc_dictionary_delete(dcm->classes);
-	afc_hash_master_delete(dcm->instances);
+	afc_hash_delete(dcm->instances);
 
 	afc_free(dcm);
 
@@ -186,7 +186,7 @@ int afc_dynamic_class_master_clear(DynamicClassMaster *dcm)
 
 	// delete any plugin still in memory
 	// afc_dynamic_class_master_internal_clear_instances ( dcm );
-	afc_hash_master_clear(dcm->instances);
+	afc_hash_clear(dcm->instances);
 
 	// delete all the classes loaded (plugins)
 	// afc_dynamic_class_master_internal_clear_classes ( dcm );
@@ -363,9 +363,9 @@ DynamicClass *afc_dynamic_class_master_new_instance(DynamicClassMaster *dcm, con
 		idata->data = data;								// Class containing all methods (base class)
 		idata->instance = dc;							// Address of the new instance (DynamicClass)
 
-		// Add this idata to the HashMaster managing instances
+		// Add this idata to the Hash managing instances
 		// The key is the new DynamicClass instance, while the data is the idata itself
-		afc_hash_master_add(dcm->instances, (unsigned long int)dc, idata);
+		afc_hash_add(dcm->instances, (unsigned long int)dc, idata);
 
 		// fprintf ( stderr, ">>> New Instance: %s (%x)\n", class_name, ( int )idata );
 	}
@@ -395,14 +395,14 @@ DynamicClass *afc_dynamic_class_master_new_instance(DynamicClassMaster *dcm, con
 */
 int afc_dynamic_class_master_delete_instance(DynamicClassMaster *dcm, DynamicClass *instance)
 {
-	DCMIData *idata = afc_hash_master_find(dcm->instances, (unsigned long int)instance);
+	DCMIData *idata = afc_hash_find(dcm->instances, (unsigned long int)instance);
 
 	AFC_DEBUG_FUNC();
 
 	if (idata == NULL)
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_DYNAMIC_CLASS_MASTER_ERR_INVALID_INSTANCE, "Invalid address for this instance", NULL));
 
-	afc_hash_master_del(dcm->instances);
+	afc_hash_del(dcm->instances);
 
 	return (AFC_ERR_NO_ERROR);
 }
@@ -554,7 +554,7 @@ static int afc_dynamic_class_master_internal_clear_class(void *c)
 }
 // }}}
 // {{{ afc_dynamic_class_master_internal_clear_instance ( hm, d )
-static int afc_dynamic_class_master_internal_clear_instance(HashMaster *hm, void *d)
+static int afc_dynamic_class_master_internal_clear_instance(Hash *hm, void *d)
 {
 	DCMIData *idata = d;
 

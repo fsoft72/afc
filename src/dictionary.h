@@ -28,7 +28,7 @@
 #include "base.h"
 #include "string.h"
 #include "array.h"
-#include "hash_master.h"
+#include "hash.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -44,7 +44,7 @@ extern "C"
 	/* Errors for afc_dictionary */
 	enum
 	{
-		AFC_DICTIONARY_ERR_HASHING = AFC_DICTIONARY_BASE + 1, /* Ths HashMaster class reported an error  */
+		AFC_DICTIONARY_ERR_HASHING = AFC_DICTIONARY_BASE + 1, /* Ths Hash class reported an error  */
 		AFC_DICTIONARY_ERR_NOT_FOUND
 	}; /* Requesteq key cannot be found           */
 
@@ -58,7 +58,7 @@ extern "C"
 	{
 		unsigned long magic;
 
-		HashMaster *hash;
+		Hash *hash;
 
 		struct afc_dictionary_internal_data *curr_data;
 

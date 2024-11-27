@@ -5,7 +5,7 @@
 CC=gcc
 CFLAGS=-g -Wall
 
-DIRS=dir_array dir_string dir_readargs dir_list dir_hash_master
+DIRS=dir_array dir_string dir_readargs dir_list dir_hash
 
 all: test_utils.o $(DIRS)
 
@@ -21,8 +21,8 @@ dir_readargs:
 dir_list:
 	@cd list; make
 
-dir_hash_master:
-	@cd hash_master; make
+dir_hash:
+	@cd hash; make
 
 %.o : %.c
 	@echo "Building: $@"

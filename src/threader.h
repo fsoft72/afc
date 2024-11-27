@@ -28,7 +28,7 @@
 #include "strings.h"
 #include "array.h"
 #include "dictionary.h"
-#include "hash_master.h"
+#include "hash.h"
 
 #ifdef MINGW
 #define sleep _sleep

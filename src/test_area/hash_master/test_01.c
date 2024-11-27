@@ -26,7 +26,7 @@
 
 int elements = 0;
 
-HashMaster *hm;
+Hash *hm;
 
 int main()
 {
@@ -40,20 +40,20 @@ int main()
 
 	test_header();
 
-	hm = afc_hash_master_new();
+	hm = afc_hash_new();
 
 	// Set 20 keys
 	for (t = 0; t < 20; t++)
 	{
 		afc_string_make(str, "%d", t);
-		afc_hash_master_add(hm, t, afc_string_dup(str));
+		afc_hash_add(hm, t, afc_string_dup(str));
 	}
 
 	// Retrieve those 20 keys
 	for (t = 0; t < 20; t++)
 	{
 		afc_string_make(str, "%d", t);
-		print_res("find()", str, afc_hash_master_find(hm, t), 1);
+		print_res("find()", str, afc_hash_find(hm, t), 1);
 	}
 	print_row();
 
@@ -61,12 +61,12 @@ int main()
 	for (t = 10; t < 20; t++)
 	{
 		afc_string_make(str, "%d", t);
-		print_res("find()", str, s = afc_hash_master_find(hm, t), 1);
+		print_res("find()", str, s = afc_hash_find(hm, t), 1);
 
 		if (s)
 			afc_string_delete(s);
 
-		afc_hash_master_del(hm);
+		afc_hash_del(hm);
 	}
 
 	// Retrieve all 20 keys (10-20 should be NULL)
@@ -75,16 +75,16 @@ int main()
 		if (t < 10)
 		{
 			afc_string_make(str, "%d", t);
-			print_res("find()", str, afc_hash_master_find(hm, t), 1);
+			print_res("find()", str, afc_hash_find(hm, t), 1);
 		}
 		else
-			print_res("find()", NULL, afc_hash_master_find(hm, t), 1);
+			print_res("find()", NULL, afc_hash_find(hm, t), 1);
 	}
 
 	// Free all resources
 	for (t = 0; t < 20; t++)
 	{
-		s = afc_hash_master_find(hm, t);
+		s = afc_hash_find(hm, t);
 		if (s)
 			afc_string_delete(s);
 	}
@@ -92,7 +92,7 @@ int main()
 	print_row();
 	print_summary();
 
-	afc_hash_master_delete(hm);
+	afc_hash_delete(hm);
 	afc_string_delete(str);
 
 	afc_delete(afc);

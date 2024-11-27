@@ -29,7 +29,7 @@
 
 #include "base.h"
 #include "list.h"
-#include "stringlist.h"
+#include "string_list.h"
 #include "string.h"
 
 #ifdef MINGW
@@ -75,8 +75,8 @@ extern "C"
     struct afc_list *fields;
     struct afc_list *str;
 
-    struct afc_stringlist *global_split;
-    struct afc_stringlist *local_split;
+    struct afc_string_list *global_split;
+    struct afc_string_list *local_split;
 
     char *buffer;
   };

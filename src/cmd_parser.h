@@ -30,8 +30,8 @@
 #include "dictionary.h"
 #include "dynamic_class.h"
 #include "dynamic_class_master.h"
-#include "stringlist.h"
-#include "hash_master.h"
+#include "string_list.h"
+#include "hash.h"
 #include "readargs.h"
 
 /*****************************

@@ -35,7 +35,7 @@ static int afc_pop3_internal_get_line(POP3 *p);
 static int afc_pop3_internal_get_multi_line(POP3 *p);
 static int afc_pop3_internal_cmd(POP3 *p, const char *cmd, short multi);
 
-static int afc_pop3_internal_del_msg(HashMaster *hm, void *msg);
+static int afc_pop3_internal_del_msg(Hash *hm, void *msg);
 
 // {{{ afc_pop3_new ()
 /*
@@ -73,10 +73,10 @@ POP3 *afc_pop3_new(void)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "tmp", NULL);
 	if ((p->buf = afc_string_new(1024)) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "buf", NULL);
-	if ((p->msg = afc_hash_master_new()) == NULL)
+	if ((p->msg = afc_hash_new()) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "msg", NULL);
 
-	afc_hash_master_set_clear_func(p->msg, afc_pop3_internal_del_msg);
+	afc_hash_set_clear_func(p->msg, afc_pop3_internal_del_msg);
 
 	p->port = afc_string_new(5);
 	afc_string_copy(p->port, "110", ALL);
@@ -298,7 +298,7 @@ int afc_pop3_get_list(POP3 *p)
 	POP3MsgData *msg;
 	short subject, sender;
 
-	afc_hash_master_clear(p->msg);
+	afc_hash_clear(p->msg);
 
 	if ((res = afc_pop3_internal_cmd(p, "LIST", TRUE)) != AFC_ERR_NO_ERROR)
 		return (res);
@@ -315,14 +315,14 @@ int afc_pop3_get_list(POP3 *p)
 		msg->id = atoi(s);
 		msg->size = atoi(pos + 1);
 
-		afc_hash_master_add(p->msg, msg->id, msg);
+		afc_hash_add(p->msg, msg->id, msg);
 
 		s = afc_string_list_next(p->sn);
 	}
 
 	// Retrieve msg subject and sender
 
-	msg = afc_hash_master_first(p->msg);
+	msg = afc_hash_first(p->msg);
 
 	while (msg)
 	{
@@ -351,7 +351,7 @@ int afc_pop3_get_list(POP3 *p)
 			s = afc_string_list_next(p->sn);
 		}
 
-		msg = afc_hash_master_next(p->msg);
+		msg = afc_hash_next(p->msg);
 	}
 
 	return (AFC_ERR_NO_ERROR);
@@ -360,7 +360,7 @@ int afc_pop3_get_list(POP3 *p)
 // {{{ afc_pop3_retr ( p, num ) *********
 int afc_pop3_retr(POP3 *p, int num)
 {
-	// if ( afc_hash_master_find ( p->msg, num ) == NULL ) return ( AFC_ERR_NO_ERROR );
+	// if ( afc_hash_find ( p->msg, num ) == NULL ) return ( AFC_ERR_NO_ERROR );
 
 	afc_string_make(p->tmp, "RETR %d", num);
 	return (afc_pop3_internal_cmd(p, p->tmp, TRUE));
@@ -369,7 +369,7 @@ int afc_pop3_retr(POP3 *p, int num)
 // {{{ afc_pop3_dele ( p, num ) ********
 int afc_pop3_dele(POP3 *p, int num)
 {
-	// if ( afc_hash_master_find ( p->msg, num ) == NULL ) return ( AFC_ERR_NO_ERROR );
+	// if ( afc_hash_find ( p->msg, num ) == NULL ) return ( AFC_ERR_NO_ERROR );
 
 	afc_string_make(p->tmp, "DELE %d", num);
 	return (afc_pop3_internal_cmd(p, p->tmp, FALSE));
@@ -387,7 +387,7 @@ int afc_pop3_quit(POP3 *p) { return (afc_pop3_internal_cmd(p, "QUIT", FALSE)); }
 // {{{ afc_pop3_top ( p, msg, lines ) ********
 int afc_pop3_top(POP3 *p, int msg, int lines)
 {
-	// if ( afc_hash_master_find ( p->msg, msg ) == NULL ) return ( AFC_ERR_NO_ERROR );
+	// if ( afc_hash_find ( p->msg, msg ) == NULL ) return ( AFC_ERR_NO_ERROR );
 
 	afc_string_make(p->tmp, "TOP %d %d", msg, lines);
 	return (afc_pop3_internal_cmd(p, p->tmp, TRUE));
@@ -481,7 +481,7 @@ static int afc_pop3_internal_cmd(POP3 *p, const char *cmd, short multi)
 }
 // }}}
 // {{{ afc_pop3_internal_del_msg ( hm, m )
-static int afc_pop3_internal_del_msg(HashMaster *hm, void *m)
+static int afc_pop3_internal_del_msg(Hash *hm, void *m)
 {
 	POP3MsgData *msg = m;
 
@@ -502,12 +502,12 @@ void dump_messages(POP3 *p)
 {
 	POP3MsgData *msg;
 
-	msg = afc_hash_master_first(p->msg);
+	msg = afc_hash_first(p->msg);
 
 	while (msg)
 	{
 		printf("MSG ID: %d - Size: %d - From: %s - Subject: %s\n", msg->id, msg->size, msg->from, msg->subject);
-		msg = afc_hash_master_next(p->msg);
+		msg = afc_hash_next(p->msg);
 	}
 }
 

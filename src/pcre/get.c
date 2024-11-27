@@ -1,6 +1,6 @@
 /*************************************************
-*      Perl-Compatible Regular Expressions       *
-*************************************************/
+ *      Perl-Compatible Regular Expressions       *
+ *************************************************/
 
 /*
 This is a library of functions to support regular expressions whose syntax
@@ -36,16 +36,14 @@ restrictions:
 from the subject string after a regex match has succeeded. The original idea
 for these functions came from Scott Wimer <scottw@cgibuilder.com>. */
 
-
 /* Include the internals header, which itself includes Standard C headers plus
 the external pcre header. */
 
 #include "internal.h"
 
-
 /*************************************************
-*           Find number for named string         *
-*************************************************/
+ *           Find number for named string         *
+ *************************************************/
 
 /* This function is used by the two extraction functions below, as well
 as being generally available.
@@ -58,41 +56,43 @@ Returns:      the number of the named parentheses, or a negative number
                 (PCRE_ERROR_NOSUBSTRING) if not found
 */
 
-int
-pcre_get_stringnumber(const pcre *code, const char *stringname)
+int pcre_get_stringnumber(const pcre *code, const char *stringname)
 {
-int rc;
-int entrysize;
-int top, bot;
-uschar *nametable;
+  int rc;
+  int entrysize;
+  int top, bot;
+  uschar *nametable;
 
-if ((rc = pcre_fullinfo(code, NULL, PCRE_INFO_NAMECOUNT, &top)) != 0)
-  return rc;
-if (top <= 0) return PCRE_ERROR_NOSUBSTRING;
+  if ((rc = pcre_fullinfo(code, NULL, PCRE_INFO_NAMECOUNT, &top)) != 0)
+    return rc;
+  if (top <= 0)
+    return PCRE_ERROR_NOSUBSTRING;
 
-if ((rc = pcre_fullinfo(code, NULL, PCRE_INFO_NAMEENTRYSIZE, &entrysize)) != 0)
-  return rc;
-if ((rc = pcre_fullinfo(code, NULL, PCRE_INFO_NAMETABLE, &nametable)) != 0)
-  return rc;
+  if ((rc = pcre_fullinfo(code, NULL, PCRE_INFO_NAMEENTRYSIZE, &entrysize)) != 0)
+    return rc;
+  if ((rc = pcre_fullinfo(code, NULL, PCRE_INFO_NAMETABLE, &nametable)) != 0)
+    return rc;
 
-bot = 0;
-while (top > bot)
+  bot = 0;
+  while (top > bot)
   {
-  int mid = (top + bot) / 2;
-  uschar *entry = nametable + entrysize*mid;
-  int c = strcmp(stringname, (char *)(entry + 2));
-  if (c == 0) return (entry[0] << 8) + entry[1];
-  if (c > 0) bot = mid + 1; else top = mid;
+    int mid = (top + bot) / 2;
+    uschar *entry = nametable + entrysize * mid;
+    int c = strcmp(stringname, (char *)(entry + 2));
+    if (c == 0)
+      return (entry[0] << 8) + entry[1];
+    if (c > 0)
+      bot = mid + 1;
+    else
+      top = mid;
   }
 
-return PCRE_ERROR_NOSUBSTRING;
+  return PCRE_ERROR_NOSUBSTRING;
 }
 
-
-
 /*************************************************
-*      Copy captured string to given buffer      *
-*************************************************/
+ *      Copy captured string to given buffer      *
+ *************************************************/
 
 /* This function copies a single captured substring into a given buffer.
 Note that we use memcpy() rather than strncpy() in case there are binary zeros
@@ -117,26 +117,24 @@ Returns:         if successful:
                    PCRE_ERROR_NOSUBSTRING (-7) no such captured substring
 */
 
-int
-pcre_copy_substring(const char *subject, int *ovector, int stringcount,
-  int stringnumber, char *buffer, int size)
+int pcre_copy_substring(const char *subject, int *ovector, int stringcount,
+                        int stringnumber, char *buffer, int size)
 {
-int yield;
-if (stringnumber < 0 || stringnumber >= stringcount)
-  return PCRE_ERROR_NOSUBSTRING;
-stringnumber *= 2;
-yield = ovector[stringnumber+1] - ovector[stringnumber];
-if (size < yield + 1) return PCRE_ERROR_NOMEMORY;
-memcpy(buffer, subject + ovector[stringnumber], yield);
-buffer[yield] = 0;
-return yield;
+  int yield;
+  if (stringnumber < 0 || stringnumber >= stringcount)
+    return PCRE_ERROR_NOSUBSTRING;
+  stringnumber *= 2;
+  yield = ovector[stringnumber + 1] - ovector[stringnumber];
+  if (size < yield + 1)
+    return PCRE_ERROR_NOMEMORY;
+  memcpy(buffer, subject + ovector[stringnumber], yield);
+  buffer[yield] = 0;
+  return yield;
 }
 
-
-
 /*************************************************
-*   Copy named captured string to given buffer   *
-*************************************************/
+ *   Copy named captured string to given buffer   *
+ *************************************************/
 
 /* This function copies a single captured substring into a given buffer,
 identifying it by name.
@@ -161,20 +159,18 @@ Returns:         if successful:
                    PCRE_ERROR_NOSUBSTRING (-7) no such captured substring
 */
 
-int
-pcre_copy_named_substring(const pcre *code, const char *subject, int *ovector,
-  int stringcount, const char *stringname, char *buffer, int size)
+int pcre_copy_named_substring(const pcre *code, const char *subject, int *ovector,
+                              int stringcount, const char *stringname, char *buffer, int size)
 {
-int n = pcre_get_stringnumber(code, stringname);
-if (n <= 0) return n;
-return pcre_copy_substring(subject, ovector, stringcount, n, buffer, size);
+  int n = pcre_get_stringnumber(code, stringname);
+  if (n <= 0)
+    return n;
+  return pcre_copy_substring(subject, ovector, stringcount, n, buffer, size);
 }
 
-
-
 /*************************************************
-*      Copy all captured strings to new store    *
-*************************************************/
+ *      Copy all captured strings to new store    *
+ *************************************************/
 
 /* This function gets one chunk of store and builds a list of pointers and all
 of the captured substrings in it. A NULL pointer is put on the end of the list.
@@ -193,43 +189,41 @@ Returns:         if successful: 0
                    PCRE_ERROR_NOMEMORY (-6) failed to get store
 */
 
-int
-pcre_get_substring_list(const char *subject, int *ovector, int stringcount,
-  const char ***listptr)
+int pcre_get_substring_list(const char *subject, int *ovector, int stringcount,
+                            const char ***listptr)
 {
-int i;
-int size = sizeof(char *);
-int double_count = stringcount * 2;
-char **stringlist;
-char *p;
+  int i;
+  int size = sizeof(char *);
+  int double_count = stringcount * 2;
+  char **string_list;
+  char *p;
 
-for (i = 0; i < double_count; i += 2)
-  size += sizeof(char *) + ovector[i+1] - ovector[i] + 1;
+  for (i = 0; i < double_count; i += 2)
+    size += sizeof(char *) + ovector[i + 1] - ovector[i] + 1;
 
-stringlist = (char **)(pcre_malloc)(size);
-if (stringlist == NULL) return PCRE_ERROR_NOMEMORY;
+  string_list = (char **)(pcre_malloc)(size);
+  if (string_list == NULL)
+    return PCRE_ERROR_NOMEMORY;
 
-*listptr = (const char **)stringlist;
-p = (char *)(stringlist + stringcount + 1);
+  *listptr = (const char **)string_list;
+  p = (char *)(string_list + stringcount + 1);
 
-for (i = 0; i < double_count; i += 2)
+  for (i = 0; i < double_count; i += 2)
   {
-  int len = ovector[i+1] - ovector[i];
-  memcpy(p, subject + ovector[i], len);
-  *stringlist++ = p;
-  p += len;
-  *p++ = 0;
+    int len = ovector[i + 1] - ovector[i];
+    memcpy(p, subject + ovector[i], len);
+    *string_list++ = p;
+    p += len;
+    *p++ = 0;
   }
 
-*stringlist = NULL;
-return 0;
+  *string_list = NULL;
+  return 0;
 }
 
-
-
 /*************************************************
-*   Free store obtained by get_substring_list    *
-*************************************************/
+ *   Free store obtained by get_substring_list    *
+ *************************************************/
 
 /* This function exists for the benefit of people calling PCRE from non-C
 programs that can call its functions, but not free() or (pcre_free)() directly.
@@ -238,17 +232,14 @@ Argument:   the result of a previous pcre_get_substring_list()
 Returns:    nothing
 */
 
-void
-pcre_free_substring_list(const char **pointer)
+void pcre_free_substring_list(const char **pointer)
 {
-(pcre_free)((void *)pointer);
+  (pcre_free)((void *)pointer);
 }
 
-
-
 /*************************************************
-*      Copy captured string to new store         *
-*************************************************/
+ *      Copy captured string to new store         *
+ *************************************************/
 
 /* This function copies a single captured substring into a piece of new
 store
@@ -271,29 +262,27 @@ Returns:         if successful:
                    PCRE_ERROR_NOSUBSTRING (-7) substring not present
 */
 
-int
-pcre_get_substring(const char *subject, int *ovector, int stringcount,
-  int stringnumber, const char **stringptr)
+int pcre_get_substring(const char *subject, int *ovector, int stringcount,
+                       int stringnumber, const char **stringptr)
 {
-int yield;
-char *substring;
-if (stringnumber < 0 || stringnumber >= stringcount)
-  return PCRE_ERROR_NOSUBSTRING;
-stringnumber *= 2;
-yield = ovector[stringnumber+1] - ovector[stringnumber];
-substring = (char *)(pcre_malloc)(yield + 1);
-if (substring == NULL) return PCRE_ERROR_NOMEMORY;
-memcpy(substring, subject + ovector[stringnumber], yield);
-substring[yield] = 0;
-*stringptr = substring;
-return yield;
+  int yield;
+  char *substring;
+  if (stringnumber < 0 || stringnumber >= stringcount)
+    return PCRE_ERROR_NOSUBSTRING;
+  stringnumber *= 2;
+  yield = ovector[stringnumber + 1] - ovector[stringnumber];
+  substring = (char *)(pcre_malloc)(yield + 1);
+  if (substring == NULL)
+    return PCRE_ERROR_NOMEMORY;
+  memcpy(substring, subject + ovector[stringnumber], yield);
+  substring[yield] = 0;
+  *stringptr = substring;
+  return yield;
 }
 
-
-
 /*************************************************
-*   Copy named captured string to new store      *
-*************************************************/
+ *   Copy named captured string to new store      *
+ *************************************************/
 
 /* This function copies a single captured substring, identified by name, into
 new store.
@@ -317,21 +306,18 @@ Returns:         if successful:
                    PCRE_ERROR_NOSUBSTRING (-7) no such captured substring
 */
 
-int
-pcre_get_named_substring(const pcre *code, const char *subject, int *ovector,
-  int stringcount, const char *stringname, const char **stringptr)
+int pcre_get_named_substring(const pcre *code, const char *subject, int *ovector,
+                             int stringcount, const char *stringname, const char **stringptr)
 {
-int n = pcre_get_stringnumber(code, stringname);
-if (n <= 0) return n;
-return pcre_get_substring(subject, ovector, stringcount, n, stringptr);
+  int n = pcre_get_stringnumber(code, stringname);
+  if (n <= 0)
+    return n;
+  return pcre_get_substring(subject, ovector, stringcount, n, stringptr);
 }
 
-
-
-
 /*************************************************
-*       Free store obtained by get_substring     *
-*************************************************/
+ *       Free store obtained by get_substring     *
+ *************************************************/
 
 /* This function exists for the benefit of people calling PCRE from non-C
 programs that can call its functions, but not free() or (pcre_free)() directly.
@@ -340,10 +326,9 @@ Argument:   the result of a previous pcre_get_substring()
 Returns:    nothing
 */
 
-void
-pcre_free_substring(const char *pointer)
+void pcre_free_substring(const char *pointer)
 {
-(pcre_free)((void *)pointer);
+  (pcre_free)((void *)pointer);
 }
 
 /* End of get.c */

@@ -94,7 +94,7 @@ struct afc_dictionary *afc_dictionary_new()
 
 	dictionary->magic = AFC_DICTIONARY_MAGIC;
 
-	if ((dictionary->hash = afc_hash_master_new()) == NULL)
+	if ((dictionary->hash = afc_hash_new()) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "hash", NULL);
 
 	RETURN(dictionary);
@@ -134,7 +134,7 @@ int _afc_dictionary_delete(struct afc_dictionary *dictionary)
 	if ((afc_res = afc_dictionary_clear(dictionary)) != AFC_ERR_NO_ERROR)
 		return (afc_res);
 
-	afc_hash_master_delete(dictionary->hash);
+	afc_hash_delete(dictionary->hash);
 	afc_free(dictionary);
 
 	return (AFC_ERR_NO_ERROR);
@@ -182,7 +182,7 @@ int afc_dictionary_clear(struct afc_dictionary *dictionary)
 			afc_string_delete(ddata->key); // Dispose the Dictionary Item key
 			afc_free(ddata);			   // Free the dictionary Item
 		}
-		afc_hash_master_clear(dictionary->hash); // Clears the HashMaster
+		afc_hash_clear(dictionary->hash); // Clears the Hash
 	}
 
 	dictionary->curr_data = NULL; // Set no current data
@@ -244,7 +244,7 @@ int afc_dictionary_set(Dictionary *dict, const char *key, void *data)
 			return (AFC_ERR_NO_MEMORY);
 		}
 
-		if (afc_hash_master_add(dict->hash, afc_string_hash((unsigned char *)key, afc_string_len(ddata->key)), ddata) != AFC_ERR_NO_ERROR) // Add the new entry in the Dictionary
+		if (afc_hash_add(dict->hash, afc_string_hash((unsigned char *)key, afc_string_len(ddata->key)), ddata) != AFC_ERR_NO_ERROR) // Add the new entry in the Dictionary
 		{
 			afc_string_delete(ddata->key);
 			afc_free(ddata);
@@ -483,7 +483,7 @@ void *afc_dictionary_del(Dictionary *dict)
 	afc_string_delete(dict->curr_data->key); // Free the Item KEY
 	afc_free(dict->curr_data);				 // Free current item data
 
-	dict->curr_data = afc_hash_master_del(dict->hash); // Remove from the Array Master
+	dict->curr_data = afc_hash_del(dict->hash); // Remove from the Array Master
 
 	if (dict->curr_data == NULL)
 		return (NULL); // Check against NULL
@@ -734,14 +734,14 @@ int afc_dictionary_for_each(Dictionary *dict, int (*func)(Dictionary *am, int po
 	HashData *hd;
 	DictionaryData *ddata;
 
-	hd = afc_hash_master_first(dict->hash);
+	hd = afc_hash_first(dict->hash);
 	while (hd)
 	{
 		ddata = hd->data;
 		if ((res = func(dict, t++, ddata->value, info)) != AFC_ERR_NO_ERROR)
 			return (res);
 
-		hd = afc_hash_master_next(dict->hash);
+		hd = afc_hash_next(dict->hash);
 	}
 
 	return (AFC_ERR_NO_ERROR);
@@ -776,7 +776,7 @@ int afc_dictionary_set_custom_sort ( Dictionary * dict, void ( * func )  ( void 
 */
 // }}}
 // {{{ afc_dictionary_before_first ( d ) ************
-// int afc_dictionary_before_first ( Dictionary * d ) { return ( afc_hash_master_before_first ( d->hash ) ); }
+// int afc_dictionary_before_first ( Dictionary * d ) { return ( afc_hash_before_first ( d->hash ) ); }
 // }}}
 
 /* ==================================================================================================================
@@ -787,7 +787,7 @@ static DictionaryData *afc_dictionary_internal_find(Dictionary *dict, const char
 {
 	DictionaryData *ddata;
 
-	ddata = (DictionaryData *)afc_hash_master_find(dict->hash, afc_string_hash((unsigned char *)key, strlen(key)));
+	ddata = (DictionaryData *)afc_hash_find(dict->hash, afc_string_hash((unsigned char *)key, strlen(key)));
 	dict->curr_data = ddata;
 
 	return ddata;

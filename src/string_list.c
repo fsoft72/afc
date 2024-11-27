@@ -27,7 +27,7 @@
 @endnode
 */
 
-#include "stringlist.h"
+#include "string_list.h"
 
 static const char class_name[] = "StringList";
 
@@ -83,7 +83,7 @@ StringList *_afc_string_list_new(const char *file, const char *func, const unsig
 	StringList *sn = (StringList *)_afc_malloc(sizeof(StringList), file, func, line);
 
 	if (sn == NULL)
-		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "stringlist", NULL);
+		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "string_list", NULL);
 
 	sn->magic = AFC_STRING_LIST_MAGIC;
 
@@ -1106,12 +1106,12 @@ static long afc_string_list_internal_sort_case_inv(void *a, void *b, void *info)
 
 #ifdef TEST_CLASS
 // {{{ TEST_CLASS
-void dosort(struct afc_stringlist *n)
+void dosort(struct afc_string_list *n)
 {
 	afc_string_list_sort(n, TRUE, TRUE, FALSE);
 }
 
-void shwall(struct afc_stringlist *n)
+void shwall(struct afc_string_list *n)
 {
 	printf("-----------------------\n");
 
@@ -1127,7 +1127,7 @@ void shwall(struct afc_stringlist *n)
 
 int main(void)
 {
-	struct afc_stringlist *sn;
+	struct afc_string_list *sn;
 	// struct TagItem tags[] = { TAGSTR_MaxChars, 3, TAG_END };
 
 	sn = afc_string_list_new();

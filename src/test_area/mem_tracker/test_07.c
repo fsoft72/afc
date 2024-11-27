@@ -19,12 +19,12 @@
  */
 #include "../../base.h"
 #include "../../mem_tracker.h"
-#include "../../hash_master.h"
+#include "../../hash.h"
 #include "../../array.h"
 #include "../../string.h"
 #include "../../dictionary.h"
 
-int _clean_func(HashMaster *hm, void *mem)
+int _clean_func(Hash *hm, void *mem)
 {
 	char *s = (char *)mem;
 	afc_string_delete(s);
@@ -35,7 +35,7 @@ int _clean_func(HashMaster *hm, void *mem)
 int main()
 {
 	AFC *afc = afc_new();
-	HashMaster *d;
+	Hash *d;
 	int t;
 	char buf[1024];
 
@@ -45,8 +45,8 @@ int main()
 				 /* AFC_TAG_SHOW_FREES,	TRUE, */
 				 AFC_TAG_END);
 
-	d = afc_hash_master_new();
-	afc_hash_master_set_clear_func(d, _clean_func);
+	d = afc_hash_new();
+	afc_hash_set_clear_func(d, _clean_func);
 
 	for (t = 0; t < 100; t++)
 	{
@@ -54,10 +54,10 @@ int main()
 			printf("Pos: %d\n", t);
 
 		sprintf(buf, "key%d", t);
-		afc_hash_master_add(d, t, afc_string_dup(buf));
+		afc_hash_add(d, t, afc_string_dup(buf));
 	}
 
-	afc_hash_master_clear(d);
+	afc_hash_clear(d);
 
 	afc_delete(afc);
 

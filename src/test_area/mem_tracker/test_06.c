@@ -19,7 +19,7 @@
  */
 #include "../../base.h"
 #include "../../mem_tracker.h"
-#include "../../hash_master.h"
+#include "../../hash.h"
 #include "../../array.h"
 #include "../../string.h"
 #include "../../dictionary.h"

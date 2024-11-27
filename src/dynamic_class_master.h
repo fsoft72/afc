@@ -25,7 +25,7 @@
 #include <dlfcn.h>
 
 #include "base.h"
-#include "hash_master.h"
+#include "hash.h"
 #include "dictionary.h"
 #include "dynamic_class.h"
 
@@ -68,7 +68,7 @@ struct afc_dynamic_class_master
 {
 	unsigned long magic; /* DynamicClassMaster Magic Value */
 	Dictionary *classes;
-	HashMaster *instances;
+	Hash *instances;
 
 	BOOL check_params; // Flag T/F. If T, plugins will perform params checking before execute()
 

@@ -4,7 +4,7 @@
 
 CC=gcc
 CFLAGS=-g -Wall
-OBJS=../../base.o ../../array.o ../../hash_master.o ../../string.o  ../../dictionary.o ../../dynamic_class.o ../../dynamic_class_master.o ../test_utils.o
+OBJS=../../base.o ../../array.o ../../hash.o ../../string.o  ../../dictionary.o ../../dynamic_class.o ../../dynamic_class_master.o ../test_utils.o
 
 LIBS=-ldl
 

@@ -49,7 +49,7 @@ int inet_send(InetServer *is, InetConnData *data, char *msg)
 	InetConnData *dest;
 	char *buf = afc_string_new(afc_string_len(data->buf) + 55);
 
-	dest = afc_hash_master_first(is->hash);
+	dest = afc_hash_first(is->hash);
 
 	if (msg == NULL)
 		msg = data->buf;
@@ -60,7 +60,7 @@ int inet_send(InetServer *is, InetConnData *data, char *msg)
 		if (dest != data)
 			afc_inet_server_send(is, dest, buf);
 
-		dest = afc_hash_master_next(is->hash);
+		dest = afc_hash_next(is->hash);
 	}
 
 	return (AFC_ERR_NO_ERROR);

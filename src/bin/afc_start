@@ -21,7 +21,7 @@ class afc_starter:
 				 [ "DirMaster",   	"afc_dirmaster",		"dirmaster" ],
 				 [ "DynamicClassMaster","afc_dynamic_class_master",	"dynamic_class_master" ],
 				 [ "FileOperations",	"afc_fileops",			"file_operations" ],
-				 [ "HashMaster",	"afc_hash_master",		"hash_master" ],
+				 [ "Hash",	"afc_hash",		"hash" ],
 				 [ "InetClient",	"afc_inet_client",		"inet_client" ],
 				 [ "InetServer",	"afc_inet_server",		"inet_server" ],
 				 [ "MD5",		"afc_md5",			"md5" ],
@@ -30,7 +30,7 @@ class afc_starter:
 				 [ "POP3",		"afc_pop3",			"pop3" ],
 				 [ "ReadArgs",		"afc_readargs",			"readargs" ],
 				 [ "RegExp",		"afc_regexp",			"regexp" ],
-				 [ "StringList",	"afc_stringlist",		"stringlist" ],
+				 [ "StringList",	"afc_string_list",		"string_list" ],
 				 [ "Threader",		"afc_threader",			"threader" ]
 				]
 

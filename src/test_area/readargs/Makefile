@@ -4,8 +4,8 @@
 
 CC=gcc
 CFLAGS=-g -Wall
-OBJS=../../base.c ../../list.c ../../stringlist.c ../../string.c ../../readargs.c
-LIBS=../../base.o ../../list.o ../../stringlist.o ../../string.o ../../readargs.o ../test_utils.o  ../../mem_tracker.o
+OBJS=../../base.c ../../list.c ../../string_list.c ../../string.c ../../readargs.c
+LIBS=../../base.o ../../list.o ../../string_list.o ../../string.o ../../readargs.o ../test_utils.o  ../../mem_tracker.o
 
 PROGS=test_01 test_02 test_03
 

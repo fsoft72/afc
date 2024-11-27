@@ -29,7 +29,7 @@
 #include "base.h"
 #include "dictionary.h"
 #include "array.h"
-#include "stringlist.h"
+#include "string_list.h"
 
 #ifdef __cplusplus
 extern "C"

@@ -23,7 +23,7 @@
 
 int elements = 0;
 
-HashMaster *hm;
+Hash *hm;
 
 int main()
 {
@@ -34,17 +34,17 @@ int main()
 
 	test_header();
 
-	hm = afc_hash_master_new();
+	hm = afc_hash_new();
 
-	afc_hash_master_add(hm, 1, (void *)1);
-	afc_hash_master_add(hm, 2, (void *)2);
-	afc_hash_master_add(hm, 3, (void *)3);
-	afc_hash_master_add(hm, 4, (void *)4);
+	afc_hash_add(hm, 1, (void *)1);
+	afc_hash_add(hm, 2, (void *)2);
+	afc_hash_add(hm, 3, (void *)3);
+	afc_hash_add(hm, 4, (void *)4);
 
-	afc_hash_master_find(hm, 1);
-	afc_hash_master_del(hm);
+	afc_hash_find(hm, 1);
+	afc_hash_del(hm);
 
-	afc_hash_master_delete(hm);
+	afc_hash_delete(hm);
 
 	afc_delete(afc);
 

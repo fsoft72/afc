@@ -34,7 +34,7 @@
 
 #include "base.h"
 #include "strings.h"
-#include "hash_master.h"
+#include "hash.h"
 #include "exceptions.h"
 
 /* InetServer'Magic' value: 'IBSE' */
@@ -92,7 +92,7 @@ struct afc_inet_server
 	int listener; /* Listener FD */
 	int newfd;	  /* FD of a new client connecting */
 
-	HashMaster *hash; /* Keep track of connections data */
+	Hash *hash; /* Keep track of connections data */
 
 	int active; /* Used to find the current active connection */
 

@@ -76,7 +76,7 @@ extern "C"
 /* AFC StringList Magic value: STRN */
 #define AFC_STRING_LIST_MAGIC ('S' << 24 | 'T' << 16 | 'R' << 8 | 'N')
 
-	struct afc_stringlist
+	struct afc_string_list
 	{
 		unsigned long magic; /* AFC Magic Number */
 
@@ -88,7 +88,7 @@ extern "C"
 		char escape_char;		// Escape character (used for the _split() method)
 	};
 
-	typedef struct afc_stringlist StringList;
+	typedef struct afc_string_list StringList;
 
 #define afc_string_list_new() _afc_string_list_new(__FILE__, __FUNCTION__, __LINE__)
 #define afc_string_list_delete(sn)   \

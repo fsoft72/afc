@@ -76,7 +76,7 @@ InetServer *afc_inet_server_new()
 	if (is == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "is", NULL);
 	is->magic = AFC_INET_SERVER_MAGIC;
-	if ((is->hash = afc_hash_master_new()) == NULL)
+	if ((is->hash = afc_hash_new()) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "hash", NULL);
 	is->bufsize = AFC_INET_SERVER_DEFAULT_BUFSIZE;
 
@@ -118,7 +118,7 @@ int _afc_inet_server_delete(InetServer *is)
 		return (afc_res);
 
 	afc_inet_server_close(is);
-	afc_hash_master_delete(is->hash);
+	afc_hash_delete(is->hash);
 	afc_free(is);
 
 	return (AFC_ERR_NO_ERROR);
@@ -212,11 +212,11 @@ int afc_inet_server_close(InetServer *is)
 	InetConnData *data;
 	// int t;
 
-	data = afc_hash_master_first(is->hash);
+	data = afc_hash_first(is->hash);
 	while (data)
 	{
 		afc_inet_server_close_conn(is, data);
-		data = afc_hash_master_next(is->hash);
+		data = afc_hash_next(is->hash);
 	}
 
 	return (AFC_ERR_NO_ERROR);
@@ -271,7 +271,7 @@ int afc_inet_server_process(InetServer *is)
 			}
 			else
 			{
-				data = afc_hash_master_find(is->hash, i);
+				data = afc_hash_find(is->hash, i);
 
 				// Data from clients already connected
 				if ((nbytes = recv(i, data->buf, afc_string_max(data->buf), 0)) <= 0)
@@ -333,7 +333,7 @@ int afc_inet_server_close_conn(InetServer *is, InetConnData *data)
 		afc_string_delete(data->buf);
 
 	afc_free(data);
-	afc_hash_master_del(is->hash);
+	afc_hash_del(is->hash);
 
 	return (AFC_ERR_NO_ERROR);
 }
@@ -366,7 +366,7 @@ static InetConnData *afc_inet_server_create_conn_data(InetServer *is, int fd)
 	data->is = is;
 
 	// Add it to the Hash Table
-	afc_hash_master_add(is->hash, is->newfd, data);
+	afc_hash_add(is->hash, is->newfd, data);
 
 	if ((is->cb_connect) != NULL)
 		is->cb_connect(is, data);

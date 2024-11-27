@@ -18,14 +18,14 @@
 			AFC should work without problems on 64bit machines.
 
 
-02 Jun 2005:	ENH:	HashMaster					Status: STABLE
+02 Jun 2005:	ENH:	Hash					Status: STABLE
 
-			afc_hash_master_del() now returns the next node data and not
-			an HashMaster Data structure.
+			afc_hash_del() now returns the next node data and not
+			an Hash Data structure.
 
 		UPD:	Dictionary					Status: STABLE
 
-			afc_dictionary_del() has been updated to reflect HashMaster
+			afc_dictionary_del() has been updated to reflect Hash
 			changes.
 
 31 May 2005:	ENH:	64bit compatibility
@@ -64,7 +64,7 @@
 
 			A new class to handle BTrees.
 
-18 Apr 2004:	FIX:	HashMaster					Status: STABLE
+18 Apr 2004:	FIX:	Hash					Status: STABLE
 
 			The sorting routine could lead erroneus results on some situations.
 
@@ -109,7 +109,7 @@
 
 			Added the new afc_*_before_first() method to all classes that
 			allow iteration (List / Array / StringList /
-			Dictionary and HashMaster) so it is now possible to simplify
+			Dictionary and Hash) so it is now possible to simplify
 			while() loops.
 
 		ENH:	Added the new BOOL type for TRUE/FALSE value.
@@ -171,10 +171,10 @@
 
 			Added afc_list_for_each() function.
 
-		ADD:	HashMaster					Status: STABLE
-			Added afc_hash_master_set_clear_func() function.
+		ADD:	Hash					Status: STABLE
+			Added afc_hash_set_clear_func() function.
 
-			Added afc_hash_master_for_each() function.
+			Added afc_hash_for_each() function.
 
 		ADD:	Dictionary					Status: STABLE
 			Added afc_dictionary_set_clear_func() function.
@@ -324,7 +324,7 @@
 10 Feb 2002:	ENH:	ReadArgs					Status: STABLE
 			Added the "tab" char to the list of common separators where needed.
 
-10 Feb 2002:	ADD:	test_area/stringlist				Status: STABLE
+10 Feb 2002:	ADD:	test_area/string_list				Status: STABLE
 			Very first test area cases for StringList.
 
 10 Feb 2002:	ADD:	StringList					Status: STABLE

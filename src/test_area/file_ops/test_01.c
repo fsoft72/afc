@@ -23,7 +23,7 @@
 
 int elements = 0;
 
-HashMaster *hm;
+Hash *hm;
 
 int create_file(char *name)
 {
@@ -61,7 +61,7 @@ int main()
 	print_res("move(\"link1\", \"link0\")", 0, (void *)afc_fileops_move(fo, "/tmp/fo_tst/dir1/link1", "/tmp/fo_tst/dir1/link0"), 0);
 	print_res("del(\"/tmp/fo_tst\")", 0, (void *)afc_fileops_del(fo, "/tmp/fo_tst"), 0);
 
-	// print_res ( "find()", str, s = afc_hash_master_find ( hm, t ), 1 );
+	// print_res ( "find()", str, s = afc_hash_find ( hm, t ), 1 );
 
 	print_row();
 	print_summary();
