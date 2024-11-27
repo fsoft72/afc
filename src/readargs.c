@@ -169,11 +169,11 @@ ReadArgs *afc_readargs_new()
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "str", NULL);
 
 	// Create the main string Splitter
-	if ((rdargs->global_split = afc_stringnode_new()) == NULL)
+	if ((rdargs->global_split = afc_string_list_new()) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "global_split", NULL);
 
 	// Create the secondary string splitter
-	if ((rdargs->local_split = afc_stringnode_new()) == NULL)
+	if ((rdargs->local_split = afc_string_list_new()) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "local_split", NULL);
 
 	RETURN(rdargs);
@@ -212,8 +212,8 @@ int _afc_readargs_delete(ReadArgs *rdargs)
 
 	afc_list_delete(rdargs->str);
 	afc_list_delete(rdargs->fields);
-	afc_stringnode_delete(rdargs->global_split);
-	afc_stringnode_delete(rdargs->local_split);
+	afc_string_list_delete(rdargs->global_split);
+	afc_string_list_delete(rdargs->local_split);
 
 	afc_free(rdargs);
 
@@ -447,8 +447,8 @@ int afc_readargs_clear(ReadArgs *rdargs)
 	afc_list_clear(rdargs->fields);
 	afc_list_clear(rdargs->str);
 
-	afc_stringnode_clear(rdargs->global_split);
-	afc_stringnode_clear(rdargs->local_split);
+	afc_string_list_clear(rdargs->global_split);
+	afc_string_list_clear(rdargs->local_split);
 
 	return (AFC_ERR_NO_ERROR);
 }
@@ -548,15 +548,15 @@ static int afc_readargs_internal_parse_template(ReadArgs *rdargs, const char *te
 	char *token;
 	int res;
 
-	if ((res = afc_stringnode_split(rdargs->global_split, template, " ,	")) != AFC_ERR_NO_ERROR)
+	if ((res = afc_string_list_split(rdargs->global_split, template, " ,	")) != AFC_ERR_NO_ERROR)
 		return (res);
 
-	token = afc_stringnode_first(rdargs->global_split);
+	token = afc_string_list_first(rdargs->global_split);
 
 	while (token)
 	{
 		afc_readargs_internal_add_template(rdargs, token);
-		token = afc_stringnode_next(rdargs->global_split);
+		token = afc_string_list_next(rdargs->global_split);
 	}
 
 	return (AFC_ERR_NO_ERROR);
@@ -572,11 +572,11 @@ static int afc_readargs_internal_add_template(ReadArgs *rdargs, char *tok)
 	if (data == NULL)
 		return (AFC_LOG_FAST(AFC_ERR_NO_MEMORY));
 
-	if ((res = afc_stringnode_split(rdargs->local_split, tok, "/")) != AFC_ERR_NO_ERROR)
+	if ((res = afc_string_list_split(rdargs->local_split, tok, "/")) != AFC_ERR_NO_ERROR)
 		return (res);
 
-	name = afc_stringnode_first(rdargs->local_split);
-	token = afc_stringnode_next(rdargs->local_split);
+	name = afc_string_list_first(rdargs->local_split);
+	token = afc_string_list_next(rdargs->local_split);
 
 	while (token)
 	{
@@ -601,7 +601,7 @@ static int afc_readargs_internal_add_template(ReadArgs *rdargs, char *tok)
 			break;
 		}
 
-		token = afc_stringnode_next(rdargs->local_split);
+		token = afc_string_list_next(rdargs->local_split);
 	}
 
 	afc_string_copy(data->name, name, ALL);
@@ -618,10 +618,10 @@ static void afc_readargs_internal_parse_string(ReadArgs *rdargs, char *txt)
 
 	afc_readargs_internal_find_quotes(rdargs, txt);
 
-	if ((res = afc_stringnode_split(rdargs->global_split, txt, " =")) != AFC_ERR_NO_ERROR)
+	if ((res = afc_string_list_split(rdargs->global_split, txt, " =")) != AFC_ERR_NO_ERROR)
 		return;
 
-	token = afc_stringnode_first(rdargs->global_split);
+	token = afc_string_list_first(rdargs->global_split);
 
 	while (token)
 	{
@@ -630,7 +630,7 @@ static void afc_readargs_internal_parse_string(ReadArgs *rdargs, char *txt)
 			afc_list_add(rdargs->str, afc_string_dup(token), AFC_LIST_ADD_TAIL);
 		}
 
-		token = afc_stringnode_next(rdargs->global_split);
+		token = afc_string_list_next(rdargs->global_split);
 	}
 }
 // }}}

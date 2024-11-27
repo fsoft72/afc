@@ -28,7 +28,7 @@ ifeq ($(DEFINE),MINGW)
 CFLAGS+=-DMINGW
 
 OBJS=string.o base.o base64.o list.o array.o cgi_manager.o dictionary.o hash_master.o \
-     mem_tracker.o readargs.o regexp.o stringnode.o dynamic_class.o \
+     mem_tracker.o readargs.o regexp.o stringlist.o dynamic_class.o \
      threader.o date_handler.o md5.o fileops.o avl_tree.o tree.o
 
 else
@@ -37,7 +37,7 @@ else
 CFLAGS+=-O2
 
 OBJS=string.o base.o base64.o list.o array.o cgi_manager.o dictionary.o dirmaster.o hash_master.o \
-     mem_tracker.o readargs.o regexp.o stringnode.o dynamic_class.o dynamic_class_master.o \
+     mem_tracker.o readargs.o regexp.o stringlist.o dynamic_class.o dynamic_class_master.o \
      cmd_parser.o threader.o inet_client.o inet_server.o date_handler.o md5.o bin_tree.o dbi_manager.o \
      circular_list.o btree.o avl_tree.o  fileops.o tree.o\
 	pop3.o
@@ -169,7 +169,7 @@ dirmaster.test:	dirmaster.c
 	@$(CC) -DTEST_CLASS -o dirmaster.test $(CFLAGS) dirmaster.c string.o array.o
 
 cmdparser.test: cmd_parser.c cmd_parser.h
-	@$(CC) -DTEST_CLASS -o cmdparser.test $(CFLAGS) cmd_parser.c string.o base.o list.o array.o cgi_manager.o dictionary.o dirmaster.o hash_master.o readargs.o regexp.o stringnode.o fileops.o dynamic_class.o dynamic_class_master.o -ldl
+	@$(CC) -DTEST_CLASS -o cmdparser.test $(CFLAGS) cmd_parser.c string.o base.o list.o array.o cgi_manager.o dictionary.o dirmaster.o hash_master.o readargs.o regexp.o stringlist.o fileops.o dynamic_class.o dynamic_class_master.o -ldl
 
 threader.test:	threader.c threader.h
 	@$(CC) -DTEST_CLASS -o threader.test $(CFLAGS) threader.c string.o array.o hash_master.o dictionary.o base.o mem_tracker.o -lpthread
@@ -187,10 +187,10 @@ bin_tree.test:	bin_tree.h bin_tree.c
 	@$(CC) -DTEST_CLASS -o bin_tree.test $(CFLAGS) bin_tree.c  base.o string.o  mem_tracker.o
 
 pop3.test:	pop3.h pop3.c
-	@$(CC) -DTEST_CLASS -DDEBUG -o pop3.test $(CFLAGS) pop3.c  base.o string.o  mem_tracker.o inet_client.o stringnode.o list.o hash_master.o \
+	@$(CC) -DTEST_CLASS -DDEBUG -o pop3.test $(CFLAGS) pop3.c  base.o string.o  mem_tracker.o inet_client.o stringlist.o list.o hash_master.o \
 
 ftp_client.test:	ftp_client.h ftp_client.c
-	@$(CC) -DTEST_CLASS -DDEBUG -o ftp_client.test $(CFLAGS) ftp_client.c  base.o string.o  mem_tracker.o inet_client.o stringnode.o list.o hash_master.o \
+	@$(CC) -DTEST_CLASS -DDEBUG -o ftp_client.test $(CFLAGS) ftp_client.c  base.o string.o  mem_tracker.o inet_client.o stringlist.o list.o hash_master.o \
 								   array.o
 
 dbi.test:	dbi_manager.c

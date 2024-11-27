@@ -94,7 +94,7 @@ CommandParser *afc_cmd_parser_new(void)
 		return (NULL);
 	}
 
-	if ((cmdparser->stack = afc_stringnode_new()) == NULL)
+	if ((cmdparser->stack = afc_string_list_new()) == NULL)
 	{
 		AFC_LOG_FAST_INFO(AFC_ERR_NO_MEMORY, "stack");
 		afc_cmd_parser_delete(cmdparser);
@@ -175,7 +175,7 @@ int _afc_cmd_parser_delete(CommandParser *cmdparser)
 	if (cmdparser->classes)
 		afc_dictionary_delete(cmdparser->classes);
 	if (cmdparser->stack)
-		afc_stringnode_delete(cmdparser->stack);
+		afc_string_list_delete(cmdparser->stack);
 	if (cmdparser->token)
 		afc_cmd_parser_internal_token_delete(cmdparser->token);
 	if (cmdparser->rdargs)
@@ -247,7 +247,7 @@ int afc_cmd_parser_clear(CommandParser *cmdparser)
 	}
 
 	if (cmdparser->stack)
-		afc_stringnode_clear(cmdparser->stack);
+		afc_string_list_clear(cmdparser->stack);
 	if (cmdparser->token)
 		afc_cmd_parser_internal_token_clear(cmdparser->token);
 	if (cmdparser->rdargs)
@@ -402,7 +402,7 @@ int afc_cmd_parser_parse_string(CommandParser *cmdparser, const char *script, vo
 				if ((func = afc_dictionary_get(cmdparser->builtins, cmdparser->token->name)) != NULL)
 				{
 					found = true;
-					afc_stringnode_add(cmdparser->stack, cmdparser->token->name, AFC_STRINGNODE_ADD_TAIL);
+					afc_string_list_add(cmdparser->stack, cmdparser->token->name, AFC_STRING_LIST_ADD_TAIL);
 
 					if ((afc_cmd_parser_internal_get_token_args(cmdparser, &myscript2, "ARGS/M")) == AFC_ERR_NO_ERROR)
 						quit = func(cmdparser, myscript2, (List *)afc_cmd_parser_arg_get_by_name(cmdparser, "ARGS"));
@@ -418,7 +418,7 @@ int afc_cmd_parser_parse_string(CommandParser *cmdparser, const char *script, vo
 						if ((cb->args_template != NULL) && (strcmp(cb->args_template, "") != 0))
 							quit = afc_cmd_parser_internal_get_token_args(cmdparser, &myscript2, cb->args_template);
 
-						afc_stringnode_add(cmdparser->stack, cmdparser->token->name, AFC_STRINGNODE_ADD_TAIL);
+						afc_string_list_add(cmdparser->stack, cmdparser->token->name, AFC_STRING_LIST_ADD_TAIL);
 
 						if (quit == AFC_ERR_NO_ERROR)
 						{
@@ -460,7 +460,7 @@ int afc_cmd_parser_parse_string(CommandParser *cmdparser, const char *script, vo
 	} /* while myscript != "" */
 
 	// stack must be empty, otherwise some open bracket is unmatched (= no corresponding closed bracket)
-	if (afc_stringnode_len(cmdparser->stack) > 0)
+	if (afc_string_list_len(cmdparser->stack) > 0)
 	{
 		quit = AFC_CMD_PARSER_ERR_UNMATCHED_OPEN_BRACKET;
 		AFC_LOG(AFC_LOG_ERROR, AFC_CMD_PARSER_ERR_UNMATCHED_OPEN_BRACKET, "Unmatched open bracket", NULL);
@@ -936,15 +936,15 @@ static int afc_cmd_parser_internal_get_next_token(CommandParser *cmdparser, char
 	{
 		if ((bra == NULL) || ((bra != NULL) && (ket < bra)))
 		{
-			if ((last_token = afc_stringnode_last(cmdparser->stack)) != NULL)
+			if ((last_token = afc_string_list_last(cmdparser->stack)) != NULL)
 			{
 				strcpy(cmdparser->token->name, last_token);
-				afc_stringnode_del(cmdparser->stack);
+				afc_string_list_del(cmdparser->stack);
 				cmdparser->token->type = AFC_CMD_PARSER_TOKEN_CLOSE;
 
 				/* if we have to skip some block, we know we have reached the end of a block if the current stack depth is
 				   equal to stack_depth: then we decrement the value of the skip_block parameter */
-				if ((cmdparser->skip_block > 0) && ((int)afc_stringnode_len(cmdparser->stack) == cmdparser->stack_depth))
+				if ((cmdparser->skip_block > 0) && ((int)afc_string_list_len(cmdparser->stack) == cmdparser->stack_depth))
 				{
 					cmdparser->skip_block = cmdparser->skip_block - 1;
 				}
@@ -1150,7 +1150,7 @@ static int afc_cmd_parser_internal_set_skip(CommandParser *cmdparser, int howman
 		break;
 	}
 
-	cmdparser->stack_depth = afc_stringnode_len(cmdparser->stack);
+	cmdparser->stack_depth = afc_string_list_len(cmdparser->stack);
 
 	return (AFC_ERR_NO_ERROR);
 }

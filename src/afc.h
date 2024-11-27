@@ -24,7 +24,7 @@
 #include "exceptions.h"
 #include "mem_tracker.h"
 #include "list.h"
-#include "stringnode.h"
+#include "stringlist.h"
 #include "readargs.h"
 #include "regexp.h"
 #include "hash_master.h"

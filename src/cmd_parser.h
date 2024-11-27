@@ -30,7 +30,7 @@
 #include "dictionary.h"
 #include "dynamic_class.h"
 #include "dynamic_class_master.h"
-#include "stringnode.h"
+#include "stringlist.h"
 #include "hash_master.h"
 #include "readargs.h"
 
@@ -105,7 +105,7 @@ struct afc_cmd_parser
 	List *callbacks;
 	Dictionary *classes;
 	void *userdata;
-	StringNode *stack;
+	StringList *stack;
 	struct afc_cmd_parser_token *token;
 	ReadArgs *rdargs;
 	DynamicClassMaster *dynmast;

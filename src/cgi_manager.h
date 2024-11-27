@@ -29,7 +29,7 @@
 #include "base.h"
 #include "dictionary.h"
 #include "array.h"
-#include "stringnode.h"
+#include "stringlist.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -84,7 +84,7 @@ extern "C"
 		struct afc_dictionary *fields;	/* Used to store FORM fields    */
 		struct afc_dictionary *cookies; /* Used to store Cookies        */
 
-		StringNode *split;
+		StringList *split;
 
 		int method; /* Can be AFC_CGI_MANAGER_METHOD /GET/, /POST/ or /UNDEF/ */
 

@@ -5,7 +5,7 @@
 CC=gcc
 CFLAGS=-g -Wall
 OBJS=../../base.o ../../string.o ../../array.o ../../list.o ../../hash_master.o ../../dictionary.o  ../../dynamic_class.o \
-     ../../dynamic_class_master.o  ../../cmd_parser.o ../../stringnode.o ../../readargs.o
+     ../../dynamic_class_master.o  ../../cmd_parser.o ../../stringlist.o ../../readargs.o
 
 LIBS= -ldl -lpthread
 

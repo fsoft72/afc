@@ -8,7 +8,7 @@
 			afc_regexp_replace() no longer returns an empty string if the
 			giver regex pattern is not found on the source string.
 
-		ADD:	Array / List / StringNode		Status: STABLE
+		ADD:	Array / List / StringList		Status: STABLE
 
 			Added: afc_*_add_tail(), afc_*_add_head() and afc_*_insert()
 			to add items at the end, head and current position respectively.
@@ -108,7 +108,7 @@
 26 Oct  2003:   ENH:	function: afc_*_before_first()			Status: STABLE
 
 			Added the new afc_*_before_first() method to all classes that
-			allow iteration (List / Array / StringNode /
+			allow iteration (List / Array / StringList /
 			Dictionary and HashMaster) so it is now possible to simplify
 			while() loops.
 
@@ -130,9 +130,9 @@
 
 23 Aug  2003:   ENH:	Code clean ups
 
-19 July 2003:	FIX:	StringNode					Status: STABLE
+19 July 2003:	FIX:	StringList					Status: STABLE
 
-			Fixed a small bug in afc_stringnode_add() function.
+			Fixed a small bug in afc_string_list_add() function.
 
 17 June 2003:	ADD:	MD5						Status: *BETA*
 
@@ -324,13 +324,13 @@
 10 Feb 2002:	ENH:	ReadArgs					Status: STABLE
 			Added the "tab" char to the list of common separators where needed.
 
-10 Feb 2002:	ADD:	test_area/stringnode				Status: STABLE
-			Very first test area cases for StringNode.
+10 Feb 2002:	ADD:	test_area/stringlist				Status: STABLE
+			Very first test area cases for StringList.
 
-10 Feb 2002:	ADD:	StringNode					Status: STABLE
+10 Feb 2002:	ADD:	StringList					Status: STABLE
 			Added support for escape char in the split() method. Now it is possible
 			to set (and unset) an escape char to avoid a delimiter char to be treated
-			as a delimiter in special cases. By setting the tag AFC_STRINGNODE_TAG_ESCAPE_CHAR
+			as a delimiter in special cases. By setting the tag AFC_STRING_LIST_TAG_ESCAPE_CHAR
 			you can set the escape character to use (NOTE: one single character). To remove
 			the escape char, set the tag with a NULL value.
 
@@ -399,13 +399,13 @@
 			Based on Array, it should not be considered stable, even if
 			it is already used in a big project.
 
-04 Jan 2002:	ENH:	StringNode					Status: Stable
-			A new tag has been added to the StringNode:
+04 Jan 2002:	ENH:	StringList					Status: Stable
+			A new tag has been added to the StringList:
 
-				AFC_STRINGNODE_TAG_DISCARD_ZERO_LEN	(TRUE/FALSE)
+				AFC_STRING_LIST_TAG_DISCARD_ZERO_LEN	(TRUE/FALSE)
 
-			This is used by afc_stringnode_split() to know whether it should
-			create StringNode items with zero length, or just discard them.
+			This is used by afc_string_list_split() to know whether it should
+			create StringList items with zero length, or just discard them.
 			For example, suppose you are parsing lines like the following:
 
 			line1;data1;pass1;foo1;skip1;
@@ -413,7 +413,7 @@
 			line3;;pass3;;;
 
 			In this case, you'd likely to keep zero len string, so you can
-			access the right element by simply call the afc_stringnode_item()
+			access the right element by simply call the afc_string_list_item()
 			function.
 			But now suppose you are parsing stuff like:
 

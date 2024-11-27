@@ -24,7 +24,7 @@ CHMOD=chmod
 CFLAGS=-g -Wall -O2 -Wstrict-prototypes -DMINGW -DDEBUG
 
 OBJS=string.o base.o list.o array.o cgi_manager.o dictionary.o hash_master.o \
-     mem_tracker.o readargs.o regexp.o stringnode.o dynamic_class.o \
+     mem_tracker.o readargs.o regexp.o stringlist.o dynamic_class.o \
      threader.o date_handler.o md5.o
 
 LIBFLAGS=-shared
@@ -141,7 +141,7 @@ dirmaster.test:	dirmaster.c
 	@$(CC) -DTEST_CLASS -o dirmaster.test $(CFLAGS) dirmaster.c string.o array.o
 
 cmdparser.test: cmd_parser.c cmd_parser.h
-	@$(CC) -DTEST_CLASS -o cmdparser.test $(CFLAGS) cmd_parser.c string.o base.o list.o array.o cgi_manager.o dictionary.o dirmaster.o hash_master.o readargs.o regexp.o stringnode.o file_operations.o dynamic_class.o dynamic_class_master.o fs_tree.o -ldl
+	@$(CC) -DTEST_CLASS -o cmdparser.test $(CFLAGS) cmd_parser.c string.o base.o list.o array.o cgi_manager.o dictionary.o dirmaster.o hash_master.o readargs.o regexp.o stringlist.o file_operations.o dynamic_class.o dynamic_class_master.o fs_tree.o -ldl
 
 threader.test:	threader.c threader.h
 	@$(CC) -DTEST_CLASS -o threader.test $(CFLAGS) threader.c string.o array.o hash_master.o dictionary.o base.o mem_tracker.o -lpthread

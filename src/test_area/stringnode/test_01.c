@@ -22,73 +22,73 @@
 int main()
 {
 	AFC *afc = afc_new();
-	StringNode *sn = afc_stringnode_new();
+	StringList *sn = afc_string_list_new();
 	char *str = afc_string_new(50);
 
 	test_header();
 
-	afc_stringnode_add(sn, "hello", AFC_STRINGNODE_ADD_TAIL);
-	afc_stringnode_add(sn, "little", AFC_STRINGNODE_ADD_TAIL);
-	afc_stringnode_add(sn, "world", AFC_STRINGNODE_ADD_TAIL);
+	afc_string_list_add(sn, "hello", AFC_STRING_LIST_ADD_TAIL);
+	afc_string_list_add(sn, "little", AFC_STRING_LIST_ADD_TAIL);
+	afc_string_list_add(sn, "world", AFC_STRING_LIST_ADD_TAIL);
 
-	print_res("afc_stringnode_obj()", "world", afc_stringnode_obj(sn), 1);
-	print_res("afc_stringnode_first()", "hello", afc_stringnode_first(sn), 1);
-	print_res("afc_stringnode_last()", "world", afc_stringnode_last(sn), 1);
-	print_res("afc_stringnode_next()", NULL, afc_stringnode_next(sn), 1);
+	print_res("afc_string_list_obj()", "world", afc_string_list_obj(sn), 1);
+	print_res("afc_string_list_first()", "hello", afc_string_list_first(sn), 1);
+	print_res("afc_string_list_last()", "world", afc_string_list_last(sn), 1);
+	print_res("afc_string_list_next()", NULL, afc_string_list_next(sn), 1);
 
 	print_row();
 
 	afc_string_copy(str, "first/second/third/last", ALL);
-	afc_stringnode_split(sn, str, "/");
+	afc_string_list_split(sn, str, "/");
 
-	print_res("afc_stringnode_first()", "first", afc_stringnode_first(sn), 1);
-	print_res("afc_stringnode_last()", "last", afc_stringnode_last(sn), 1);
+	print_res("afc_string_list_first()", "first", afc_string_list_first(sn), 1);
+	print_res("afc_string_list_last()", "last", afc_string_list_last(sn), 1);
 
 	print_row();
 
 	afc_string_copy(str, "first/second/third\\/item/last", ALL);
-	afc_stringnode_set_tags(sn, AFC_STRINGNODE_TAG_ESCAPE_CHAR, '\\', AFC_TAG_END);
-	afc_stringnode_split(sn, str, "/");
+	afc_string_list_set_tags(sn, AFC_STRING_LIST_TAG_ESCAPE_CHAR, '\\', AFC_TAG_END);
+	afc_string_list_split(sn, str, "/");
 
-	print_res("afc_stringnode_first()", "first", afc_stringnode_first(sn), 1);
-	print_res("afc_stringnode_last()", "last", afc_stringnode_last(sn), 1);
-	print_res("afc_stringnode_prev()", "third\\/item", afc_stringnode_prev(sn), 1);
+	print_res("afc_string_list_first()", "first", afc_string_list_first(sn), 1);
+	print_res("afc_string_list_last()", "last", afc_string_list_last(sn), 1);
+	print_res("afc_string_list_prev()", "third\\/item", afc_string_list_prev(sn), 1);
 
 	print_row();
 
 	afc_string_copy(str, "/first/second/third/last", ALL);
-	afc_stringnode_split(sn, str, "/");
+	afc_string_list_split(sn, str, "/");
 
-	print_res("afc_stringnode_first()", "", afc_stringnode_first(sn), 1);
-	print_res("afc_stringnode_next()", "first", afc_stringnode_next(sn), 1);
+	print_res("afc_string_list_first()", "", afc_string_list_first(sn), 1);
+	print_res("afc_string_list_next()", "first", afc_string_list_next(sn), 1);
 
 	print_row();
 
 	afc_string_copy(str, "\\/first/second/third/last\\/", ALL);
-	afc_stringnode_split(sn, str, "/");
+	afc_string_list_split(sn, str, "/");
 
-	print_res("afc_stringnode_first()", "\\/first", afc_stringnode_first(sn), 1);
-	print_res("afc_stringnode_next()", "second", afc_stringnode_next(sn), 1);
-	print_res("afc_stringnode_last()", "last\\/", afc_stringnode_last(sn), 1);
+	print_res("afc_string_list_first()", "\\/first", afc_string_list_first(sn), 1);
+	print_res("afc_string_list_next()", "second", afc_string_list_next(sn), 1);
+	print_res("afc_string_list_last()", "last\\/", afc_string_list_last(sn), 1);
 
 	print_row();
 
 	afc_string_copy(str, "\\/first\\/second\\/third/last\\/", ALL);
-	afc_stringnode_split(sn, str, "/ ");
+	afc_string_list_split(sn, str, "/ ");
 
-	print_res("afc_stringnode_first()", "\\/first\\/second\\/third", afc_stringnode_first(sn), 1);
-	print_res("afc_stringnode_next()", "last\\/", afc_stringnode_next(sn), 1);
-	print_res("afc_stringnode_last()", "last\\/", afc_stringnode_last(sn), 1);
+	print_res("afc_string_list_first()", "\\/first\\/second\\/third", afc_string_list_first(sn), 1);
+	print_res("afc_string_list_next()", "last\\/", afc_string_list_next(sn), 1);
+	print_res("afc_string_list_last()", "last\\/", afc_string_list_last(sn), 1);
 
-	afc_stringnode_split(sn, ":1;80.1: :2;93.3:", ":");
+	afc_string_list_split(sn, ":1;80.1: :2;93.3:", ":");
 
-	print_res("afc_stringnode_first()", "1;80.1", afc_stringnode_item(sn, 1), 1);
-	print_res("afc_stringnode_next()", "2;93.3", afc_stringnode_item(sn, 3), 1);
+	print_res("afc_string_list_first()", "1;80.1", afc_string_list_item(sn, 1), 1);
+	print_res("afc_string_list_next()", "2;93.3", afc_string_list_item(sn, 3), 1);
 
 	print_summary();
 
 	afc_string_delete(str);
-	afc_stringnode_delete(sn);
+	afc_string_list_delete(sn);
 
 	afc_delete(afc);
 

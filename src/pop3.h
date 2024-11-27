@@ -71,7 +71,7 @@ struct afc_pop3
 	char *buf; // Buffer
 	char *tmp; // Temp Buffer
 
-	StringNode *sn;	 // Long Response
+	StringList *sn;	 // Long Response
 	HashMaster *msg; // Hash Table of Messages (populated by 'LIST')
 
 	int tot_messages; // Number of messages in mailbox

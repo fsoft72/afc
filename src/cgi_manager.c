@@ -106,7 +106,7 @@ CGIManager *_afc_cgi_manager_new(const char *file, const char *func, const unsig
 	if ((cgi_manager->cookies = afc_dictionary_new()) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "cookies", NULL);
 
-	if ((cgi_manager->split = afc_stringnode_new()) == NULL)
+	if ((cgi_manager->split = afc_string_list_new()) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "split", NULL);
 
 	if ((cgi_manager->cookies_expire = afc_string_new(30)) == NULL)
@@ -167,7 +167,7 @@ int _afc_cgi_manager_delete(CGIManager *cgi_manager)
 	afc_dictionary_delete(cgi_manager->fields);
 	afc_dictionary_delete(cgi_manager->cookies);
 
-	afc_stringnode_delete(cgi_manager->split);
+	afc_string_list_delete(cgi_manager->split);
 
 	afc_string_delete(cgi_manager->content_type);
 	afc_string_delete(cgi_manager->cookies_expire);
@@ -213,7 +213,7 @@ int afc_cgi_manager_clear(CGIManager *cgi)
 	if (cgi->fields)
 		afc_cgi_manager_internal_clear_dict(cgi, cgi->fields);
 	if (cgi->split)
-		afc_stringnode_clear(cgi->split);
+		afc_string_list_clear(cgi->split);
 
 	cgi->is_post_read = FALSE;
 
@@ -935,16 +935,16 @@ static int afc_cgi_manager_internal_parse_data(CGIManager *cgi, char *data)
 	}
 
 	/* Split into tokens */
-	afc_stringnode_split(cgi->split, data, "&");
+	afc_string_list_split(cgi->split, data, "&");
 
-	s = afc_stringnode_first(cgi->split);
+	s = afc_string_list_first(cgi->split);
 	while (s)
 	{
 		afc_string_trim(s);
 		if (afc_string_len(s))
 			afc_cgi_manager_internal_add_key(cgi, s, AFC_CGI_MANAGER_MODE_FORM);
 
-		s = afc_stringnode_next(cgi->split);
+		s = afc_string_list_next(cgi->split);
 	}
 
 	return (AFC_ERR_NO_ERROR);
@@ -1008,16 +1008,16 @@ static int afc_cgi_manager_internal_get_cookies(CGIManager *cgi)
 	if (cookie_string == NULL)
 		return (AFC_ERR_NO_ERROR);
 
-	afc_stringnode_split(cgi->split, cookie_string, "; ");
+	afc_string_list_split(cgi->split, cookie_string, "; ");
 
-	if ((s = afc_stringnode_first(cgi->split)) == NULL)
+	if ((s = afc_string_list_first(cgi->split)) == NULL)
 		return (AFC_ERR_NO_ERROR);
 
 	while (s)
 	{
 		if (afc_string_len(s))
 			afc_cgi_manager_internal_add_key(cgi, s, AFC_CGI_MANAGER_MODE_COOKIE);
-		s = afc_stringnode_next(cgi->split);
+		s = afc_string_list_next(cgi->split);
 	}
 
 	return (AFC_ERR_NO_ERROR);

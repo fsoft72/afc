@@ -31,7 +31,7 @@ typedef struct iinfo IInfo;
 
 int import_list(FSTree *fst, FILE *fh, char *buf)
 {
-	StringNode *sn = afc_stringnode_new();
+	StringList *sn = afc_string_list_new();
 	char *name;
 	char *x;
 	IInfo *info;
@@ -40,19 +40,19 @@ int import_list(FSTree *fst, FILE *fh, char *buf)
 	if (sn == NULL)
 		return (AFC_ERR_NO_MEMORY);
 
-	afc_stringnode_set_tags(sn, AFC_STRINGNODE_TAG_DISCARD_ZERO_LEN, TRUE, AFC_TAG_END);
+	afc_string_list_set_tags(sn, AFC_STRING_LIST_TAG_DISCARD_ZERO_LEN, TRUE, AFC_TAG_END);
 
 	while (afc_string_fget(buf, fh))
 	{
 		afc_string_trim(buf);
 
-		afc_stringnode_split(sn, buf, " ");
+		afc_string_list_split(sn, buf, " ");
 
 		info = afc_malloc(sizeof(IInfo));
 
-		name = afc_stringnode_item(sn, 8);
-		info->size = atoi(afc_stringnode_item(sn, 3));
-		info->perm = afc_string_dup(afc_stringnode_item(sn, 0));
+		name = afc_string_list_item(sn, 8);
+		info->size = atoi(afc_string_list_item(sn, 3));
+		info->perm = afc_string_dup(afc_string_list_item(sn, 0));
 
 		// afc_fstree_cd ( fst, "/" );
 
@@ -64,7 +64,7 @@ int import_list(FSTree *fst, FILE *fh, char *buf)
 			afc_fstree_add(fst, b, info);
 	}
 
-	afc_stringnode_delete(sn);
+	afc_string_list_delete(sn);
 
 	return (AFC_ERR_NO_ERROR);
 }

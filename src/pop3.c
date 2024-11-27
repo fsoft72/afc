@@ -67,7 +67,7 @@ POP3 *afc_pop3_new(void)
 
 	if ((p->ic = afc_inet_client_new()) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "inet_client", NULL);
-	if ((p->sn = afc_stringnode_new()) == NULL)
+	if ((p->sn = afc_string_list_new()) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "sn", NULL);
 	if ((p->tmp = afc_string_new(1024)) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "tmp", NULL);
@@ -119,7 +119,7 @@ int _afc_pop3_delete(POP3 *p)
 		return (afc_res);
 
 	afc_inet_client_delete(p->ic);
-	afc_stringnode_delete(p->sn);
+	afc_string_list_delete(p->sn);
 	afc_string_delete(p->tmp);
 	afc_string_delete(p->buf);
 	afc_string_delete(p->port);
@@ -156,7 +156,7 @@ int afc_pop3_clear(POP3 *p)
 	if (p->ic)
 		afc_inet_client_clear(p->ic);
 	if (p->sn)
-		afc_stringnode_clear(p->sn);
+		afc_string_list_clear(p->sn);
 	if (p->tmp)
 		afc_string_clear(p->tmp);
 	if (p->buf)
@@ -278,12 +278,12 @@ int afc_pop3_stat(POP3 *p)
 	if ((res = afc_pop3_internal_cmd(p, "STAT", FALSE)) != AFC_ERR_NO_ERROR)
 		return (res);
 
-	afc_stringnode_split(p->sn, p->buf, " ");
+	afc_string_list_split(p->sn, p->buf, " ");
 
 	// NOTA: la parte "s = ..." e' stata aggiunta per evitare il warning del GCC 4.1:
 	// null argument where non-null required
-	p->tot_messages = atoi((s = afc_stringnode_item(p->sn, 1)));
-	p->tot_size = atoi((s = afc_stringnode_item(p->sn, 2)));
+	p->tot_messages = atoi((s = afc_string_list_item(p->sn, 1)));
+	p->tot_size = atoi((s = afc_string_list_item(p->sn, 2)));
 
 	afc_dprintf("Messages: %d\nSize: %d\n", p->tot_messages, p->tot_size);
 
@@ -303,7 +303,7 @@ int afc_pop3_get_list(POP3 *p)
 	if ((res = afc_pop3_internal_cmd(p, "LIST", TRUE)) != AFC_ERR_NO_ERROR)
 		return (res);
 
-	s = afc_stringnode_first(p->sn);
+	s = afc_string_list_first(p->sn);
 
 	while (s)
 	{
@@ -317,7 +317,7 @@ int afc_pop3_get_list(POP3 *p)
 
 		afc_hash_master_add(p->msg, msg->id, msg);
 
-		s = afc_stringnode_next(p->sn);
+		s = afc_string_list_next(p->sn);
 	}
 
 	// Retrieve msg subject and sender
@@ -330,7 +330,7 @@ int afc_pop3_get_list(POP3 *p)
 
 		afc_pop3_top(p, msg->id, 0);
 
-		s = afc_stringnode_first(p->sn);
+		s = afc_string_list_first(p->sn);
 		while (s)
 		{
 			if (afc_string_comp(s, "Subject:", 8) == 0)
@@ -348,7 +348,7 @@ int afc_pop3_get_list(POP3 *p)
 			if (subject && sender)
 				break;
 
-			s = afc_stringnode_next(p->sn);
+			s = afc_string_list_next(p->sn);
 		}
 
 		msg = afc_hash_master_next(p->msg);
@@ -443,7 +443,7 @@ static int afc_pop3_internal_get_multi_line(POP3 *p)
 	if ((res = afc_pop3_internal_get_response(p)) != AFC_ERR_NO_ERROR)
 		return (res);
 
-	afc_stringnode_clear(p->sn);
+	afc_string_list_clear(p->sn);
 
 	afc_pop3_internal_get_line(p);
 
@@ -451,7 +451,7 @@ static int afc_pop3_internal_get_multi_line(POP3 *p)
 	{
 		afc_dprintf("LINE: '%s'\n", p->buf);
 
-		afc_stringnode_add(p->sn, p->buf, AFC_STRINGNODE_ADD_TAIL);
+		afc_string_list_add(p->sn, p->buf, AFC_STRING_LIST_ADD_TAIL);
 		afc_pop3_internal_get_line(p);
 	}
 

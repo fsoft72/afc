@@ -30,7 +30,7 @@ class afc_starter:
 				 [ "POP3",		"afc_pop3",			"pop3" ],
 				 [ "ReadArgs",		"afc_readargs",			"readargs" ],
 				 [ "RegExp",		"afc_regexp",			"regexp" ],
-				 [ "StringNode",	"afc_stringnode",		"stringnode" ],
+				 [ "StringList",	"afc_stringlist",		"stringlist" ],
 				 [ "Threader",		"afc_threader",			"threader" ]
 				]
 
