@@ -5,12 +5,12 @@
 CC=gcc
 CFLAGS=-g -Wall
 
-DIRS=dir_array_master dir_string dir_readargs dir_nodemaster dir_hash_master
+DIRS=dir_array dir_string dir_readargs dir_nodemaster dir_hash_master
 
 all: test_utils.o $(DIRS)
 
-dir_array_master:
-	@cd array_master; make
+dir_array:
+	@cd array; make
 
 dir_string:
 	@cd string; make

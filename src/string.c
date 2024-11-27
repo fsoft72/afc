@@ -1,17 +1,17 @@
-/* 
+/*
  * Advanced Foundation Classes
- * Copyright (C) 2000/2004  Fabio Rotondo 
- *  
+ * Copyright (C) 2000/2025  Fabio Rotondo
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- *  
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -30,12 +30,11 @@
 @endnode
 */
 
-
 #include "string.h"
 
 #include <unistd.h>
 
-#define STRING_MAX(str) ( str ?  ( ( unsigned long ) ( * ( ( unsigned long * ) ( str - sizeof ( unsigned long ) * 2 ) ) - 1 ) ) : 0L )
+#define STRING_MAX(str) (str ? ((unsigned long)(*((unsigned long *)(str - sizeof(unsigned long) * 2)) - 1)) : 0L)
 
 #ifdef MINGW
 static const char dir_sep = '\\';
@@ -51,11 +50,11 @@ static const char dir_sep = '/';
 		Stephen Wright
 @endnode
 
-@node intro 
-This is a suite of functions to create, manipulate and dispose strings.  
+@node intro
+This is a suite of functions to create, manipulate and dispose strings.
 As you should already know, strings are a bad animal for C programmers, sice they are
 just a bunch of bytes in memory where no bound control is made during manipulation and
-that can lead to the worse (and most hidden) segmentation fault problems. 
+that can lead to the worse (and most hidden) segmentation fault problems.
 
 If you use inside your programs these functions and what we have called /AFC/ /Strings/,
 you will not suffer for these problems. Every function for manipulating strings does bound
@@ -64,37 +63,37 @@ checking and integrity checking, so if you copy "supercalifragilisticespiralidou
 
 But there's more. /AFC/ /Strings/ offer a bunch of optimized calls, like afc_string_len(), that is
 light year faster than the standard C strlen function, and afc_string_max() that let's you know how
-many chars can be handled by the provided string. 
+many chars can be handled by the provided string.
 
 The most important thing is that /AFC/ /Strings/ are backward compatible with standard C strins (array of chars),
-so you can pass a standard /AFC/ /String/ to functions like printf, sprintf and so on without problems. 
+so you can pass a standard /AFC/ /String/ to functions like printf, sprintf and so on without problems.
 
 NOTE:
 	Please, note that where an /AFC/ /String/ is needed, you /must/ provide an /AFC/ /String/ and not just a C string,
 	or you'll get into troubles. As we mentioned before, /AFC/ /Strings/ can (and should) be used as standard C strings
-	in all function calls, like printf or sprintf, but the opposite is /never/ true. 
-	So keep in mind: where you need an /AFC/ /String/, you need an /AFC/ /String/. Where you need a C string, 
-	you can provide both a C string or an /AFC/ /String/. 
+	in all function calls, like printf or sprintf, but the opposite is /never/ true.
+	So keep in mind: where you need an /AFC/ /String/, you need an /AFC/ /String/. Where you need a C string,
+	you can provide both a C string or an /AFC/ /String/.
 
 /AFC/ /Strings/ also offer /advanced/ manipulation functions, like afc_string_radix() used to convert a number
 to a given base (up to base64 is supported); afc_string_hash() that is able to generate an hash value for the provided
-string or afc_string_pattern_match() that is able to match the given string against a standard pattern match string to 
+string or afc_string_pattern_match() that is able to match the given string against a standard pattern match string to
 see if the pattern is ok.
 
 To create a new /AFC/ /String/ you use afc_string_new(), then you can manipulate it with standard AFC functions like
-afc_string_copy(), afc_string_left(), afc_string_right() or afc_string_make(). When you have finished with a string, 
-remember to call afc_string_delete() to free the memory associated with it. 
+afc_string_copy(), afc_string_left(), afc_string_right() or afc_string_make(). When you have finished with a string,
+remember to call afc_string_delete() to free the memory associated with it.
 @endnode
 */
 // }}}
 
 // {{{ afc_string_new ( max_chars )
 /*
-@node afc_string_new 
+@node afc_string_new
 
 	NAME: afc_string_new ( numchars ) - Allocates a string numchars long
 
-    SYNOPSIS: char * afc_string_new ( unsigned long numchars )
+	SYNOPSIS: char * afc_string_new ( unsigned long numchars )
 
  DESCRIPTION: This command allocates a standard Amiga string.
 			This string structure has been mutuated from
@@ -123,23 +122,24 @@ remember to call afc_string_delete() to free the memory associated with it.
 @endnode
 */
 
-char * _afc_string_new ( unsigned long numchars, const char * file, const char * func, const unsigned int line )
+char *_afc_string_new(unsigned long numchars, const char *file, const char *func, const unsigned int line)
 {
 	unsigned long *location;
-	char * str;
-	
-	if ( ( str = _afc_malloc ( numchars + 1 + ( sizeof ( unsigned long ) * 2 ), file, func, line ) ) == NULL ) return NULL;
+	char *str;
+
+	if ((str = _afc_malloc(numchars + 1 + (sizeof(unsigned long) * 2), file, func, line)) == NULL)
+		return NULL;
 
 	// if ( ( str = afc_malloc ( numchars + 1 + ( sizeof ( unsigned long ) * 2 ) ) ) == NULL ) return ( NULL );
 
-	location = ( unsigned long * ) str;
+	location = (unsigned long *)str;
 
-	// printf ( "String NEW: (%d) (%x)\n", ( numchars + 1 + ( sizeof ( unsigned long ) * 2 ) ), ( int ) str ); 
+	// printf ( "String NEW: (%d) (%x)\n", ( numchars + 1 + ( sizeof ( unsigned long ) * 2 ) ), ( int ) str );
 
 	location[0] = numchars + 1;
 	location[1] = 0L;
 
-	return ( str + ( sizeof ( unsigned long ) * 2 ) );
+	return (str + (sizeof(unsigned long) * 2));
 }
 // }}}
 // {{{ afc_string_delete ( str )
@@ -156,25 +156,26 @@ char * _afc_string_new ( unsigned long numchars, const char * file, const char *
 
 		RESULT: - the string is freed from memory and a NULL is returned. This value is useful if you want to set
 				the string pointer to NULL in a shot.
-	            
+
 			NOTE: - afc_string_delete() can handle NULL pointers.
 
 			- afc_string_delete() is THE ONLY WAY to correctly deallocate strings
-			  created with afc_string_new(). 
+			  created with afc_string_new().
 
 	SEE ALSO: - afc_string_new()
 
 @endnode
 */
 
-char *  _afc_string_delete ( char * location)
+char *_afc_string_delete(char *location)
 {
-	if ( location == NULL ) return ( NULL );
+	if (location == NULL)
+		return (NULL);
 
-	location = location - ( sizeof ( unsigned long ) * 2 );
-	afc_free ( location );
-	
-	return ( NULL );
+	location = location - (sizeof(unsigned long) * 2);
+	afc_free(location);
+
+	return (NULL);
 }
 // }}}
 // {{{ afc_string_max ( str )
@@ -201,9 +202,9 @@ char *  _afc_string_delete ( char * location)
 @endnode
 */
 
-unsigned long afc_string_max ( const char * str)
+unsigned long afc_string_max(const char *str)
 {
-	 return (str? ((unsigned long)(*((unsigned long *)(str - sizeof(unsigned long) * 2)) - 1)): 0L);
+	return (str ? ((unsigned long)(*((unsigned long *)(str - sizeof(unsigned long) * 2)) - 1)) : 0L);
 }
 // }}}
 // {{{ afc_string_len ( str )
@@ -232,9 +233,9 @@ unsigned long afc_string_max ( const char * str)
 @endnode
 */
 
-unsigned long afc_string_len ( const char * str )
+unsigned long afc_string_len(const char *str)
 {
-	 return (str? ((unsigned long)(*((unsigned long *)(str - sizeof(unsigned long))))): 0L);
+	return (str ? ((unsigned long)(*((unsigned long *)(str - sizeof(unsigned long))))) : 0L);
 }
 // }}}
 // {{{ afc_string_copy ( dest, src, len )
@@ -268,26 +269,30 @@ unsigned long afc_string_len ( const char * str )
 @endnode
 */
 
-char * afc_string_copy ( char * dest, const char * source, unsigned long len)
+char *afc_string_copy(char *dest, const char *source, unsigned long len)
 {
-	 unsigned long m, srclen;
+	unsigned long m, srclen;
 
-	 if (!(dest && source)) return (NULL);
+	if (!(dest && source))
+		return (NULL);
 
-	 srclen = strlen(source); 
+	srclen = strlen(source);
 
-	 m = afc_string_max(dest);	 
+	m = afc_string_max(dest);
 
-	 if ( ( long ) len == ALL) len = srclen;	 
-					
+	if ((long)len == ALL)
+		len = srclen;
 
-	 if (len > m) len = m;			
-	 if (len > srclen) len = srclen; 
+	if (len > m)
+		len = m;
+	if (len > srclen)
+		len = srclen;
 
-	 *((unsigned long *)(dest - sizeof(unsigned long))) = len;	
+	*((unsigned long *)(dest - sizeof(unsigned long))) = len;
 
-	 for (m = 0; m < len; m++) *(dest++) = *(source++);
-	 *dest = '\0';	
+	for (m = 0; m < len; m++)
+		*(dest++) = *(source++);
+	*dest = '\0';
 
 	return (dest);
 }
@@ -301,7 +306,7 @@ char * afc_string_copy ( char * dest, const char * source, unsigned long len)
 	SYNOPSIS: char * afc_string_clear ( char * str )
 
 		 DESCRIPTION: This function deletes all the contents of an AFC string.
-	                It is similar to /afc_string_copy(str,"",ALL)/ but faster.
+					It is similar to /afc_string_copy(str,"",ALL)/ but faster.
 
 		 INPUT: - string		- The string to clear. MUST be an AFC string_new, created using the afc_string_new() command.
 
@@ -315,14 +320,15 @@ char * afc_string_copy ( char * dest, const char * source, unsigned long len)
 
 @endnode
 */
-char * afc_string_clear ( char * dest )
+char *afc_string_clear(char *dest)
 {
-	if ( dest == NULL ) return ( NULL );
+	if (dest == NULL)
+		return (NULL);
 
-	*((unsigned long *)(dest - sizeof(unsigned long))) = 0;	
+	*((unsigned long *)(dest - sizeof(unsigned long))) = 0;
 	*dest = '\0';
 
-	return ( dest );
+	return (dest);
 }
 // }}}
 // {{{ afc_string_mid ( dest, src, from, num_chars )
@@ -353,19 +359,22 @@ char * afc_string_clear ( char * dest )
 
 @endnode
 */
-char * afc_string_mid(char * dest, const char * src, unsigned long fromchar, unsigned long numchars)
+char *afc_string_mid(char *dest, const char *src, unsigned long fromchar, unsigned long numchars)
 {
-	 unsigned long len;
+	unsigned long len;
 
-	 if (!src) return (NULL);
+	if (!src)
+		return (NULL);
 
-	 len = strlen(src);
+	len = strlen(src);
 
-	 if (fromchar > len) return (NULL);	
+	if (fromchar > len)
+		return (NULL);
 
-	 if ((fromchar + numchars) > len) numchars = len - fromchar;
+	if ((fromchar + numchars) > len)
+		numchars = len - fromchar;
 
-	 return (afc_string_copy(dest,src + fromchar,numchars));	
+	return (afc_string_copy(dest, src + fromchar, numchars));
 }
 // }}}
 // {{{ afc_string_comp ( str1, str2, chars )
@@ -381,29 +390,30 @@ char * afc_string_mid(char * dest, const char * src, unsigned long fromchar, uns
 		 INPUT: - str1              - First string to compare
 			- str2              - Second string to compare
 			- numchars		- How many chars to compare before quitting.
-					If you pass *ALL*, that means that the whole 
-	                                strings will be compared
+					If you pass *ALL*, that means that the whole
+									strings will be compared
 
 		RESULT: -  a value < 0	 means	str1>str2
 		  -  a value > 0	 means	str2>str1
-		 	-  a value == 0	 means	str1==str2
+			-  a value == 0	 means	str1==str2
 
 	SEE ALSO:
 @endnode
 */
-signed long afc_string_comp ( const char * s1, const char * s2, long chars )
+signed long afc_string_comp(const char *s1, const char *s2, long chars)
 {
-	char * str1,	* str2;
-	long	c=0;
+	char *str1, *str2;
+	long c = 0;
 
-	if ( chars != ALL ) 
+	if (chars != ALL)
 		chars--;
 	else
 		chars = 0;
 
-	for ( str1 = ( char * ) s1, str2 = ( char * ) s2; ( *str1 == *str2 ) && ( *str1 && *str2 ) && ( ( chars ? ( long ) c++ < chars : TRUE ) ); str1++, str2++ ) ;
+	for (str1 = (char *)s1, str2 = (char *)s2; (*str1 == *str2) && (*str1 && *str2) && ((chars ? (long)c++ < chars : TRUE)); str1++, str2++)
+		;
 
-	return ( -(*str1 - *str2));
+	return (-(*str1 - *str2));
 }
 // }}}
 // {{{ afc_string_upper ( str )
@@ -416,7 +426,7 @@ signed long afc_string_comp ( const char * s1, const char * s2, long chars )
 
 		 DESCRIPTION: This function converts a string in all upper case chars.
 			Please note that this is a /in/ /place/ substitution. The
-	          provided string will be modified with all uppercase chars.
+			  provided string will be modified with all uppercase chars.
 
 		 INPUT: - string				- AFC string to convert.
 
@@ -428,14 +438,16 @@ signed long afc_string_comp ( const char * s1, const char * s2, long chars )
 
 @endnode
 */
-char * afc_string_upper( register char * s)
+char *afc_string_upper(register char *s)
 {
-	char * x;
+	char *x;
 
-	if ( ( x = s ) == NULL ) return ( NULL );
+	if ((x = s) == NULL)
+		return (NULL);
 
-	for ( ; *s; s++ ) 	*s = toupper ( *s );
-		
+	for (; *s; s++)
+		*s = toupper(*s);
+
 	return (x);
 }
 // }}}
@@ -449,7 +461,7 @@ char * afc_string_upper( register char * s)
 
 		 DESCRIPTION: This function converts a string in all lower case chars.
 			Please note that this is a /in/ /place/ substitution. The
-		        provided string will be modified with all lowercase chars.
+				provided string will be modified with all lowercase chars.
 
 		 INPUT: - string				- AFC string to convert.
 
@@ -461,15 +473,17 @@ char * afc_string_upper( register char * s)
 
 @endnode
 */
-char * afc_string_lower ( register char * s )
+char *afc_string_lower(register char *s)
 {
-	char * x;
+	char *x;
 
-	if ( ( x = s ) == NULL ) return ( NULL );
+	if ((x = s) == NULL)
+		return (NULL);
 
-	for ( ; *s; s++ )	*s = tolower ( *s );
+	for (; *s; s++)
+		*s = tolower(*s);
 
-	return ( x );
+	return (x);
 }
 // }}}
 // {{{ afc_string_trim ( str )
@@ -481,9 +495,9 @@ char * afc_string_lower ( register char * s )
 	SYNOPSIS: char * afc_string_trim ( char * string )
 
 		 DESCRIPTION: This function removes all blank chars from both start and end
-		        string. Blank chars are: space, tab, new line (10), carriage return (13).
+				string. Blank chars are: space, tab, new line (10), carriage return (13).
 			Please note that this is a /in/ /place/ substitution. The
-		        provided string will be modified.
+				provided string will be modified.
 
 		 INPUT: - string				- AFC string to convert.
 
@@ -491,32 +505,32 @@ char * afc_string_lower ( register char * s )
 
 			NOTE: - This function can handle NULL pointers.
 
-	SEE ALSO: 
+	SEE ALSO:
 
 @endnode
 */
-char * afc_string_trim ( char * s )
+char *afc_string_trim(char *s)
 {
-	char * x;
+	char *x;
 	int y;
 
-	if ( s == NULL ) return ( NULL ) ;
+	if (s == NULL)
+		return (NULL);
 
 	x = s;
-	while ( ( x[0]==' ' ) || ( x[0] == 9 ) )
+	while ((x[0] == ' ') || (x[0] == 9))
 	{
-		x++; 
+		x++;
 	}
 
-	y = afc_string_len ( s );
+	y = afc_string_len(s);
 
-	while ( ( s[y]==' ') || ( s[y] == 9 ) || ( s[y] == 0 ) || ( s[y] == 10 ) || ( s[y] == 13 ) )
-		s[y--]=0;
+	while ((s[y] == ' ') || (s[y] == 9) || (s[y] == 0) || (s[y] == 10) || (s[y] == 13))
+		s[y--] = 0;
 
+	afc_string_copy(s, x, ALL);
 
-	afc_string_copy ( s, x, ALL );
-
-	return ( s );
+	return (s);
 }
 // }}}
 // {{{ afc_string_instr ( str, match, start_pos )
@@ -528,8 +542,8 @@ char * afc_string_trim ( char * s )
 	SYNOPSIS: char * afc_string_instr ( const char * string, const char * match, unsigned long startpos )
 
 		 DESCRIPTION: This function searches for the string /match/ inside the string /string/.
-		        It is possible to specify a starting point to search from inside the string
-		        /string/ by providing a value != 0 in /startpos/.
+				It is possible to specify a starting point to search from inside the string
+				/string/ by providing a value != 0 in /startpos/.
 
 		 INPUT: - string				- AFC string to convert.
 			- match		- string to match inside the /string/
@@ -539,19 +553,22 @@ char * afc_string_trim ( char * s )
 
 			NOTE: - This function can handle NULL pointers.
 
-	SEE ALSO: 
+	SEE ALSO:
 
 @endnode
 */
-char * afc_string_instr ( const char * str, const char * match, unsigned long startpos )
+char *afc_string_instr(const char *str, const char *match, unsigned long startpos)
 {
-	
-	if ( str   == NULL )		 	 return NULL;
-	if ( match == NULL )			 return NULL;
 
-	if ( startpos > afc_string_len ( str ) ) return NULL;
+	if (str == NULL)
+		return NULL;
+	if (match == NULL)
+		return NULL;
 
-	return ( ( char * ) (strstr ( str + startpos, match )) );
+	if (startpos > afc_string_len(str))
+		return NULL;
+
+	return ((char *)(strstr(str + startpos, match)));
 }
 // }}}
 // {{{ afc_string_left ( dest, src, len )
@@ -563,8 +580,8 @@ char * afc_string_instr ( const char * str, const char * match, unsigned long st
 	SYNOPSIS: char * afc_string_left ( char * dest, const char * src, long len )
 
 		 DESCRIPTION: This function copies the leftmost /len/ characters from /src/ into /string/.
-		        This function is just provided for completeness, since it has the same function
-		        like afc_string_copy().
+				This function is just provided for completeness, since it has the same function
+				like afc_string_copy().
 
 		 INPUT: - dest				- AFC destination string.
 			- src 		- The source string. It doesn't necessarily need to be an AFC string.
@@ -579,9 +596,9 @@ char * afc_string_instr ( const char * str, const char * match, unsigned long st
 			- afc_string_copy()
 @endnode
 */
-char * afc_string_left (  char * dest, const char * src, long len )
+char *afc_string_left(char *dest, const char *src, long len)
 {
-	return ( afc_string_copy ( dest, src, len ) );
+	return (afc_string_copy(dest, src, len));
 }
 // }}}
 // {{{ afc_string_right ( dest, src, len )
@@ -607,16 +624,16 @@ char * afc_string_left (  char * dest, const char * src, long len )
 			- afc_string_copy()
 @endnode
 */
-char * afc_string_right ( char * dest, const char * src, long len )
+char *afc_string_right(char *dest, const char *src, long len)
 {
 	unsigned long l;
 
-	l = strlen ( src );
+	l = strlen(src);
 
-	if ( ( long ) l < len ) len = l;
+	if ((long)l < len)
+		len = l;
 
-	return ( afc_string_copy ( dest, (src+l) - len, ALL ) );
-
+	return (afc_string_copy(dest, (src + l) - len, ALL));
 }
 // }}}
 // {{{ afc_string_reset_len ( str )
@@ -628,9 +645,9 @@ char * afc_string_right ( char * dest, const char * src, long len )
 	SYNOPSIS: unsigned long afc_string_reset_len ( const char * string )
 
 DESCRIPTION: This function is low-level. It is needed to update internal AFC string information when the AFC string
-		         is not manipulated by AFC string functions, but rather with standard string functions (like those in
-		         string.h). After you have used one function that manipulates an AFC string like it was a standard buffer,
-		         you must call /afc_string_reset_len/ to update internal string len rappresentation.
+				 is not manipulated by AFC string functions, but rather with standard string functions (like those in
+				 string.h). After you have used one function that manipulates an AFC string like it was a standard buffer,
+				 you must call /afc_string_reset_len/ to update internal string len rappresentation.
 
 		 INPUT: - string				- AFC string to convert.
 
@@ -638,18 +655,19 @@ DESCRIPTION: This function is low-level. It is needed to update internal AFC str
 
 			NOTE: - This function can handle NULL pointers.
 
-	SEE ALSO: 
-		
+	SEE ALSO:
+
 @endnode
 */
-unsigned long afc_string_reset_len ( const char * str )
+unsigned long afc_string_reset_len(const char *str)
 {
 	unsigned long l;
 	// char * s;
 
-	if ( str == NULL ) return ( 0 );
+	if (str == NULL)
+		return (0);
 
-	 *((unsigned long *)(str - sizeof(unsigned long))) = ( l = strlen ( str ));
+	*((unsigned long *)(str - sizeof(unsigned long))) = (l = strlen(str));
 
 	return (l);
 }
@@ -663,53 +681,56 @@ unsigned long afc_string_reset_len ( const char * str )
 	SYNOPSIS: int afc_string_radix ( char * string, long number, int base )
 
 		 DESCRIPTION: This function converts the passed /number/ into a string in the given /base/ and copies
-		              the result in /string/. You can generate string rappresenting a number with base ranging 
-		              from 1 to 64.
+					  the result in /string/. You can generate string rappresenting a number with base ranging
+					  from 1 to 64.
 
 		 INPUT: - string				- Destination AFC string.
 			- number				- The number to convert.
 			- base    			- The new base. It can range from 1 to 64.
 
 		RESULT: - 0 - The convertion worked properely
-			- non zero - Something went wrong. 
+			- non zero - Something went wrong.
 
 			NOTE: - This function can handle NULL pointers.
-		        - These are the chars used in the base: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_@"
+				- These are the chars used in the base: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_@"
 				please note that, since the function uses both lower and upper chars, case /does/ matter.
 
-	SEE ALSO: 
-	
+	SEE ALSO:
+
 @endnode
 */
-int afc_string_radix ( char * dest, long n, int radix )
+int afc_string_radix(char *dest, long n, int radix)
 {
-	char hexn[]="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_@";
-	char buf[1024];		// Flawfinder: ignore
- 	int	q = abs(n);
- 	int	r = 0;
+	char hexn[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_@";
+	char buf[1024]; // Flawfinder: ignore
+	int q = abs(n);
+	int r = 0;
 
- 	afc_string_copy (dest , "", ALL);
+	afc_string_copy(dest, "", ALL);
 
- 	if ( radix > 64 ) return ( -1 );
+	if (radix > 64)
+		return (-1);
 
- 	while (1) {
-		r=q % radix;
+	while (1)
+	{
+		r = q % radix;
 
-		snprintf ( buf, 1024, "%c%s", hexn[r], dest );	// Flawfinder: ignore
-		afc_string_copy ( dest, buf, ALL );
+		snprintf(buf, 1024, "%c%s", hexn[r], dest); // Flawfinder: ignore
+		afc_string_copy(dest, buf, ALL);
 
-		q = (q-r) / radix;
+		q = (q - r) / radix;
 
-		if ( q == 0 ) break;
- 	}
-	
- 	if ( n<0 )
- 	{
-		snprintf ( buf, 1024, "-%s", dest );
-		afc_string_copy ( dest, buf, ALL );
- 	}
+		if (q == 0)
+			break;
+	}
 
- 	return ( 0 );
+	if (n < 0)
+	{
+		snprintf(buf, 1024, "-%s", dest);
+		afc_string_copy(dest, buf, ALL);
+	}
+
+	return (0);
 }
 // }}}
 // {{{ afc_string_hash ( string, turbolence )
@@ -721,70 +742,83 @@ int afc_string_radix ( char * dest, long n, int radix )
 	SYNOPSIS: unsigned long int afc_string_hash ( register unsigned char * string, unsigned long int turbolence )
 
 		 DESCRIPTION: This function generates and hash value for the given /string/. An hash value is a (very long)
-		              number that tries to generate unique id (values) for one string. The /turbolence/ value is used
-		              to add some randomness to the given number. Please, remember that changing the /turbolence/ causes
-		              a different hash value to be generated. If you want always the same hash value for a specific /string/,
-		              you should always use the same /turbolence/
+					  number that tries to generate unique id (values) for one string. The /turbolence/ value is used
+					  to add some randomness to the given number. Please, remember that changing the /turbolence/ causes
+					  a different hash value to be generated. If you want always the same hash value for a specific /string/,
+					  you should always use the same /turbolence/
 
-		 INPUT: - string				- String to be hashed. 
+		 INPUT: - string				- String to be hashed.
 			- turbolence		- The starting value randomness
 
 		RESULT: - 0 - The convertion worked properely
-			- non zero - Something went wrong. 
+			- non zero - Something went wrong.
 
 			NOTE: - This function can handle NULL pointers.
 
-	SEE ALSO: 
+	SEE ALSO:
 
 	 CREDITS: Original code by Bob Jenkins
-	
+
 @endnode
 */
-unsigned long int afc_string_hash ( register const unsigned char * k, register unsigned long int turbolence )
+unsigned long int afc_string_hash(register const unsigned char *k, register unsigned long int turbolence)
 {
-	 register unsigned long int a,b,c,len, length;
+	register unsigned long int a, b, c, len, length;
 
-	if ( k == NULL ) return ( 0 );
+	if (k == NULL)
+		return (0);
 
-	length = strlen ( ( char * ) k );
+	length = strlen((char *)k);
 
-	 /* Set up the internal state */
-	 len = length;
-	 a = b = 0x9e3779b9;  /* the golden ratio; an arbitrary value */
-	 c = turbolence;      /* An init turbolence value */
+	/* Set up the internal state */
+	len = length;
+	a = b = 0x9e3779b9; /* the golden ratio; an arbitrary value */
+	c = turbolence;		/* An init turbolence value */
 
-	 /*---------------------------------------- handle most of the key */
-	 while (len >= 12)
-	 {
-		  a += (k[0] +((unsigned long int)k[1]<<8) +((unsigned long int)k[2]<<16) +((unsigned long int)k[3]<<24));
-		  b += (k[4] +((unsigned long int)k[5]<<8) +((unsigned long int)k[6]<<16) +((unsigned long int)k[7]<<24));
-		  c += (k[8] +((unsigned long int)k[9]<<8) +((unsigned long int)k[10]<<16)+((unsigned long int)k[11]<<24));
-		  afc_tools_internal_mix(a,b,c);
-		  k += 12; len -= 12;
-	 }
+	/*---------------------------------------- handle most of the key */
+	while (len >= 12)
+	{
+		a += (k[0] + ((unsigned long int)k[1] << 8) + ((unsigned long int)k[2] << 16) + ((unsigned long int)k[3] << 24));
+		b += (k[4] + ((unsigned long int)k[5] << 8) + ((unsigned long int)k[6] << 16) + ((unsigned long int)k[7] << 24));
+		c += (k[8] + ((unsigned long int)k[9] << 8) + ((unsigned long int)k[10] << 16) + ((unsigned long int)k[11] << 24));
+		afc_tools_internal_mix(a, b, c);
+		k += 12;
+		len -= 12;
+	}
 
-	 /*------------------------------------- handle the last 11 bytes */
-	 c += length;
-	 switch(len)              /* all the case statements fall through */
-	 {
-	 case 11: c+=((unsigned long int)k[10]<<24);
-	 case 10: c+=((unsigned long int)k[9]<<16);
-	 case 9 : c+=((unsigned long int)k[8]<<8);
-		  /* the first byte of c is reserved for the length */
-	 case 8 : b+=((unsigned long int)k[7]<<24);
-	 case 7 : b+=((unsigned long int)k[6]<<16);
-	 case 6 : b+=((unsigned long int)k[5]<<8);
-	 case 5 : b+=k[4];
-	 case 4 : a+=((unsigned long int)k[3]<<24);
-	 case 3 : a+=((unsigned long int)k[2]<<16);
-	 case 2 : a+=((unsigned long int)k[1]<<8);
-	 case 1 : a+=k[0];
-		 /* case 0: nothing left to add */
-	 }
-	 afc_tools_internal_mix(a,b,c);
-	 /*-------------------------------------------- report the result */
+	/*------------------------------------- handle the last 11 bytes */
+	c += length;
+	switch (len) /* all the case statements fall through */
+	{
+	case 11:
+		c += ((unsigned long int)k[10] << 24);
+	case 10:
+		c += ((unsigned long int)k[9] << 16);
+	case 9:
+		c += ((unsigned long int)k[8] << 8);
+		/* the first byte of c is reserved for the length */
+	case 8:
+		b += ((unsigned long int)k[7] << 24);
+	case 7:
+		b += ((unsigned long int)k[6] << 16);
+	case 6:
+		b += ((unsigned long int)k[5] << 8);
+	case 5:
+		b += k[4];
+	case 4:
+		a += ((unsigned long int)k[3] << 24);
+	case 3:
+		a += ((unsigned long int)k[2] << 16);
+	case 2:
+		a += ((unsigned long int)k[1] << 8);
+	case 1:
+		a += k[0];
+		/* case 0: nothing left to add */
+	}
+	afc_tools_internal_mix(a, b, c);
+	/*-------------------------------------------- report the result */
 
-	 return c;
+	return c;
 }
 // }}}
 // {{{ afc_string_dup ( str )
@@ -796,7 +830,7 @@ unsigned long int afc_string_hash ( register const unsigned char * k, register u
 	SYNOPSIS: char * afc_string_dup ( const char * string )
 
 		 DESCRIPTION: This function allocates a new AFC string and copies the contents of the provided /string/ into it,
-		              It is a shorthand for afc_string_new() and afc_string_copy(). 
+					  It is a shorthand for afc_string_new() and afc_string_copy().
 
 		 INPUT: - string				- String to be copied. It doesn't necessarily be an AFC string.
 
@@ -804,29 +838,32 @@ unsigned long int afc_string_hash ( register const unsigned char * k, register u
 
 			NOTE: - This function can handle NULL pointers.
 			- This is a new AFC string, like the ones usually created using afc_string_new(), so you have to
-		          explicitely deallocate it when you have finished, using the standard afc_string_delete() function.
+				  explicitely deallocate it when you have finished, using the standard afc_string_delete() function.
 
 	SEE ALSO: - afc_string_new ()
-		        - afc_string_copy()
+				- afc_string_copy()
 
 @endnode
 */
-char * _afc_string_dup ( const char * str, const char * file, const char * func, const unsigned int line )
+char *_afc_string_dup(const char *str, const char *file, const char *func, const unsigned int line)
 {
-	char * s ;
+	char *s;
 	unsigned long l;
 
-	if ( str == NULL ) return ( NULL );
-	
-	l = strlen ( str );
+	if (str == NULL)
+		return (NULL);
 
-	if ( l == 0 ) return ( NULL );
+	l = strlen(str);
 
-	if ( ( s = _afc_string_new ( l, file, func, line ) ) == NULL ) return ( NULL );
+	if (l == 0)
+		return (NULL);
 
-	afc_string_copy ( s, str, ALL );
+	if ((s = _afc_string_new(l, file, func, line)) == NULL)
+		return (NULL);
 
-	return ( s );
+	afc_string_copy(s, str, ALL);
+
+	return (s);
 }
 // }}}
 // {{{ afc_string_make ( str, fmt, ... )
@@ -838,7 +875,7 @@ char * _afc_string_dup ( const char * str, const char * file, const char * func,
 	SYNOPSIS: char * afc_string_make ( char * string, const char * fmt, ... )
 
 		 DESCRIPTION: This function is a safe version of the standard sprintf. It does just the same things,
-		              but with bound checking, so you are pretty sure that the passed args will not be too big.
+					  but with bound checking, so you are pretty sure that the passed args will not be too big.
 
 		 INPUT: - string				- Destination AFC string.
 			- fmt                 - Format string. It uses the same syntax of printf or sprintf.
@@ -849,25 +886,26 @@ char * _afc_string_dup ( const char * str, const char * file, const char * func,
 			NOTE: - This function can handle NULL pointers.
 
 	SEE ALSO: - afc_string_new ()
-		        - afc_string_copy()
+				- afc_string_copy()
 
 @endnode
 */
-char * afc_string_make ( char * dest, const char * fmt, ... )
+char *afc_string_make(char *dest, const char *fmt, ...)
 {
 	va_list ap;
 
-	if ( ( dest == NULL ) || ( fmt == NULL ) ) return ( NULL );
+	if ((dest == NULL) || (fmt == NULL))
+		return (NULL);
 
-	va_start ( ap, fmt );
+	va_start(ap, fmt);
 
-	vsnprintf ( dest, afc_string_max ( dest ) + 1, fmt, ap );	// Flawfinder: ignore
+	vsnprintf(dest, afc_string_max(dest) + 1, fmt, ap); // Flawfinder: ignore
 
-	va_end ( ap );
+	va_end(ap);
 
-	afc_string_reset_len ( dest );
+	afc_string_reset_len(dest);
 
-	return ( dest );
+	return (dest);
 }
 // }}}
 // {{{ afc_string_fget ( dest, file )
@@ -879,7 +917,7 @@ char * afc_string_make ( char * dest, const char * fmt, ... )
 	SYNOPSIS: char * afc_string_fget ( char * deststring, FILE * file )
 
 		 DESCRIPTION: Use this function to read a line of text from a file.
-			This function is advanced considering the usual C /fgets/ 
+			This function is advanced considering the usual C /fgets/
 			command: it does bound checking so you don't have to do any
 			control before reading from the file.
 
@@ -892,21 +930,23 @@ char * afc_string_make ( char * dest, const char * fmt, ... )
 
 			NOTE: - this function can handle NULL pointers
 
-	SEE ALSO: 
+	SEE ALSO:
 
 @endnode
 */
-char * afc_string_fget ( char * dest, FILE * fh )
+char *afc_string_fget(char *dest, FILE *fh)
 {
-	if ( ( dest == NULL ) || ( fh == NULL ) ) return ( NULL );
+	if ((dest == NULL) || (fh == NULL))
+		return (NULL);
 
-	afc_string_clear ( dest );
+	afc_string_clear(dest);
 
-	if ( fgets ( dest, afc_string_max ( dest ), fh ) == NULL ) return ( NULL );
+	if (fgets(dest, afc_string_max(dest), fh) == NULL)
+		return (NULL);
 
-	afc_string_reset_len ( dest );
+	afc_string_reset_len(dest);
 
-	return ( dest );
+	return (dest);
 }
 // }}}
 // {{{ afc_string_add ( dest, source, len )
@@ -918,7 +958,7 @@ char * afc_string_fget ( char * dest, FILE * fh )
 	SYNOPSIS: char * afc_string_add ( char * deststring, const char * sourcestring, unsigned long len)
 
 		 DESCRIPTION: Use this function to append a string at the end of another.
-			This function is advanced considering the usual C strcat 
+			This function is advanced considering the usual C strcat
 			command: it does bound checking so you don't have to do any
 			control before appending.
 
@@ -938,28 +978,33 @@ char * afc_string_fget ( char * dest, FILE * fh )
 
 @endnode
 */
-char * afc_string_add ( char * dest, const char * source, unsigned long len )
+char *afc_string_add(char *dest, const char *source, unsigned long len)
 {
-	 unsigned long m, srclen, clen;
+	unsigned long m, srclen, clen;
 
-	 if (!(dest && source)) return (NULL);
+	if (!(dest && source))
+		return (NULL);
 
-	 srclen = strlen(source); 
+	srclen = strlen(source);
 
-	 clen = afc_string_len ( dest );
-	 m    = afc_string_max ( dest ) - clen;
+	clen = afc_string_len(dest);
+	m = afc_string_max(dest) - clen;
 
-	 if ( ( long ) len == ALL) len = srclen;	 
+	if ((long)len == ALL)
+		len = srclen;
 
-	 if ( len > m)       len = m;			
-	 if ( len > srclen ) len = srclen; 
+	if (len > m)
+		len = m;
+	if (len > srclen)
+		len = srclen;
 
-	 *((unsigned long *)(dest - sizeof(unsigned long))) = clen + len;	
+	*((unsigned long *)(dest - sizeof(unsigned long))) = clen + len;
 
-	 dest += clen;
+	dest += clen;
 
-	 for (m = 0; m < len; m++) *(dest++) = *(source++);
-	 *dest = '\0';	
+	for (m = 0; m < len; m++)
+		*(dest++) = *(source++);
+	*dest = '\0';
 
 	return (dest);
 }
@@ -968,29 +1013,29 @@ char * afc_string_add ( char * dest, const char * source, unsigned long len )
 /*
 @node afc_string_temp
 
-	    NAME: afc_string_temp ( path ) - Creates a temporary file name
+		NAME: afc_string_temp ( path ) - Creates a temporary file name
 
 	SYNOPSIS: char * afc_string_temp ( const char * path )
 
-     DESCRIPTION: This function creates a new string containing an unique name, not avaible
+	 DESCRIPTION: This function creates a new string containing an unique name, not avaible
 		  in the given path when checking. This is useful when you want to create,
 		  for example, some temporary files and want to be sure an unique name is used.
 		  In the /path/ you should also specify a /prefix/ for the temporary file being
 		  created. If for example, you want to create a temp file in "/tmp" with the prefix
 		  "temp", you should write "/tmp/temp" and the temp file name you'll get back will
 		  be something like "/tmp/tempVt6Akr".
-		  
+
 
 	   INPUT: - path		- The path in the filesystem to check against unique name.
 
 	  RESULT: - A *new* AFC string, that you'll need to free with afc_string_delete() when you're done.
 		  - A NULL value means an error occurred.
 
-	    NOTE: - To avoid race conditions, this function actually creates the file in the specified path.
-		    This should not be a problem, since you are going to create that file anyway and you have the
-		    permissions to do that. 
+		NOTE: - To avoid race conditions, this function actually creates the file in the specified path.
+			This should not be a problem, since you are going to create that file anyway and you have the
+			permissions to do that.
 		  - this function can handle NULL pointers
-	      	  - remember to free the string using afc_string_delete() when you have finished with it.
+			  - remember to free the string using afc_string_delete() when you have finished with it.
 
 	SEE ALSO: - afc_string_delete()
 		  - stdio.h/tempnam call.
@@ -998,68 +1043,70 @@ char * afc_string_add ( char * dest, const char * source, unsigned long len )
 
 @endnode
 */
-char * afc_string_temp ( const char * path )
+char *afc_string_temp(const char *path)
 {
-	char * tmp;
-	int  fd;
+	char *tmp;
+	int fd;
 #ifdef MINGW
-	char * name;
+	char *name;
 #endif
-	char * p;
+	char *p;
 
-	if ( path == NULL ) 	path   = "/tmp/afc";
+	if (path == NULL)
+		path = "/tmp/afc";
 
 #ifdef MINGW
-	p   = afc_string_dirname ( path );
+	p = afc_string_dirname(path);
 
 	/* tempnam adds "file" prefix to the file name */
-	tmp = afc_string_new ( afc_string_len ( p ) + 11 );
+	tmp = afc_string_new(afc_string_len(p) + 11);
 #else
-	p   = ( char * ) path;
-	tmp = afc_string_new ( strlen ( p ) + 7 );
+	p = (char *)path;
+	tmp = afc_string_new(strlen(p) + 7);
 #endif
 
-	if ( tmp == NULL ) return ( NULL );
+	if (tmp == NULL)
+		return (NULL);
 
-	afc_string_make ( tmp, "%sXXXXXX", path );
+	afc_string_make(tmp, "%sXXXXXX", path);
 
 #ifdef MINGW
-	if ( ( name = tempnam ( p, NULL ) ) == NULL ) 
+	if ((name = tempnam(p, NULL)) == NULL)
 	{
-		afc_string_delete ( p );
-		afc_string_delete ( tmp );
-		return ( NULL );
+		afc_string_delete(p);
+		afc_string_delete(tmp);
+		return (NULL);
 	}
 
-	afc_string_copy ( tmp, name, ALL );
+	afc_string_copy(tmp, name, ALL);
 
-	afc_string_delete ( p );
-	free ( name );
+	afc_string_delete(p);
+	free(name);
 
-	if ( ( fd = open ( tmp, O_CREAT | O_EXCL ) ) == -1 )
+	if ((fd = open(tmp, O_CREAT | O_EXCL)) == -1)
 #else
-	if ( ( fd = mkstemp ( tmp ) ) == -1 )
+	if ((fd = mkstemp(tmp)) == -1)
 #endif
 	{
-		fprintf ( stderr, "afc_string_temp() error: %s\n", strerror ( errno ) );
-		afc_string_delete ( tmp );
-		return ( NULL );
+		fprintf(stderr, "afc_string_temp() error: %s\n", strerror(errno));
+		afc_string_delete(tmp);
+		return (NULL);
 	}
 
-	close ( fd );	// Close the file descriptor
+	close(fd); // Close the file descriptor
 
-	return ( tmp );
+	return (tmp);
 }
 // }}}
 // {{{ afc_string_resize_copy ( dest, str )
 /*
 @node afc_string_resize_copy
 
-	    NAME: afc_string_resize_copy ( dest, str ) - Copies a string resizing the dest buffer
+		NAME: afc_string_resize_copy ( dest, str ) - Copies a string resizing the dest buffer
 
 	SYNOPSIS: char * afc_string_resize_copy ( char * * dest, char * str )
 
-     DESCRIPTION: This function copies the full content of string /str/ inside the /dest/ AFC String.
+	 DESCRIPTION: This function copies the full content of string /str/ inside the /dest/ AFC String.
 		  If the memory alloc'd for the /dest/ string is not enough, a new string is allocated in place
 		  of the original /dest/ AFC String and the /str/ is copied.
 
@@ -1068,185 +1115,199 @@ char * afc_string_temp ( const char * path )
 
 	  RESULT: - The /str/ will be copied inside /dest/.
 
-	    NOTE: - /dest/ is a pointer of pointer. You have to call this function by referencing the /dest/ string
+		NOTE: - /dest/ is a pointer of pointer. You have to call this function by referencing the /dest/ string
 		   with the "&" operator. Eg. afc_string_resize_copy ( &dest, "hello world" );
 
 	SEE ALSO: - afc_string_copy()
 
 @endnode
 */
-char * afc_string_resize_copy ( char * * dest, const char * str )
+char *afc_string_resize_copy(char **dest, const char *str)
 {
-        char * str_new;
+	char *str_new;
 	unsigned int max;
 
-	max = afc_string_max ( * dest );
+	max = afc_string_max(*dest);
 
-        if ( ( strlen ( str ) + afc_string_len ( *dest ) ) >  ( max - 3 ) )
-        {
-                str_new = afc_string_new ( max * 2 );
-                afc_string_copy ( str_new, *dest, ALL );
+	if ((strlen(str) + afc_string_len(*dest)) > (max - 3))
+	{
+		str_new = afc_string_new(max * 2);
+		afc_string_copy(str_new, *dest, ALL);
 
-                afc_string_delete ( *dest );
-                *dest = str_new;
-        } else
-		afc_string_copy ( * dest, str, ALL );
+		afc_string_delete(*dest);
+		*dest = str_new;
+	}
+	else
+		afc_string_copy(*dest, str, ALL);
 
-	return ( * dest );
+	return (*dest);
 }
 // }}}
 // {{{ afc_string_resize_add ( dest, str )
-char * afc_string_resize_add ( char ** dest, const char * str )
+char *afc_string_resize_add(char **dest, const char *str)
 {
-	char * str_new;
+	char *str_new;
 	unsigned int max;
 
-	max = afc_string_max ( *dest );
+	max = afc_string_max(*dest);
 
-	if ( ( strlen ( str ) + afc_string_len ( *dest ) ) >  ( max - 3 ) )
+	if ((strlen(str) + afc_string_len(*dest)) > (max - 3))
 	{
-		if ( ( str_new = afc_string_new ( ( strlen ( str ) + afc_string_len ( *dest ) ) * 2 ) ) == NULL )
-			return ( NULL );
+		if ((str_new = afc_string_new((strlen(str) + afc_string_len(*dest)) * 2)) == NULL)
+			return (NULL);
 
-		afc_string_copy ( str_new, *dest, ALL );
+		afc_string_copy(str_new, *dest, ALL);
 
-		afc_string_delete ( *dest );
+		afc_string_delete(*dest);
 		*dest = str_new;
 	}
 
-	afc_string_add ( *dest, str, ALL );
+	afc_string_add(*dest, str, ALL);
 
-	return ( *dest );
+	return (*dest);
 }
 // }}}
 
 // {{{ afc_string_dirname ( path )
-char * afc_string_dirname ( const char * path )
+char *afc_string_dirname(const char *path)
 {
-	char * dest = NULL;
-	char * x;
+	char *dest = NULL;
+	char *x;
 
 	// If path is not defined, do nothing.
-	if ( path == NULL ) return ( NULL );
+	if (path == NULL)
+		return (NULL);
 
 	// Search for the last "/" in the file_name
-	x  = strrchr ( path, dir_sep );
+	x = strrchr(path, dir_sep);
 
 	// if we don't find it, simply copy all the path
-	if ( x == NULL ) 
-		dest = afc_string_dup ( path );
+	if (x == NULL)
+		dest = afc_string_dup(path);
 	else
 	{
 		// ... else we have to create a new string and
 		// copy the chars we are interested in
-		dest = afc_string_new ( ( x - path ) );
-		afc_string_copy ( dest, path, ALL );
+		dest = afc_string_new((x - path));
+		afc_string_copy(dest, path, ALL);
 	}
 
-	return ( dest );
+	return (dest);
 }
 // }}}
 // {{{ afc_string_basename ( path )
-char * afc_string_basename ( const char * path )
+char *afc_string_basename(const char *path)
 {
-	char * dest = NULL;
-	char * x;
+	char *dest = NULL;
+	char *x;
 
 	// If path is not defined, do nothing.
-	if ( path == NULL ) return ( NULL );
+	if (path == NULL)
+		return (NULL);
 
 	// Search for the last "/" in the file_name
-	x  = strrchr ( path, dir_sep );
+	x = strrchr(path, dir_sep);
 
 	// if we don't find it, simply copy all the path
-	if ( x == NULL ) 
-		dest = afc_string_dup ( path );
+	if (x == NULL)
+		dest = afc_string_dup(path);
 	else
 	{
 		// ... else we have to create a new string and
 		// copy the chars we are interested in
-		dest = afc_string_dup ( x +1 );
+		dest = afc_string_dup(x + 1);
 	}
 
-	return ( dest );
+	return (dest);
 }
 // }}}
 
-int _seems_utf8 ( const char * str )
+int _seems_utf8(const char *str)
 {
-	int len = strlen ( str );
+	int len = strlen(str);
 	int i, n, j;
 	unsigned char c;
 
-	for ( i = 0; i < len; i ++ )
+	for (i = 0; i < len; i++)
 	{
-		c = str [ i ];
+		c = str[i];
 
-		if ( c < 0x80 ) n = 0;
-		else if ( ( c & 0xE0 ) == 0xC0 ) n = 1;
-		else if ( ( c & 0xF0 ) == 0xE0 ) n = 2;
-		else if ( ( c & 0xF8 ) == 0xF0 ) n = 3;
-		else if ( ( c & 0xFC ) == 0xF8 ) n = 4;
-		else if ( ( c & 0xFE ) == 0xFC ) n = 5;
-		else return FALSE;
+		if (c < 0x80)
+			n = 0;
+		else if ((c & 0xE0) == 0xC0)
+			n = 1;
+		else if ((c & 0xF0) == 0xE0)
+			n = 2;
+		else if ((c & 0xF8) == 0xF0)
+			n = 3;
+		else if ((c & 0xFC) == 0xF8)
+			n = 4;
+		else if ((c & 0xFE) == 0xFC)
+			n = 5;
+		else
+			return FALSE;
 
-		for ( j = 0; j < n; j ++ )
+		for (j = 0; j < n; j++)
 		{
-			if ( ( ++i == len ) || ( ( str [ i ] & 0xC0 ) != 0x80 ) ) return FALSE;
+			if ((++i == len) || ((str[i] & 0xC0) != 0x80))
+				return FALSE;
 		}
 	}
 
 	return TRUE;
 }
 
-char * afc_string_utf8_to_latin1 ( const char * utf8 )
+char *afc_string_utf8_to_latin1(const char *utf8)
 {
-	if ( ! utf8 || ! strlen ( utf8 ) ) return afc_string_new ( 1 );
+	if (!utf8 || !strlen(utf8))
+		return afc_string_new(1);
 
-	if ( ! _seems_utf8 ( utf8 ) )
+	if (!_seems_utf8(utf8))
 	{
-		return afc_string_dup ( utf8 );
+		return afc_string_dup(utf8);
 	}
 
-	unsigned char * s = afc_malloc ( strlen ( utf8 ) + 20 );
+	unsigned char *s = afc_malloc(strlen(utf8) + 20);
 	unsigned int pos = 0;
-	unsigned int len = strlen ( utf8 );
+	unsigned int len = strlen(utf8);
 	unsigned char c1, c2, iso;
 	unsigned int xpos = 0;
-	char * res;
+	char *res;
 
-	while ( pos < len )
+	while (pos < len)
 	{
-		c1 =  utf8 [ pos ++ ];
+		c1 = utf8[pos++];
 
-		if ( c1 <= 0x7F )
+		if (c1 <= 0x7F)
 		{
-			s [ xpos ++ ] = c1;
-		} else if ( c1 >= 0xC0 && c1 <= 0xC7 ) {
-			if ( pos == len )
+			s[xpos++] = c1;
+		}
+		else if (c1 >= 0xC0 && c1 <= 0xC7)
+		{
+			if (pos == len)
 			{
-				_afc_dprintf ( "%s::%s - ERROR: wrong string length", __FILE__, __FUNCTION__ );
+				_afc_dprintf("%s::%s - ERROR: wrong string length", __FILE__, __FUNCTION__);
 				return NULL;
 			}
 
-			c2 = utf8 [ pos ++ ];
+			c2 = utf8[pos++];
 
-			iso = ( ( c1 & 0x07 ) << 6 ) | ( c2 & 0x3F );
+			iso = ((c1 & 0x07) << 6) | (c2 & 0x3F);
 
-			if ( iso <= 0x7F )
+			if (iso <= 0x7F)
 			{
-				_afc_dprintf ( "%s::%s - ERROR: Sequence longer than needed", __FILE__, __FUNCTION__ );
+				_afc_dprintf("%s::%s - ERROR: Sequence longer than needed", __FILE__, __FUNCTION__);
 				return NULL;
 			}
 
-			s [ xpos ++ ] = iso;
+			s[xpos++] = iso;
 		}
 	}
 
-	s [ xpos ] = '\0';
+	s[xpos] = '\0';
 
-	res = afc_string_dup ( ( char * ) s );
-	afc_free ( s );
+	res = afc_string_dup((char *)s);
+	afc_free(s);
 
 	return res;
 }
@@ -1261,8 +1322,8 @@ char * afc_string_utf8_to_latin1 ( const char * utf8 )
 	SYNOPSIS: int afc_string_pattern_match ( const char * string, const char * pattern, short no_case )
 
 		 DESCRIPTION: This function tests if the given /string/ correctly matches the provided /pattern/ using
-		              the standard system pattern matching algo. It can be made case insensitive by passing TRUE
-		              as /no_case/ value.
+					  the standard system pattern matching algo. It can be made case insensitive by passing TRUE
+					  as /no_case/ value.
 
 		 INPUT: - string				- AFC string to convert.
 			- pattern 			- The pattern string. It doesn't necessarily need to be an AFC string.
@@ -1273,38 +1334,41 @@ char * afc_string_utf8_to_latin1 ( const char * utf8 )
 
 			NOTE: - This function can handle NULL pointers.
 
-	SEE ALSO: 
-	
+	SEE ALSO:
+
 @endnode
 */
-int afc_string_pattern_match ( const char * str, const char * pattern, short nocase )
+int afc_string_pattern_match(const char *str, const char *pattern, short nocase)
 {
 	int res;
-	char * s, * patt;
+	char *s, *patt;
 
-	if ( ( str == NULL ) || ( pattern == NULL ) ) return ( -1 );
+	if ((str == NULL) || (pattern == NULL))
+		return (-1);
 
-	if ( nocase ) 
+	if (nocase)
 	{
-		if ( ( s = afc_string_dup ( str ) ) == NULL ) return ( -1 );
-		afc_string_upper ( s );
+		if ((s = afc_string_dup(str)) == NULL)
+			return (-1);
+		afc_string_upper(s);
 
-		if ( ( patt = afc_string_dup ( pattern ) ) == NULL )
+		if ((patt = afc_string_dup(pattern)) == NULL)
 		{
-			afc_string_delete ( s );
-			return ( -1 );
+			afc_string_delete(s);
+			return (-1);
 		}
 
-		afc_string_upper ( patt );
+		afc_string_upper(patt);
 
-		res = fnmatch ( patt, s	, 0 );
+		res = fnmatch(patt, s, 0);
 
-		afc_string_delete ( patt );
-		afc_string_delete ( s );
-	}	else 
-		res = fnmatch ( pattern, str	, 0 );
+		afc_string_delete(patt);
+		afc_string_delete(s);
+	}
+	else
+		res = fnmatch(pattern, str, 0);
 
-	return ( res );
+	return (res);
 }
 // }}}
 #endif
@@ -1346,7 +1410,7 @@ int main(void)
 	 afc_string_trim(m);
 	 printf("-%s- %ld\n", m, afc_string_len(m));
 
-	 afc_string_copy( m, "super califragilistichespiralidoso anche se da dire può sembrare spaventoso", ALL); 
+	 afc_string_copy( m, "super califragilistichespiralidoso anche se da dire puï¿½ sembrare spaventoso", ALL);
 	 printf("-%s- %ld\n", m, afc_string_len(m));
 
 	 printf("%s\n", afc_string_instr(m, "fragi", 0));

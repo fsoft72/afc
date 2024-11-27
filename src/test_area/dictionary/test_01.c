@@ -1,17 +1,17 @@
-/* 
+/*
  * Advanced Foundation Classes
- * Copyright (C) 2000/2004  Fabio Rotondo 
- *  
+ * Copyright (C) 2000/2025  Fabio Rotondo
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- *  
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -23,42 +23,42 @@
 
 int elements = 0;
 
-Dictionary * dic;
+Dictionary *dic;
 
 #define ITEMS 20
 
-int main ()
+int main()
 {
-	AFC * afc = afc_new ();
-	char * str, * s;
+	AFC *afc = afc_new();
+	char *str, *s;
 	int t;
 
-	if ( afc == NULL ) return ( 1 );
+	if (afc == NULL)
+		return (1);
 
 	// afc_track_mallocs ( afc );
 
-	dic = afc_dictionary_new ();
-	str = afc_string_new ( 30 );
+	dic = afc_dictionary_new();
+	str = afc_string_new(30);
 
-	for ( t = 0; t < ITEMS ; t ++ )
+	for (t = 0; t < ITEMS; t++)
 	{
-		afc_string_make ( str, "%d", t );	
-		afc_dictionary_set ( dic, str, afc_string_dup ( str ) );
+		afc_string_make(str, "%d", t);
+		afc_dictionary_set(dic, str, afc_string_dup(str));
 	}
 
-	printf ( "Items: %d\n", ( int ) afc_dictionary_num_items ( dic ) );
+	printf("Items: %d\n", (int)afc_dictionary_num_items(dic));
 
-	for ( t = 0; t < ITEMS; t ++ )
+	for (t = 0; t < ITEMS; t++)
 	{
-		afc_string_make ( str, "%d", t );	
-		printf ( "%s: %s\n", str, ( char * ) afc_dictionary_get ( dic, str ) );
-		afc_dictionary_del ( dic );
+		afc_string_make(str, "%d", t);
+		printf("%s: %s\n", str, (char *)afc_dictionary_get(dic, str));
+		afc_dictionary_del(dic);
 	}
 
-	afc_dictionary_delete ( dic );
-	afc_string_delete ( str );
-	afc_delete ( afc );
+	afc_dictionary_delete(dic);
+	afc_string_delete(str);
+	afc_delete(afc);
 
-	return ( 0 );
+	return (0);
 }
-

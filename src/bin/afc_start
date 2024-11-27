@@ -10,7 +10,7 @@ class afc_starter:
 			     "func_prefix" : "afc" }
 
 
-		self.classes = [ [ "ArrayMaster", 	"afc_array_master", 		"array_master" ],
+		self.classes = [ [ "ArrayMaster", 	"afc_array", 		"array" ],
 				 [ "Base64",	  	"afc_base64",			"base64" ],
 				 [ "BinTree",	  	"afc_bin_tree",			"bin_tree" ],
 				 [ "CGIManager",  	"afc_cgi_manager",		"cgi_manager" ],
@@ -49,7 +49,7 @@ class afc_starter:
 		self.vals [ "varname" ] = self._varnemize ( self.vals [ "class_name" ] )
 		self._get_line ( "Var Name", "varname" )
 
-		self.vals [ "file_name" ] = self.vals [ "function" ] 
+		self.vals [ "file_name" ] = self.vals [ "function" ]
 		self._get_line ( "File Name", "file_name" )
 
 		self.vals [ "magicv" ] = self.vals [ "constant" ][:4]
@@ -81,7 +81,7 @@ class afc_starter:
 
 
 	def _get_line ( self, descr, field_name = 0 ):
-		if ( field_name ): 
+		if ( field_name ):
 			defval = self.vals.get ( field_name )
 		else:
 			defval = 0
@@ -173,7 +173,7 @@ class afc_starter:
 		cont = 0
 		for c in self.classes:
 			print "%2.2d - %s" % ( cont, c [ 0 ] )
-			cont = cont + 1			
+			cont = cont + 1
 
 	def _create_classes ( self, f ):
 		for c in self.vals [ "classes" ]:
@@ -197,7 +197,7 @@ class afc_starter:
 		for c in self.vals [ "classes" ]:
 			cn [ c [ 1 ] [ 2 ] ] = 1
 
-		for k in cn.keys ():			
+		for k in cn.keys ():
 			f.write ( "#include \"%s.h\"\n" % k )
 
 	def _mk_c ( self ):
@@ -226,7 +226,7 @@ class afc_starter:
 
 static const char class_name[] = "%(capitalized)s";
 
-// {{{ %(func_name)s_new ()   
+// {{{ %(func_name)s_new ()
 /*
 @node %(func_name)s_new
 
@@ -272,7 +272,7 @@ ENDTRY
 
 		f.write ( '''// {{{ %(func_name)s_delete ( %(varname)s )
 /*
-@node %(func_name)s_delete 
+@node %(func_name)s_delete
 
                  NAME: %(func_name)s_delete ( %(varname)s ) - Dispose a %(capitalized)s instance.
 
@@ -306,14 +306,14 @@ int _%(func_name)s_delete ( %(capitalized)s * %(varname)s )
 
 		f.write ( '''// {{{ %(func_name)s_clear ( %(varname)s )
 /*
-@node %(func_name)s_clear 
+@node %(func_name)s_clear
 
                  NAME: %(func_name)s_clear ( %(varname)s ) - Frees all unused memory
 
              SYNOPSIS: int %(func_name)s_clear ( %(capitalized)s * %(varname)s )
 
-          DESCRIPTION: This method clears all data inside the %(capitalized)s instance, 
-                       except the main classes. 
+          DESCRIPTION: This method clears all data inside the %(capitalized)s instance,
+                       except the main classes.
 
                 INPUT: - %(varname)s   - Pointer to a *valid* %(capitalized)s instance.
 
@@ -398,7 +398,7 @@ int %(func_name)s_clear   ( %(capitalized)s * %(varname)s );
 
 #endif
 ''' % self.vals )
-			
+
 
 
 c = afc_starter ()

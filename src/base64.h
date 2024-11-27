@@ -1,17 +1,17 @@
-/* 
+/*
  * Advanced Foundation Classes
- * Copyright (C) 2000/2004  Fabio Rotondo 
- *  
+ * Copyright (C) 2000/2025  Fabio Rotondo
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- *  
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -22,7 +22,6 @@
 #ifndef AFC_BASE64_H
 #define AFC_BASE64_H
 
-
 #include <malloc.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -30,7 +29,7 @@
 #include "base.h"
 
 #ifndef MINGW
-	#include <fnmatch.h>
+#include <fnmatch.h>
 #endif
 
 #include <math.h>
@@ -39,10 +38,11 @@
 #include <errno.h>
 
 #ifdef MINGW
-	#include <fcntl.h>
+#include <fcntl.h>
 #endif
 
-enum {
+enum
+{
 	AFC_BASE64_ERR_OUT_OF_MEM,
 	AFC_BASE64_ERR_FILE_INPUT,
 	AFC_BASE64_ERR_FILE_OUTPUT,
@@ -65,25 +65,24 @@ struct afc_base64
 	unsigned int iocp;
 	BOOL error_check;
 
-	char * file_in;
-	char * file_out;
+	char *file_in;
+	char *file_out;
 
-	FILE * fin;
-	FILE * fout;
+	FILE *fin;
+	FILE *fout;
 
-	char * mem_in;
-	char * mem_in_pos;
+	char *mem_in;
+	char *mem_in_pos;
 	unsigned int mem_in_size;
 
-
-	char * mem_out;
-	char * mem_out_pos;
+	char *mem_out;
+	char *mem_out_pos;
 	unsigned int mem_out_size;
 
-	char io_buffer [ 4096 ];
+	char io_buffer[4096];
 	unsigned int size;
 
-	char dtable [ 256 ];
+	char dtable[256];
 
 	BOOL at_eof;
 
@@ -95,20 +94,20 @@ struct afc_base64
 typedef struct afc_base64 Base64;
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif /* __cplusplus */
 
-/* Function Prototypes */
+	/* Function Prototypes */
 
-Base64 * afc_base64_new ( void );
-int afc_base64_delete ( Base64 * b64 );
-int afc_base64_encode ( Base64 * b64, int first_tag, ... );
-int afc_base64_decode ( Base64 * b64, int first_tag, ... );
-int afc_base64_set_tag ( Base64 * b64, int tag, void * val );
-int afc_base64_fwrite ( Base64 * b64, const char * fname, int what );
+	Base64 *afc_base64_new(void);
+	int afc_base64_delete(Base64 *b64);
+	int afc_base64_encode(Base64 *b64, int first_tag, ...);
+	int afc_base64_decode(Base64 *b64, int first_tag, ...);
+	int afc_base64_set_tag(Base64 *b64, int tag, void *val);
+	int afc_base64_fwrite(Base64 *b64, const char *fname, int what);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 #endif
-

@@ -4,7 +4,7 @@
 
 CC=gcc
 CFLAGS=-g -Wall
-LIBS=../../base.o ../../string.o ../../array_master.o ../../fs_tree.o ../../stringnode.o ../../nodemaster.o ../test_utils.o
+LIBS=../../base.o ../../string.o ../../array.o ../../fs_tree.o ../../stringnode.o ../../nodemaster.o ../test_utils.o
 
 all: test_01 test_02 test_03
 

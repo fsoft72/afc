@@ -1,5 +1,5 @@
 14 Jan 2011:	FIX:	CGIManager					Status: STABLE
-	
+
 			Fix parsing of GET params with escaped chars.
 
 
@@ -16,7 +16,7 @@
 		ENH:	64bit compatibility 				Status: STABLE
 
 			AFC should work without problems on 64bit machines.
-			
+
 
 02 Jun 2005:	ENH:	HashMaster					Status: STABLE
 
@@ -35,11 +35,11 @@
 			Added a new class AVLTree that handles balanced Trees.
 
 05 May 2004:    FIX:    BTree						Status: BETA
-		
+
 			The remove routine crashed if a NULL root was passed
 
 			The afc_btree_del didn't call clear function on node's entry.
- 	
+
 
 30 Apr 2004:	ENH:	MemTracker					Status: STABLE
 
@@ -56,7 +56,7 @@
 			leak tracking.
 
 28 Apr 2004:	ENH:	base.h						Status: STABLE
-	
+
 			Added a new constant AFC_NO_ERR which has the same value of
 			AFC_ERR_NO_ERROR.
 
@@ -70,13 +70,13 @@
 
 		ENH:	all classes
 
-			Thanks to some preprocessor magic, the afc_(class_name)_set_tags() 
-			function does not require the AFC_TAG_END tag at the end of the 	
+			Thanks to some preprocessor magic, the afc_(class_name)_set_tags()
+			function does not require the AFC_TAG_END tag at the end of the
 			list anymore.
 
 
 15 Apr 2004:	ADD:	FTPClient					Status: ALPHA
-		
+
 			A new class to handle FTP client file transfert.
 
 		ADD:	Circular List					Status: BETA
@@ -108,7 +108,7 @@
 26 Oct  2003:   ENH:	function: afc_*_before_first()			Status: STABLE
 
 			Added the new afc_*_before_first() method to all classes that
-			allow iteration (NodeMaster / ArrayMaster / StringNode / 
+			allow iteration (NodeMaster / ArrayMaster / StringNode /
 			Dictionary and HashMaster) so it is now possible to simplify
 			while() loops.
 
@@ -125,7 +125,7 @@
 
 		ENH:	DynamicClass and DynamicClassMaster		Status: Stable
 
-			Some calls now have the right "const char *" prototype when 
+			Some calls now have the right "const char *" prototype when
 			needed.
 
 23 Aug  2003:   ENH:	Code clean ups
@@ -135,7 +135,7 @@
 			Fixed a small bug in afc_stringnode_add() function.
 
 17 June 2003:	ADD:	MD5						Status: *BETA*
-			
+
 			Added new MD5 class.
 
 20 May 2003:	ENH:	CGIManager					Status: *UNSTABLE*
@@ -164,7 +164,7 @@
 			AFC Base (using afc_track_mallocs() call) to enable memory
 			tracking (and automatic free).
 
-			
+
 
 12 Feb 2003:	ADD: 	NodeMaster					Status: STABLE
 			Added afc_nodemaster_set_clear_func() function.
@@ -183,10 +183,10 @@
 
 
 11 Feb 2003:	ADD:	ArrayMaster					Status: STABLE
-			Added afc_array_master_set_clear_func() function. Now ArrayMaster
+			Added afc_array_set_clear_func() function. Now ArrayMaster
 			is able to delete by itself all items in the list.
 
-			Added afc_array_master_for_each() function.
+			Added afc_array_for_each() function.
 
 04 Jan 2003:	ADD:	DynamicClassMaster				Status: STABLE
 			Added the new afc_dynamic_class_master_has_method() function
@@ -200,7 +200,7 @@
 			For backward compatibility, this flag is set to TRUE by default.
 			At the moment, there is no way to set it automagically using
 			DynamicClassMaster.
-			
+
 18 Sep 2002:	ADD:	InetClient and InetServer classes		Status: ALPHA
 			These classes will be the foundation for a set of socket based
 			classes.
@@ -221,11 +221,11 @@
 			- afc_dynamic_class_add_method() has a new parameter "params" used to
 			  specify the method params types.
 
-18 Jun 2002:	ENH:	ArrayMaster / AFC_ARRAY_MASTER_SORT_ELEMENT     Status: STABLE
+18 Jun 2002:	ENH:	ArrayMaster / AFC_ARRAY_SORT_ELEMENT     Status: STABLE
 			This is a simple macro to help defining sort elements.
 
 18 Jun 2002:	ADD: 	ReadArgs / afc_readargs_parse_cmd_line()	Status: STABLE
-			A new function to parse the command line using ReadArgs has 
+			A new function to parse the command line using ReadArgs has
 			been added.
 
 15 Jun 2002:	FIX:	DynamicClassMaster				Status: STABLE
@@ -245,7 +245,7 @@
 10 Jun 2002:	ADD:	RegExp / afc_regexp_compute_replace_size()	Status: BETA
 			Added a new method to compute the replace string before
 			actually performing the replace. This is useful to know
-			whether the destination string buffer will be big enough 
+			whether the destination string buffer will be big enough
 			or not.
 
 10 Jun 2002:	ENH:	String						Status: STABLE
@@ -308,7 +308,7 @@
 			DCM now has an "info" field in its structure. This field is
 			automatically copied inside the DynamicClass instance once
 			it is created.
-			
+
 11 Feb 2002:	ADD:	EasyGUI						Status: ALPHA
 			See below.
 
@@ -350,7 +350,7 @@
 			internally defined in the source file and not loaded elsewhere.
 			This allow DynamicClassMaster to have "DynamicClasses" defined by the code
 			and not loaded by plugins.
-			
+
 25 Jan 2002:	ENH:	EasyGUI library					Status: ALPHA
 			Added the "frame" container.
 
@@ -400,8 +400,8 @@
 			it is already used in a big project.
 
 04 Jan 2002:	ENH:	StringNode					Status: Stable
-			A new tag has been added to the StringNode: 
-			
+			A new tag has been added to the StringNode:
+
 				AFC_STRINGNODE_TAG_DISCARD_ZERO_LEN	(TRUE/FALSE)
 
 			This is used by afc_stringnode_split() to know whether it should
@@ -431,7 +431,7 @@
 			a very big project with no problems at all.
 
 02 Jan 2002:	ADD:	Dynamic Class					Status:	STABLE
-			This is the class that implements the "abstraction layer" for all 
+			This is the class that implements the "abstraction layer" for all
 			AFC based plugins (dynamic classes).
 			This class should be considered stable, since it is already used by
 			a very big project with no problems at all.
@@ -439,5 +439,5 @@
 30 Dec 2001:	ADD:	ChangeLog					Status:	NONE
 			From now on, we will store our news and changes to AFC in the Changelog
 			file and not the NEWS file anymore.
-			
+
 # vim60: textwidth=130

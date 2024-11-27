@@ -27,7 +27,7 @@ ifeq ($(DEFINE),MINGW)
 # MINGW version has only a subset of AFC full capabilities
 CFLAGS+=-DMINGW
 
-OBJS=string.o base.o base64.o nodemaster.o array_master.o cgi_manager.o dictionary.o hash_master.o \
+OBJS=string.o base.o base64.o nodemaster.o array.o cgi_manager.o dictionary.o hash_master.o \
      mem_tracker.o readargs.o regexp.o stringnode.o dynamic_class.o \
      threader.o date_handler.o md5.o fileops.o avl_tree.o tree.o
 
@@ -36,7 +36,7 @@ else
 
 CFLAGS+=-O2
 
-OBJS=string.o base.o base64.o nodemaster.o array_master.o cgi_manager.o dictionary.o dirmaster.o hash_master.o \
+OBJS=string.o base.o base64.o nodemaster.o array.o cgi_manager.o dictionary.o dirmaster.o hash_master.o \
      mem_tracker.o readargs.o regexp.o stringnode.o dynamic_class.o dynamic_class_master.o \
      cmd_parser.o threader.o inet_client.o inet_server.o date_handler.o md5.o bin_tree.o dbi_manager.o \
      circular_list.o btree.o avl_tree.o  fileops.o tree.o\
@@ -162,23 +162,23 @@ clean:
 base.test: base.c
 	@$(CC) -DTEST_CLASS -o base.test $(CFLAGS) base.c string.o
 
-array_master.test:	array_master.c array_master.h
-	@$(CC) -DTEST_CLASS -o array_master.test $(CFLAGS) array_master.c string.o base.o mem_tracker.o
+array.test:	array.c array.h
+	@$(CC) -DTEST_CLASS -o array.test $(CFLAGS) array.c string.o base.o mem_tracker.o
 
 dirmaster.test:	dirmaster.c
-	@$(CC) -DTEST_CLASS -o dirmaster.test $(CFLAGS) dirmaster.c string.o array_master.o
+	@$(CC) -DTEST_CLASS -o dirmaster.test $(CFLAGS) dirmaster.c string.o array.o
 
 cmdparser.test: cmd_parser.c cmd_parser.h
-	@$(CC) -DTEST_CLASS -o cmdparser.test $(CFLAGS) cmd_parser.c string.o base.o nodemaster.o array_master.o cgi_manager.o dictionary.o dirmaster.o hash_master.o readargs.o regexp.o stringnode.o fileops.o dynamic_class.o dynamic_class_master.o -ldl
+	@$(CC) -DTEST_CLASS -o cmdparser.test $(CFLAGS) cmd_parser.c string.o base.o nodemaster.o array.o cgi_manager.o dictionary.o dirmaster.o hash_master.o readargs.o regexp.o stringnode.o fileops.o dynamic_class.o dynamic_class_master.o -ldl
 
 threader.test:	threader.c threader.h
-	@$(CC) -DTEST_CLASS -o threader.test $(CFLAGS) threader.c string.o array_master.o hash_master.o dictionary.o base.o mem_tracker.o -lpthread
+	@$(CC) -DTEST_CLASS -o threader.test $(CFLAGS) threader.c string.o array.o hash_master.o dictionary.o base.o mem_tracker.o -lpthread
 
 threader.exe:	threader.c threader.h
-	@$(CC) -DTEST_CLASS -o threader.exe $(CFLAGS) threader.c string.o array_master.o hash_master.o dictionary.o base.o mem_tracker.o /mingw/lib/libpthreadGC.a
+	@$(CC) -DTEST_CLASS -o threader.exe $(CFLAGS) threader.c string.o array.o hash_master.o dictionary.o base.o mem_tracker.o /mingw/lib/libpthreadGC.a
 
 mem_debugger.test:	mem_debugger.c mem_debugger.h
-	@$(CC) -DTEST_CLASS -o mem_debugger.test $(CFLAGS) mem_debugger.c string.o array_master.o hash_master.o dictionary.o base.o -lpthread
+	@$(CC) -DTEST_CLASS -o mem_debugger.test $(CFLAGS) mem_debugger.c string.o array.o hash_master.o dictionary.o base.o -lpthread
 
 md5.test:	md5.h md5.c
 	@$(CC) -DTEST_CLASS -o md5.test $(CFLAGS) md5.c  base.o string.o  mem_tracker.o
@@ -191,7 +191,7 @@ pop3.test:	pop3.h pop3.c
 
 ftp_client.test:	ftp_client.h ftp_client.c
 	@$(CC) -DTEST_CLASS -DDEBUG -o ftp_client.test $(CFLAGS) ftp_client.c  base.o string.o  mem_tracker.o inet_client.o stringnode.o nodemaster.o hash_master.o \
-								   array_master.o
+								   array.o
 
 dbi.test:	dbi_manager.c
 	$(CC) $(CFLAGS) -DTEST_CLASS -o dbi.test dbi_manager.c -ldl -pthread $(AFC_LIBS)

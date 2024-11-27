@@ -1,17 +1,17 @@
-/* 
+/*
  * Advanced Foundation Classes
- * Copyright (C) 2000/2004  Fabio Rotondo 
- *  
+ * Copyright (C) 2000/2025  Fabio Rotondo
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- *  
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,24 +32,24 @@
 
 static const char class_name[] = "StringNode";
 
-static int afc_stringnode_internal_set_tag ( StringNode * sn, int tag, void * val );
-static long afc_stringnode_internal_sort_nocase_noinv (void * a, void * b, void * info);
-static long afc_stringnode_internal_sort_case_noinv (void * a, void * b, void * info);
-static long afc_stringnode_internal_sort_nocase_inv (void * a, void * b, void * info);
-static long afc_stringnode_internal_sort_case_inv (void * a, void * b, void * info);
+static int afc_stringnode_internal_set_tag(StringNode *sn, int tag, void *val);
+static long afc_stringnode_internal_sort_nocase_noinv(void *a, void *b, void *info);
+static long afc_stringnode_internal_sort_case_noinv(void *a, void *b, void *info);
+static long afc_stringnode_internal_sort_nocase_inv(void *a, void *b, void *info);
+static long afc_stringnode_internal_sort_case_inv(void *a, void *b, void *info);
 
 // {{{ docs
 /*
 @node quote
 	*The trick to flying is to throw yourself at the ground and miss.*
-	
+
 		The Hitchhiker's Guide to the Galaxy
 @endnode
 
 @node intro
 StringNode is a class based on NodeMaster created to handle lists of strings.
-It is able to do almost everything that /NodeMaster/ is able to do on lists, 
-making very easy to store a great number of strings at once. 
+It is able to do almost everything that /NodeMaster/ is able to do on lists,
+making very easy to store a great number of strings at once.
 
 StringNode internal rappresentation of strings are AFC Strings. Please, see
 afc_string_new() for more info about AFC Strings.
@@ -62,7 +62,7 @@ afc_string_new() for more info about AFC Strings.
 // }}}
 // {{{ afc_stringnode_new ()
 /*
-@node afc_stringnode_new 
+@node afc_stringnode_new
 
 		 NAME: afc_stringnode_new () - Initializes a new StringNode object.
 
@@ -77,27 +77,28 @@ afc_string_new() for more info about AFC Strings.
 			 SEE ALSO: afc_stringnode_delete()
 @endnode
 */
-StringNode * _afc_stringnode_new ( const char * file, const char * func, const unsigned int line )
+StringNode *_afc_stringnode_new(const char *file, const char *func, const unsigned int line)
 {
-TRY ( StringNode * )
+	TRY(StringNode *)
 
-	StringNode * sn = ( StringNode * ) _afc_malloc ( sizeof ( StringNode ), file, func, line );
+	StringNode *sn = (StringNode *)_afc_malloc(sizeof(StringNode), file, func, line);
 
-	if ( sn == NULL ) RAISE_FAST_RC ( AFC_ERR_NO_MEMORY, "stringnode", NULL );
+	if (sn == NULL)
+		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "stringnode", NULL);
 
 	sn->magic = AFC_STRINGNODE_MAGIC;
 
-	if ( ( sn->nm = afc_nodemaster_new () ) == NULL ) 
-		RAISE_FAST_RC ( AFC_ERR_NO_MEMORY, "nodemaster", NULL );
+	if ((sn->nm = afc_nodemaster_new()) == NULL)
+		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "nodemaster", NULL);
 
-	RETURN ( sn );
+	RETURN(sn);
 
-EXCEPT
-	afc_stringnode_delete ( sn );
+	EXCEPT
+	afc_stringnode_delete(sn);
 
-FINALLY
+	FINALLY
 
-ENDTRY
+	ENDTRY
 }
 // }}}
 // {{{ afc_stringnode_delete ( sn )
@@ -109,7 +110,7 @@ ENDTRY
 			 SYNOPSIS: int	afc_stringnode_delete ( StringNode * sn )
 
 		DESCRIPTION: Use this function to dispose all memory allocated by a StringNode
-		 class. 
+		 class.
 
 		INPUT: - sn - a pointer to an already allocated StringNode structure.
 
@@ -120,16 +121,17 @@ ENDTRY
 			 SEE ALSO: afc_stringnode_new()
 @endnode
 */
-int	_afc_stringnode_delete ( StringNode * sn )
+int _afc_stringnode_delete(StringNode *sn)
 {
 	int res;
 
-	if ( ( res = afc_stringnode_clear ( sn ) ) != AFC_ERR_NO_ERROR ) return ( res );
+	if ((res = afc_stringnode_clear(sn)) != AFC_ERR_NO_ERROR)
+		return (res);
 
-	afc_nodemaster_delete ( sn->nm );
-	afc_free (sn);
+	afc_nodemaster_delete(sn->nm);
+	afc_free(sn);
 
-	return ( AFC_ERR_NO_ERROR );
+	return (AFC_ERR_NO_ERROR);
 }
 // }}}
 // {{{ afc_stringnode_add ( sn, str, mode )
@@ -153,10 +155,10 @@ int	_afc_stringnode_delete ( StringNode * sn )
 
 					+ AFC_STRINGNODE_ADD_HERE - Add the string right next the previous item in the list.
 
-	RESULTS: - a pointer to the real string if everything went fine. 
+	RESULTS: - a pointer to the real string if everything went fine.
 		 - NULL if there was no memory to add the string.
 
-		NOTES: - The string will not be added directly to the list, but a copy of it will. So it is completely 
+		NOTES: - The string will not be added directly to the list, but a copy of it will. So it is completely
 			 safe to reuse the same buffer to add more than one single line to your StringNode. For the same
 			 reason, also static char strings are wellcome.
 
@@ -166,26 +168,27 @@ int	_afc_stringnode_delete ( StringNode * sn )
 		 - afc_nodemaster_add()
 @endnode
 */
-char * afc_stringnode_add (StringNode * sn, const char * s, unsigned long mode)
+char *afc_stringnode_add(StringNode *sn, const char *s, unsigned long mode)
 {
-	char * g;
+	char *g;
 
-	if ( ( s != NULL ) && ( strlen ( s ) == 0 ) && ( sn->discard_zero_len ) ) return ( NULL );
+	if ((s != NULL) && (strlen(s) == 0) && (sn->discard_zero_len))
+		return (NULL);
 
 	// printf ( "Add: %s - Len: %d\n", s, strlen ( s ) );
 
-	if ( ( s != NULL ) && ( strlen ( s ) ) )
-		g = afc_string_dup ( s );
+	if ((s != NULL) && (strlen(s)))
+		g = afc_string_dup(s);
 	else
-		g = afc_string_new ( 1 );
+		g = afc_string_new(1);
 
-	if ( g == NULL )
+	if (g == NULL)
 	{
-		AFC_LOG_FAST ( AFC_ERR_NO_MEMORY );
-		return ( NULL );
+		AFC_LOG_FAST(AFC_ERR_NO_MEMORY);
+		return (NULL);
 	}
 
-	return ( (char *) afc_nodemaster_add ( sn->nm, g, mode ) );
+	return ((char *)afc_nodemaster_add(sn->nm, g, mode));
 }
 // }}}
 // {{{ afc_stringnode_insert ( sn, str )
@@ -201,7 +204,7 @@ char * afc_stringnode_add (StringNode * sn, const char * s, unsigned long mode)
 		INPUT: - sn		 - an handler to an already allocated StringNode structure.
 		 - str		- the string you wish to add.
 
-	RESULTS: - a pointer to the real string if everything went fine. 
+	RESULTS: - a pointer to the real string if everything went fine.
 		 - NULL if there was no memory to add the string.
 
 	 SEE ALSO: - afc_stringnode_add()
@@ -228,7 +231,7 @@ char * afc_stringnode_insert (StringNode * sn, const char * s)
 
 		INPUT: - sn		 - an handler to an already allocated StringNode structure.
 
-	RESULTS: - a pointer to a string if everything went fine. 
+	RESULTS: - a pointer to a string if everything went fine.
 		 - NULL if the list is empty.
 
 			 SEE ALSO: - afc_stringnode_item()
@@ -434,7 +437,7 @@ short afc_stringnode_push (StringNode * sn)
 
 		INPUT: - sn	- an handler to an already allocated StringNode structure.
 		 - autopos	 - This is a boolean flag:
-						
+
 						 + TRUE -	restores the list pointer to the previously pushed node in list.
 
 						 + FALSE - just removes the pushed node from the stack.
@@ -442,7 +445,7 @@ short afc_stringnode_push (StringNode * sn)
 
 	RESULTS: - the last item pushed on the stack
 		 - NULL if you set autopos to TRUE.
-		
+
 
 			 SEE ALSO: - afc_stringnode_push()
 		 - afc_stringnode_clear_stack()
@@ -474,17 +477,17 @@ char * afc_stringnode_pop (StringNode * sn, short autopos)
 		 - afc_nodemaster_del()
 @endnode
 */
-char * afc_stringnode_del (StringNode * sn)
+char *afc_stringnode_del(StringNode *sn)
 {
-	char * s = NULL;
+	char *s = NULL;
 
-	if (!afc_stringnode_is_empty (sn) )
+	if (!afc_stringnode_is_empty(sn))
 	{
-		 if ( (s = afc_nodemaster_obj (sn->nm) ) )
-		 {
-			afc_string_delete (s);
-			s = (char *) afc_nodemaster_del (sn->nm);
-		 }
+		if ((s = afc_nodemaster_obj(sn->nm)))
+		{
+			afc_string_delete(s);
+			s = (char *)afc_nodemaster_del(sn->nm);
+		}
 	}
 
 	return (s);
@@ -563,22 +566,24 @@ char * afc_stringnode_last (StringNode * sn)
 		 - afc_nodemaster_clear()
 @endnode
 */
-int afc_stringnode_clear (StringNode * sn)
+int afc_stringnode_clear(StringNode *sn)
 {
-	char * s;
+	char *s;
 
-	if ( sn == NULL ) return ( AFC_LOG_FAST ( AFC_ERR_NULL_POINTER ) );
-	if ( sn->magic != AFC_STRINGNODE_MAGIC ) return ( AFC_LOG_FAST ( AFC_ERR_INVALID_POINTER ) );
+	if (sn == NULL)
+		return (AFC_LOG_FAST(AFC_ERR_NULL_POINTER));
+	if (sn->magic != AFC_STRINGNODE_MAGIC)
+		return (AFC_LOG_FAST(AFC_ERR_INVALID_POINTER));
 
-	s = (char *) afc_nodemaster_first (sn->nm);
+	s = (char *)afc_nodemaster_first(sn->nm);
 	while (s)
 	{
-		afc_string_delete (s);
+		afc_string_delete(s);
 
-		s = (char *) afc_nodemaster_next (sn->nm);
+		s = (char *)afc_nodemaster_next(sn->nm);
 	}
 
-	return ( afc_nodemaster_clear (sn->nm) );
+	return (afc_nodemaster_clear(sn->nm));
 }
 // }}}
 // {{{ afc_stringnode_len ( sn )
@@ -594,7 +599,7 @@ int afc_stringnode_clear (StringNode * sn)
 		INPUT: - sn		 - an handler to an already allocated StringNode structure.
 
 	RESULTS: the number of strings in the list.
-		
+
 			 SEE ALSO: - afc_nodemaster_len()
 @endnode
 */
@@ -658,26 +663,28 @@ char * afc_stringnode_item (StringNode * sn, unsigned long n)
 			 SEE ALSO: - afc_nodemaster_change()
 @endnode
 */
-int afc_stringnode_change (StringNode * sn, char * s)
+int afc_stringnode_change(StringNode *sn, char *s)
 {
-	char * g;
-	unsigned int		len;
+	char *g;
+	unsigned int len;
 
-	if ( afc_nodemaster_is_empty (sn->nm) ) return ( AFC_ERR_NO_ERROR ); 
- 
-	if ( ( g = afc_nodemaster_obj (sn->nm) ) )
+	if (afc_nodemaster_is_empty(sn->nm))
+		return (AFC_ERR_NO_ERROR);
+
+	if ((g = afc_nodemaster_obj(sn->nm)))
 	{
-		afc_string_delete (g);
+		afc_string_delete(g);
 
-		len = strlen (s);
+		len = strlen(s);
 
-		if ( ( g = afc_string_dup ( s ) ) == NULL ) return ( AFC_LOG_FAST ( AFC_ERR_NO_MEMORY ) );
+		if ((g = afc_string_dup(s)) == NULL)
+			return (AFC_LOG_FAST(AFC_ERR_NO_MEMORY));
 
-		if ( afc_nodemaster_change ( sn->nm, g ) == NULL ) 
-			return ( AFC_LOG ( AFC_LOG_ERROR, AFC_STRINGNODE_ERR_CHANGE, "Cannot change string", NULL ) );
+		if (afc_nodemaster_change(sn->nm, g) == NULL)
+			return (AFC_LOG(AFC_LOG_ERROR, AFC_STRINGNODE_ERR_CHANGE, "Cannot change string", NULL));
 	}
 
-	return ( AFC_ERR_NO_ERROR );
+	return (AFC_ERR_NO_ERROR);
 }
 // }}}
 // {{{ afc_stringnode_pos ( sn )
@@ -715,46 +722,47 @@ unsigned long afc_stringnode_pos (StringNode * sn)
 			 SYNOPSIS: int afc_stringnode_search (StringNode * sn, char * str, short from_here, short	nocase )
 
 		DESCRIPTION: this function searches the whole list (or part of it) for the specified pattern string.
-	               The pattern can be defined using the standard Unix file name pattern syntax, like "*" or "?".
+				   The pattern can be defined using the standard Unix file name pattern syntax, like "*" or "?".
 
 		INPUT: - sn			   - an handler to an already allocated StringNode structure.
 		 - str       - afc_string_new to search the list for.
 				   - from_here - Set it to TRUE if you want to start searching from the current position
-	                             and not from the beginning of the list.
+								 and not from the beginning of the list.
 		 - nocase	   - If set to TRUE, the sort will be case insensitive.
 
 	RESULTS: - AFC_ERR_NO_ERROR if everything went fine.
 
-	        NOTES: - This function may not be portable (it relies upon afc_string_pattern_match() )
+			NOTES: - This function may not be portable (it relies upon afc_string_pattern_match() )
 
 			 SEE ALSO: - afc_nodemaster_sort()
 @endnode
 */
-char * afc_stringnode_search (StringNode * sn, char * str, short from_here, short nocase )
+char *afc_stringnode_search(StringNode *sn, char *str, short from_here, short nocase)
 {
-	char * s;
+	char *s;
 
-	if ( afc_nodemaster_is_empty ( sn->nm ) ) return ( NULL );
+	if (afc_nodemaster_is_empty(sn->nm))
+		return (NULL);
 
-	afc_nodemaster_push ( sn->nm );
+	afc_nodemaster_push(sn->nm);
 
-	if ( from_here == FALSE ) 
-		s = ( char * ) afc_nodemaster_first ( sn->nm );
+	if (from_here == FALSE)
+		s = (char *)afc_nodemaster_first(sn->nm);
 	else
-		s = ( char * ) afc_nodemaster_obj ( sn->nm );
+		s = (char *)afc_nodemaster_obj(sn->nm);
 
-	while ( s ) 
+	while (s)
 	{
-	  if ( afc_string_pattern_match ( s, str, nocase ) == 0 ) 
+		if (afc_string_pattern_match(s, str, nocase) == 0)
 		{
-		  afc_nodemaster_pop ( sn->nm, FALSE );
-			return ( s );	
-		}	
-		s = ( char * ) afc_nodemaster_next ( sn->nm );
+			afc_nodemaster_pop(sn->nm, FALSE);
+			return (s);
+		}
+		s = (char *)afc_nodemaster_next(sn->nm);
 	}
-	
-	afc_nodemaster_pop ( sn->nm, TRUE );
-	return ( NULL );
+
+	afc_nodemaster_pop(sn->nm, TRUE);
+	return (NULL);
 }
 // }}}
 #endif
@@ -767,7 +775,7 @@ char * afc_stringnode_search (StringNode * sn, char * str, short from_here, shor
 
 			 SYNOPSIS: int afc_stringnode_sort (StringNode * sn, short	nocase, short	inverted)
 
-		DESCRIPTION: this function sorts the strings in the list. You can specify some sorting methods, 
+		DESCRIPTION: this function sorts the strings in the list. You can specify some sorting methods,
 		 such like if you want the sort being case insensitive (nocase) or if you want the
 		 order from Z-A instead of A-Z (inverted).
 
@@ -781,42 +789,47 @@ char * afc_stringnode_search (StringNode * sn, char * str, short from_here, shor
 			 SEE ALSO: - afc_nodemaster_sort()
 @endnode
 */
-int afc_stringnode_sort (StringNode * sn, short	nocase, short	inverted, short fast)
+int afc_stringnode_sort(StringNode *sn, short nocase, short inverted, short fast)
 {
 
-	 //afc_nodemaster_free_array(nm);
+	// afc_nodemaster_free_array(nm);
 
 	if (nocase)
 	{
-		 if (inverted)
-		 {
-			 if ( fast ) 
-	 afc_nodemaster_fast_sort (sn->nm, afc_stringnode_internal_sort_nocase_inv, NULL);
-			 else
-	 afc_nodemaster_sort (sn->nm, afc_stringnode_internal_sort_nocase_inv, NULL);
-
-		 } else {
-			 if ( fast )
-	 afc_nodemaster_fast_sort (sn->nm, afc_stringnode_internal_sort_nocase_noinv, NULL);
-			 else
-	 afc_nodemaster_sort (sn->nm, afc_stringnode_internal_sort_nocase_noinv, NULL);
-		 }
-	} else {
-		 if (inverted)
-		 {
-			 if ( fast ) 
-	afc_nodemaster_fast_sort (sn->nm, afc_stringnode_internal_sort_case_inv, NULL);
-			 else
-	afc_nodemaster_sort (sn->nm, afc_stringnode_internal_sort_case_inv, NULL);
-		 } else {
-			 if ( fast )
-	 afc_nodemaster_fast_sort (sn->nm, afc_stringnode_internal_sort_case_noinv, NULL);
-			 else
-	 afc_nodemaster_sort (sn->nm, afc_stringnode_internal_sort_case_noinv, NULL);
-		 }
+		if (inverted)
+		{
+			if (fast)
+				afc_nodemaster_fast_sort(sn->nm, afc_stringnode_internal_sort_nocase_inv, NULL);
+			else
+				afc_nodemaster_sort(sn->nm, afc_stringnode_internal_sort_nocase_inv, NULL);
+		}
+		else
+		{
+			if (fast)
+				afc_nodemaster_fast_sort(sn->nm, afc_stringnode_internal_sort_nocase_noinv, NULL);
+			else
+				afc_nodemaster_sort(sn->nm, afc_stringnode_internal_sort_nocase_noinv, NULL);
+		}
+	}
+	else
+	{
+		if (inverted)
+		{
+			if (fast)
+				afc_nodemaster_fast_sort(sn->nm, afc_stringnode_internal_sort_case_inv, NULL);
+			else
+				afc_nodemaster_sort(sn->nm, afc_stringnode_internal_sort_case_inv, NULL);
+		}
+		else
+		{
+			if (fast)
+				afc_nodemaster_fast_sort(sn->nm, afc_stringnode_internal_sort_case_noinv, NULL);
+			else
+				afc_nodemaster_sort(sn->nm, afc_stringnode_internal_sort_case_noinv, NULL);
+		}
 	}
 
-	return ( AFC_ERR_NO_ERROR );
+	return (AFC_ERR_NO_ERROR);
 }
 // }}}
 // {{{ afc_stringnode_close ( sn )
@@ -829,46 +842,47 @@ int afc_stringnode_sort (StringNode * sn, short	nocase, short	inverted, short fa
 
 		DESCRIPTION: this function copies all entries of a StringNode inside a new one.
 		 The new StringNode will result sorted and the internal array rappresentation
-	               is recreated in case that the original StringNode has these attributes set.
+				   is recreated in case that the original StringNode has these attributes set.
 
 		INPUT: - sn			 - an handler to an already allocated StringNode structure.
 
 	RESULTS: a pointer to a valid new StringNode object, or NULL if an error occurred.
 
 	  NOTES: - The new StringNode object must be freed with afc_stringnode_delete() like
-	                 any other StringNode object.
+					 any other StringNode object.
 
 		 - The new StringNode will contain copies of all string stored, not just references,
-	                 so it is perfectly safe to afc_stringnode_delete() the original StringNode.
+					 so it is perfectly safe to afc_stringnode_delete() the original StringNode.
 
 		 - In case the original StringNode had the internal array rappresentation of the list,
-	                 it will  be reproduced in the new StringNode.
+					 it will  be reproduced in the new StringNode.
 
 			 SEE ALSO: - afc_nodemaster_sort()
 @endnode
 */
-StringNode * afc_stringnode_clone ( StringNode * sn )
+StringNode *afc_stringnode_clone(StringNode *sn)
 {
-	StringNode * sn2 = afc_stringnode_new ();
-	char * s;
+	StringNode *sn2 = afc_stringnode_new();
+	char *s;
 
-	if ( sn2 == NULL ) return ( NULL );
+	if (sn2 == NULL)
+		return (NULL);
 
-	s = afc_stringnode_first ( sn );
-	while ( s )
+	s = afc_stringnode_first(sn);
+	while (s)
 	{
-		afc_stringnode_add ( sn2, s, AFC_STRINGNODE_ADD_TAIL );
-		s = afc_stringnode_next ( sn );
+		afc_stringnode_add(sn2, s, AFC_STRINGNODE_ADD_TAIL);
+		s = afc_stringnode_next(sn);
 	}
 
 	// Set the "is_sorted" flag inside the underlying NodeMaster
 	// to the new StringNode.
 	sn2->nm->is_sorted = sn->nm->is_sorted;
 
-	if ( sn->nm->is_array_valid )
-		afc_nodemaster_create_array ( sn2->nm );
+	if (sn->nm->is_array_valid)
+		afc_nodemaster_create_array(sn2->nm);
 
-	return ( sn2 );
+	return (sn2);
 }
 // }}}
 // {{{ afc_stringnode_split ( sn, string, delimiters )
@@ -880,84 +894,90 @@ StringNode * afc_stringnode_clone ( StringNode * sn )
 			 SYNOPSIS: int afc_stringnode_split ( StringNode * sn, const char * string, const char * delimiters )
 
 		DESCRIPTION: This function splits the string. You can specify one or more delimiters in one single string
-	               and the splitter will create the smallest part of them. Once the split is done, you can access
-	               the items usign afc_stringnode_item(), afc_stringnode_first(), afc_stringnode_next()
-	               and so on, because the fields are stored inside an AFC StringNode.
+				   and the splitter will create the smallest part of them. Once the split is done, you can access
+				   the items usign afc_stringnode_item(), afc_stringnode_first(), afc_stringnode_next()
+				   and so on, because the fields are stored inside an AFC StringNode.
 
 		INPUT: - sn      - A pointer to a valid StringNode instance
-	               - string     - The string to split in pieces
-	               - delimiters - All delimiters that the splitter must take care of.
+				   - string     - The string to split in pieces
+				   - delimiters - All delimiters that the splitter must take care of.
 
 	RESULTS: - AFC_ERR_NO_ERROR on success.
-	               - An error code in case of error
+				   - An error code in case of error
 
-	        NOTES: - Before the split is done, the function calls afc_stringnode_clear()
+			NOTES: - Before the split is done, the function calls afc_stringnode_clear()
 
 	 SEE ALSO: - afc_stringnode_first()
-	               - afc_stringnode_next()
-	               - afc_stringnode_item()
+				   - afc_stringnode_next()
+				   - afc_stringnode_item()
 
 @endnode
 */
-int afc_stringnode_split ( StringNode * sn, const char * string, const char * delimiters )
+int afc_stringnode_split(StringNode *sn, const char *string, const char *delimiters)
 {
-	char * base_string, * separators;
-	char * start_pos, * end_pos, * end_string;
-	char * x, *y, escape_char;
+	char *base_string, *separators;
+	char *start_pos, *end_pos, *end_string;
+	char *x, *y, escape_char;
 	int t, num_delimiters;
-	
-	if (string==NULL)  return ( AFC_LOG ( AFC_LOG_WARNING, AFC_STRINGNODE_ERR_NULL_STRING, "Null string is invalid", NULL ) );
-	if (delimiters==NULL) return ( AFC_LOG ( AFC_LOG_WARNING, AFC_STRINGNODE_ERR_NULL_DELIMITERS, "Null delimiters string is invalid", NULL ) );
 
-	afc_stringnode_clear ( sn ); 
+	if (string == NULL)
+		return (AFC_LOG(AFC_LOG_WARNING, AFC_STRINGNODE_ERR_NULL_STRING, "Null string is invalid", NULL));
+	if (delimiters == NULL)
+		return (AFC_LOG(AFC_LOG_WARNING, AFC_STRINGNODE_ERR_NULL_DELIMITERS, "Null delimiters string is invalid", NULL));
 
-	base_string = afc_string_dup ( string );
-	separators  = afc_string_dup ( delimiters );
+	afc_stringnode_clear(sn);
 
-	num_delimiters = afc_string_len ( separators );
+	base_string = afc_string_dup(string);
+	separators = afc_string_dup(delimiters);
 
-	end_string = base_string + afc_string_len ( base_string ) ;
-	end_pos	   = base_string;
+	num_delimiters = afc_string_len(separators);
+
+	end_string = base_string + afc_string_len(base_string);
+	end_pos = base_string;
 
 	escape_char = sn->escape_char;
 
-	while ( end_pos != end_string )
+	while (end_pos != end_string)
 	{
 		y = NULL;
 
 		start_pos = end_pos;
 
 		// Cycle all char delimiters defined
-		for ( t = 0; t < num_delimiters; t++)
+		for (t = 0; t < num_delimiters; t++)
 		{
-			x = index ( start_pos, separators[t] );
+			x = index(start_pos, separators[t]);
 
-			while ( x != NULL )
+			while (x != NULL)
 			{
-				if ( ( escape_char ) && ( x != base_string ) && ( x[-1] == escape_char ) )
+				if ((escape_char) && (x != base_string) && (x[-1] == escape_char))
 				{
-					x = index ( x+1, separators[t] );
-				} else {
-					if ( ( x < y ) || ( y == NULL ) )  y = x;
+					x = index(x + 1, separators[t]);
+				}
+				else
+				{
+					if ((x < y) || (y == NULL))
+						y = x;
 					x = NULL;
 				}
 			}
 		}
 
-		if ( y )
+		if (y)
 		{
-			*y=0;
-			end_pos = y+1;
-		} else 
+			*y = 0;
+			end_pos = y + 1;
+		}
+		else
 			end_pos = end_string;
-		
-		afc_stringnode_add ( sn, start_pos, AFC_STRINGNODE_ADD_TAIL );
+
+		afc_stringnode_add(sn, start_pos, AFC_STRINGNODE_ADD_TAIL);
 	}
 
-	afc_string_delete ( base_string );
-	afc_string_delete ( separators  );
+	afc_string_delete(base_string);
+	afc_string_delete(separators);
 
-	return ( AFC_ERR_NO_ERROR );
+	return (AFC_ERR_NO_ERROR);
 }
 // }}}
 // {{{ afc_stringnode_set_tags ( sn, first_tag, ... )
@@ -971,7 +991,7 @@ int afc_stringnode_split ( StringNode * sn, const char * string, const char * de
 	DESCRIPTION: This function sets StringNode behaviours using tags.
 
 		INPUT: - sn      	- A pointer to a valid StringNode instance
-		       - first_tag 	- First tag to be set.
+			   - first_tag 	- First tag to be set.
 					  Supported tags are:
 
 						+ AFC_STRINGNODE_TAG_DISCARD_ZERO_LEN - (TRUE/FALSE) If set to TRUE
@@ -982,40 +1002,39 @@ int afc_stringnode_split ( StringNode * sn, const char * string, const char * de
 							character during the afc_stringnode_split() operations. Please, remember to provide a
 							single character (ie. in single quotes '' and not double quotes) as escape char definition.
 
-		       - ... 		- All values and tags
+			   - ... 		- All values and tags
 
 	RESULTS: - AFC_ERR_NO_ERROR on success.
-	               - An error code in case of error
+				   - An error code in case of error
 
-	        NOTES: - Remember to end the tag list with AFC_TAG_END
+			NOTES: - Remember to end the tag list with AFC_TAG_END
 
 	 SEE ALSO: - afc_stringnode_first()
-	               - afc_stringnode_next()
-	               - afc_stringnode_item()
+				   - afc_stringnode_next()
+				   - afc_stringnode_item()
 
 @endnode
 */
-int _afc_stringnode_set_tags ( StringNode * sn, int first_tag, ... )
+int _afc_stringnode_set_tags(StringNode *sn, int first_tag, ...)
 {
 	va_list args;
 	unsigned int tag;
-	void * val;
+	void *val;
 
-	va_start ( args, first_tag );
+	va_start(args, first_tag);
 
 	tag = first_tag;
 
-	while ( tag != AFC_TAG_END )
+	while (tag != AFC_TAG_END)
 	{
-		val = va_arg ( args, void * );
+		val = va_arg(args, void *);
 
-		afc_stringnode_internal_set_tag ( sn, tag, val );
+		afc_stringnode_internal_set_tag(sn, tag, val);
 
-		tag = va_arg ( args, int );
+		tag = va_arg(args, int);
 	}
 
-	return ( AFC_ERR_NO_ERROR );
-	
+	return (AFC_ERR_NO_ERROR);
 }
 // }}}
 // {{{ afc_stringnode_before_first ( sn ) ************
@@ -1023,140 +1042,139 @@ int _afc_stringnode_set_tags ( StringNode * sn, int first_tag, ... )
 // }}}
 
 /* -------------------------------------------------------------------------------------------
-	 INTERNAL FUNCTIONS 
+	 INTERNAL FUNCTIONS
 --------------------------------------------------------------------------------------------- */
 // {{{ afc_stringnode_internal_set_tag ( sn, tag, val )
-static int afc_stringnode_internal_set_tag ( StringNode * sn, int tag, void * val )
+static int afc_stringnode_internal_set_tag(StringNode *sn, int tag, void *val)
 {
-	switch ( tag )
+	switch (tag)
 	{
-		case AFC_STRINGNODE_TAG_DISCARD_ZERO_LEN:
-			sn->discard_zero_len = ( BOOL ) ( int ) ( long ) val;
-			break;
+	case AFC_STRINGNODE_TAG_DISCARD_ZERO_LEN:
+		sn->discard_zero_len = (BOOL)(int)(long)val;
+		break;
 
-		case AFC_STRINGNODE_TAG_ESCAPE_CHAR:
-			sn->escape_char = ( char ) ( int ) ( long ) val;
-			break;
+	case AFC_STRINGNODE_TAG_ESCAPE_CHAR:
+		sn->escape_char = (char)(int)(long)val;
+		break;
 
-		default:
-			break;
+	default:
+		break;
 	}
 
-	return ( AFC_ERR_NO_ERROR );
+	return (AFC_ERR_NO_ERROR);
 }
 // }}}
 // {{{ afc_stringnode_internal_sort_nocase_noinv ( a, b, info )
-static long afc_stringnode_internal_sort_nocase_noinv (void * a, void * b, void * info)
+static long afc_stringnode_internal_sort_nocase_noinv(void *a, void *b, void *info)
 {
-	return (-afc_string_comp ((char *) a, (char *) b, ALL ));
+	return (-afc_string_comp((char *)a, (char *)b, ALL));
 }
 // }}}
 // {{{ afc_stringnode_internal_sort_case_noinv ( a, b, info )
-static long afc_stringnode_internal_sort_case_noinv (void * a, void * b, void * info)
+static long afc_stringnode_internal_sort_case_noinv(void *a, void *b, void *info)
 {
-	char * aa,	* bb;
-	signed long	 ret;
+	char *aa, *bb;
+	signed long ret;
 
-	aa = afc_string_new (strlen ((char *) a));
-	bb = afc_string_new (strlen ((char *) b));
+	aa = afc_string_new(strlen((char *)a));
+	bb = afc_string_new(strlen((char *)b));
 
-	afc_string_copy (aa, (char *)a, TRUE);
-	afc_string_copy (bb, (char *)b, TRUE);
-	afc_string_upper (aa);
-	afc_string_upper (bb);
+	afc_string_copy(aa, (char *)a, TRUE);
+	afc_string_copy(bb, (char *)b, TRUE);
+	afc_string_upper(aa);
+	afc_string_upper(bb);
 
-	ret = -afc_string_comp (aa,bb, TRUE);
+	ret = -afc_string_comp(aa, bb, TRUE);
 
-	afc_string_delete (aa);
-	afc_string_delete (bb);
+	afc_string_delete(aa);
+	afc_string_delete(bb);
 
 	return (ret);
 }
 // }}}
 // {{{ afc_stringnode_internal_sort_nocase_inv ( a, b, info )
-static long afc_stringnode_internal_sort_nocase_inv (void * a, void * b, void * info)
+static long afc_stringnode_internal_sort_nocase_inv(void *a, void *b, void *info)
 {
-	return (afc_string_comp ((char *) a, (char *)b, ALL ));
+	return (afc_string_comp((char *)a, (char *)b, ALL));
 }
 // }}}
 // {{{ afc_stringnode_internal_sort_case_inv ( a, b, info )
-static long afc_stringnode_internal_sort_case_inv (void * a, void * b, void * info)
+static long afc_stringnode_internal_sort_case_inv(void *a, void *b, void *info)
 {
-	return (-afc_stringnode_internal_sort_case_noinv (a,b, info));
+	return (-afc_stringnode_internal_sort_case_noinv(a, b, info));
 }
 // }}}
 
 #ifdef TEST_CLASS
 // {{{ TEST_CLASS
-void dosort (struct afc_stringnode *n)
+void dosort(struct afc_stringnode *n)
 {
-	 afc_stringnode_sort (n, TRUE, TRUE, FALSE );
+	afc_stringnode_sort(n, TRUE, TRUE, FALSE);
 }
 
-void shwall (struct afc_stringnode *n)
+void shwall(struct afc_stringnode *n)
 {
-	printf ("-----------------------\n");
+	printf("-----------------------\n");
 
-	if (afc_stringnode_first (n))
+	if (afc_stringnode_first(n))
 	{
-	  do
-	    printf ("Item: %s - Pos:%ld\n",afc_stringnode_obj (n), afc_stringnode_numerical_pos (n));
-	  while (afc_stringnode_next(n));
+		do
+			printf("Item: %s - Pos:%ld\n", afc_stringnode_obj(n), afc_stringnode_numerical_pos(n));
+		while (afc_stringnode_next(n));
 	}
 
-	printf ("-----------------------\n");
+	printf("-----------------------\n");
 }
 
-int main (void)
+int main(void)
 {
-	 struct afc_stringnode *sn;
-	 //struct TagItem tags[] = { TAGSTR_MaxChars, 3, TAG_END };
+	struct afc_stringnode *sn;
+	// struct TagItem tags[] = { TAGSTR_MaxChars, 3, TAG_END };
 
-	 sn = afc_stringnode_new();
+	sn = afc_stringnode_new();
 
-	 if (sn)
-	 {
-	   afc_stringnode_first (sn);
+	if (sn)
+	{
+		afc_stringnode_first(sn);
 
-	   afc_stringnode_add (sn, "Ciao Mamma", AFC_STRINGNODE_ADD_TAIL);
-	   afc_stringnode_add (sn, "Zio Peppino", AFC_STRINGNODE_ADD_TAIL);
-	   afc_stringnode_add (sn, "Paperino", AFC_STRINGNODE_ADD_TAIL);
-	   afc_stringnode_add (sn, "Tom & Jerry", AFC_STRINGNODE_ADD_TAIL);
-	   afc_stringnode_add (sn, "Pluto", AFC_STRINGNODE_ADD_TAIL);
-	   afc_stringnode_add (sn, "Anna", AFC_STRINGNODE_ADD_TAIL);
-	   afc_stringnode_add (sn, "Zorro", AFC_STRINGNODE_ADD_TAIL);
-	   afc_stringnode_add (sn, "Vienna", AFC_STRINGNODE_ADD_TAIL);
-	   afc_stringnode_add (sn, "PIPPO", AFC_STRINGNODE_ADD_TAIL);
+		afc_stringnode_add(sn, "Ciao Mamma", AFC_STRINGNODE_ADD_TAIL);
+		afc_stringnode_add(sn, "Zio Peppino", AFC_STRINGNODE_ADD_TAIL);
+		afc_stringnode_add(sn, "Paperino", AFC_STRINGNODE_ADD_TAIL);
+		afc_stringnode_add(sn, "Tom & Jerry", AFC_STRINGNODE_ADD_TAIL);
+		afc_stringnode_add(sn, "Pluto", AFC_STRINGNODE_ADD_TAIL);
+		afc_stringnode_add(sn, "Anna", AFC_STRINGNODE_ADD_TAIL);
+		afc_stringnode_add(sn, "Zorro", AFC_STRINGNODE_ADD_TAIL);
+		afc_stringnode_add(sn, "Vienna", AFC_STRINGNODE_ADD_TAIL);
+		afc_stringnode_add(sn, "PIPPO", AFC_STRINGNODE_ADD_TAIL);
 
-	   dosort (sn);
-	   shwall (sn);
+		dosort(sn);
+		shwall(sn);
 
-	   //afc_stringnode_search ("Tom#?");
-	   //afc_stringnode_search ("PLA");
+		// afc_stringnode_search ("Tom#?");
+		// afc_stringnode_search ("PLA");
 
-	   //printf ("Running!\n");
+		// printf ("Running!\n");
 
-	   //printf ("STRING:%s - Pos:%ld\n",afc_stringnode_obj (),afc_stringnode_pos ());
+		// printf ("STRING:%s - Pos:%ld\n",afc_stringnode_obj (),afc_stringnode_pos ());
 
-	   afc_stringnode_clear (sn);
+		afc_stringnode_clear(sn);
 
-		 afc_stringnode_split ( sn, "ciao|mamma|bella|come|stai", "|" );
+		afc_stringnode_split(sn, "ciao|mamma|bella|come|stai", "|");
 
-			shwall ( sn );
+		shwall(sn);
 
-	   //afc_stringnode_setattrs (tags);
-	   afc_stringnode_add (sn, "Ciao Mammina Bella", AFC_STRINGNODE_ADD_TAIL);
-	   printf ("Str:%s - Chars (%ld)\n",afc_stringnode_obj (sn),afc_string_len (afc_stringnode_obj (sn)));
-	   afc_stringnode_change (sn, "Ciao Mammina Be");
-	   printf ("Str:%s - Chars (%ld)\n",afc_stringnode_obj (sn),afc_string_len (afc_stringnode_obj (sn)));
-	   afc_stringnode_change (sn, "Pippo");
-	   printf ("Str:%s - Chars (%ld)\n",afc_stringnode_obj (sn),afc_string_len (afc_stringnode_obj (sn)));
+		// afc_stringnode_setattrs (tags);
+		afc_stringnode_add(sn, "Ciao Mammina Bella", AFC_STRINGNODE_ADD_TAIL);
+		printf("Str:%s - Chars (%ld)\n", afc_stringnode_obj(sn), afc_string_len(afc_stringnode_obj(sn)));
+		afc_stringnode_change(sn, "Ciao Mammina Be");
+		printf("Str:%s - Chars (%ld)\n", afc_stringnode_obj(sn), afc_string_len(afc_stringnode_obj(sn)));
+		afc_stringnode_change(sn, "Pippo");
+		printf("Str:%s - Chars (%ld)\n", afc_stringnode_obj(sn), afc_string_len(afc_stringnode_obj(sn)));
 
-	   afc_stringnode_delete(sn);
+		afc_stringnode_delete(sn);
 	}
 
-	return(0);
-
+	return (0);
 }
 // }}}
 #endif
