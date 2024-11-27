@@ -28,7 +28,7 @@
 #include <stdarg.h>
 
 #include "base.h"
-#include "nodemaster.h"
+#include "list.h"
 #include "stringnode.h"
 #include "string.h"
 
@@ -72,8 +72,8 @@ extern "C"
   {
     unsigned long magic;
 
-    struct afc_nodemaster *fields;
-    struct afc_nodemaster *str;
+    struct afc_list *fields;
+    struct afc_list *str;
 
     struct afc_stringnode *global_split;
     struct afc_stringnode *local_split;
@@ -83,7 +83,7 @@ extern "C"
 
   struct afc_readargs_data
   {
-    struct afc_nodemaster *multi;
+    struct afc_list *multi;
 
     char *name;
     void *data;

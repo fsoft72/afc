@@ -23,16 +23,16 @@
 
 int elements = 0;
 
-NodeMaster *am;
+List *am;
 
 void add_element()
 {
 	printf("Adding a new Element...\n ");
 
-	afc_nodemaster_add(am, (void *)1, AFC_NODEMASTER_ADD_TAIL);
+	afc_list_add(am, (void *)1, AFC_LIST_ADD_TAIL);
 	elements++;
 
-	printf("Elements: %d - AM Elements: %lu\n", elements, afc_nodemaster_len(am));
+	printf("Elements: %d - AM Elements: %lu\n", elements, afc_list_len(am));
 }
 
 void del_element()
@@ -46,11 +46,11 @@ void del_element()
 
 	printf("Deleting an Element...%d\n ", num);
 
-	afc_nodemaster_item(am, num);
-	afc_nodemaster_del(am);
+	afc_list_item(am, num);
+	afc_list_del(am);
 	elements--;
 
-	printf("Elements: %d - AM Elements: %lu\n", elements, afc_nodemaster_len(am));
+	printf("Elements: %d - AM Elements: %lu\n", elements, afc_list_len(am));
 }
 
 int main()
@@ -63,7 +63,7 @@ int main()
 	if (afc == NULL)
 		return (1);
 
-	am = afc_nodemaster_new();
+	am = afc_list_new();
 
 	for (t = 0; t < 100000; t++)
 	{
@@ -76,7 +76,7 @@ int main()
 			del_element();
 	}
 
-	afc_nodemaster_delete(am);
+	afc_list_delete(am);
 
 	afc_delete(afc);
 

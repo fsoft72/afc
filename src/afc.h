@@ -23,7 +23,7 @@
 #include "base.h"
 #include "exceptions.h"
 #include "mem_tracker.h"
-#include "nodemaster.h"
+#include "list.h"
 #include "stringnode.h"
 #include "readargs.h"
 #include "regexp.h"

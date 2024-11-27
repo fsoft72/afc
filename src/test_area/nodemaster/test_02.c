@@ -19,22 +19,22 @@
  */
 #include "../test_utils.h"
 
-void add_three(NodeMaster *am)
+void add_three(List *am)
 {
-	afc_nodemaster_add(am, (void *)1, AFC_NODEMASTER_ADD_TAIL);
-	afc_nodemaster_add(am, (void *)2, AFC_NODEMASTER_ADD_TAIL);
-	afc_nodemaster_add(am, (void *)3, AFC_NODEMASTER_ADD_TAIL);
+	afc_list_add(am, (void *)1, AFC_LIST_ADD_TAIL);
+	afc_list_add(am, (void *)2, AFC_LIST_ADD_TAIL);
+	afc_list_add(am, (void *)3, AFC_LIST_ADD_TAIL);
 }
 
 int main()
 {
 	AFC *afc;
-	NodeMaster *am;
+	List *am;
 
 	if ((afc = afc_new()) == NULL)
 		exit(1);
 
-	if ((am = afc_nodemaster_new()) == NULL)
+	if ((am = afc_list_new()) == NULL)
 		exit(1);
 
 	add_three(am);
@@ -45,52 +45,52 @@ int main()
 
 	print_row();
 
-	print_res("first", (void *)1, afc_nodemaster_first(am), 0);
-	print_res("del", (void *)2, afc_nodemaster_del(am), 0);
-	print_res("del", (void *)3, afc_nodemaster_del(am), 0);
-	print_res("del", (void *)0, afc_nodemaster_del(am), 0);
-	print_res("first", (void *)0, afc_nodemaster_first(am), 0);
-	print_res("empty", (void *)1, (void *)(int)afc_nodemaster_is_empty(am), 0);
+	print_res("first", (void *)1, afc_list_first(am), 0);
+	print_res("del", (void *)2, afc_list_del(am), 0);
+	print_res("del", (void *)3, afc_list_del(am), 0);
+	print_res("del", (void *)0, afc_list_del(am), 0);
+	print_res("first", (void *)0, afc_list_first(am), 0);
+	print_res("empty", (void *)1, (void *)(int)afc_list_is_empty(am), 0);
 
 	print_row();
 
 	add_three(am);
 
-	print_res("item(1)", (void *)2, afc_nodemaster_item(am, 1), 0);
-	print_res("del", (void *)3, afc_nodemaster_del(am), 0);
-	print_res("del", (void *)1, afc_nodemaster_del(am), 0);
-	print_res("del", (void *)0, afc_nodemaster_del(am), 0);
-	print_res("empty", (void *)1, (void *)(int)afc_nodemaster_is_empty(am), 0);
+	print_res("item(1)", (void *)2, afc_list_item(am, 1), 0);
+	print_res("del", (void *)3, afc_list_del(am), 0);
+	print_res("del", (void *)1, afc_list_del(am), 0);
+	print_res("del", (void *)0, afc_list_del(am), 0);
+	print_res("empty", (void *)1, (void *)(int)afc_list_is_empty(am), 0);
 
 	print_row();
 
 	add_three(am);
 
-	print_res("last", (void *)3, afc_nodemaster_last(am), 0);
-	print_res("del", (void *)2, afc_nodemaster_del(am), 0);
-	print_res("del", (void *)1, afc_nodemaster_del(am), 0);
-	print_res("del", (void *)0, afc_nodemaster_del(am), 0);
-	print_res("empty", (void *)1, (void *)(int)afc_nodemaster_is_empty(am), 0);
+	print_res("last", (void *)3, afc_list_last(am), 0);
+	print_res("del", (void *)2, afc_list_del(am), 0);
+	print_res("del", (void *)1, afc_list_del(am), 0);
+	print_res("del", (void *)0, afc_list_del(am), 0);
+	print_res("empty", (void *)1, (void *)(int)afc_list_is_empty(am), 0);
 
 	print_row();
 
 	add_three(am);
 
-	print_res("clear", (void *)AFC_ERR_NO_ERROR, (void *)afc_nodemaster_clear(am), 0);
-	print_res("empty", (void *)1, (void *)(int)afc_nodemaster_is_empty(am), 0);
+	print_res("clear", (void *)AFC_ERR_NO_ERROR, (void *)afc_list_clear(am), 0);
+	print_res("empty", (void *)1, (void *)(int)afc_list_is_empty(am), 0);
 
 	print_summary();
 
-	afc_nodemaster_clear(am);
+	afc_list_clear(am);
 
-	printf("Empty: %d\n", afc_nodemaster_is_empty(am));
-	afc_nodemaster_clear(am);
-	printf("Empty: %d\n", afc_nodemaster_is_empty(am));
-	afc_nodemaster_clear(am);
-	printf("Empty: %d\n", afc_nodemaster_is_empty(am));
-	afc_nodemaster_clear(am);
+	printf("Empty: %d\n", afc_list_is_empty(am));
+	afc_list_clear(am);
+	printf("Empty: %d\n", afc_list_is_empty(am));
+	afc_list_clear(am);
+	printf("Empty: %d\n", afc_list_is_empty(am));
+	afc_list_clear(am);
 
-	afc_nodemaster_delete(am);
+	afc_list_delete(am);
 
 	afc_delete(afc);
 

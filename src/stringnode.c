@@ -47,8 +47,8 @@ static long afc_stringnode_internal_sort_case_inv(void *a, void *b, void *info);
 @endnode
 
 @node intro
-StringNode is a class based on NodeMaster created to handle lists of strings.
-It is able to do almost everything that /NodeMaster/ is able to do on lists,
+StringNode is a class based on List created to handle lists of strings.
+It is able to do almost everything that /List/ is able to do on lists,
 making very easy to store a great number of strings at once.
 
 StringNode internal rappresentation of strings are AFC Strings. Please, see
@@ -88,8 +88,8 @@ StringNode *_afc_stringnode_new(const char *file, const char *func, const unsign
 
 	sn->magic = AFC_STRINGNODE_MAGIC;
 
-	if ((sn->nm = afc_nodemaster_new()) == NULL)
-		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "nodemaster", NULL);
+	if ((sn->nm = afc_list_new()) == NULL)
+		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "list", NULL);
 
 	RETURN(sn);
 
@@ -128,7 +128,7 @@ int _afc_stringnode_delete(StringNode *sn)
 	if ((res = afc_stringnode_clear(sn)) != AFC_ERR_NO_ERROR)
 		return (res);
 
-	afc_nodemaster_delete(sn->nm);
+	afc_list_delete(sn->nm);
 	afc_free(sn);
 
 	return (AFC_ERR_NO_ERROR);
@@ -165,7 +165,7 @@ int _afc_stringnode_delete(StringNode *sn)
 			 SEE ALSO: - afc_stringnode_insert()
 		 - afc_stringnode_del()
 		 - afc_stringnode_clear()
-		 - afc_nodemaster_add()
+		 - afc_list_add()
 @endnode
 */
 char *afc_stringnode_add(StringNode *sn, const char *s, unsigned long mode)
@@ -188,7 +188,7 @@ char *afc_stringnode_add(StringNode *sn, const char *s, unsigned long mode)
 		return (NULL);
 	}
 
-	return ((char *)afc_nodemaster_add(sn->nm, g, mode));
+	return ((char *)afc_list_add(sn->nm, g, mode));
 }
 // }}}
 // {{{ afc_stringnode_insert ( sn, str )
@@ -235,13 +235,13 @@ char * afc_stringnode_insert (StringNode * sn, const char * s)
 		 - NULL if the list is empty.
 
 			 SEE ALSO: - afc_stringnode_item()
-		 - afc_nodemaster_obj()
+		 - afc_list_obj()
 @endnode
 */
 /*
 char * afc_stringnode_obj (StringNode * sn)
 {
-	return ((char *)afc_nodemaster_obj (sn->nm));
+	return ((char *)afc_list_obj (sn->nm));
 }
 */
 // }}}
@@ -260,13 +260,13 @@ char * afc_stringnode_obj (StringNode * sn)
 	RESULTS: - TRUE if the StringNode does not contain any items.
 		 - FALSE if at least one item is present in the current StringNode's list
 
-			 SEE ALSO: - afc_nodemaster_is_empty()
+			 SEE ALSO: - afc_list_is_empty()
 @endnode
 */
 /*
 short afc_stringnode_is_empty (StringNode * sn)
 {
-	return ( afc_nodemaster_is_empty (sn->nm) );
+	return ( afc_list_is_empty (sn->nm) );
 }
 */
 // }}}
@@ -289,10 +289,10 @@ short afc_stringnode_is_empty (StringNode * sn)
 		 - afc_stringnode_next()
 		 - afc_stringnode_prev()
 		 - afc_stringnode_item()
-		 - afc_nodemaster_first()
+		 - afc_list_first()
 @endnode
 */
-// char * afc_stringnode_first ( StringNode * sn ) { return ( ( char * ) afc_nodemaster_first ( sn->nm ) ); }
+// char * afc_stringnode_first ( StringNode * sn ) { return ( ( char * ) afc_list_first ( sn->nm ) ); }
 // }}}
 // {{{ afc_stringnode_next ( sn )
 /*
@@ -313,10 +313,10 @@ short afc_stringnode_is_empty (StringNode * sn)
 		 - afc_stringnode_last()
 		 - afc_stringnode_prev()
 		 - afc_stringnode_item()
-		 - afc_nodemaster_next()
+		 - afc_list_next()
 @endnode
 */
-// char * afc_stringnode_next ( StringNode * sn ) { return ( ( char * ) afc_nodemaster_next ( sn->nm ) ); }
+// char * afc_stringnode_next ( StringNode * sn ) { return ( ( char * ) afc_list_next ( sn->nm ) ); }
 // }}}
 // {{{ afc_stringnode_prev ( sn )
 /*
@@ -337,10 +337,10 @@ short afc_stringnode_is_empty (StringNode * sn)
 		 - afc_stringnode_last()
 		 - afc_stringnode_next()
 		 - afc_stringnode_item()
-		 - afc_nodemaster_prev()
+		 - afc_list_prev()
 @endnode
 */
-// char * afc_stringnode_prev ( StringNode * sn ) { return ( ( char * ) afc_nodemaster_prev ( sn->nm ) ); }
+// char * afc_stringnode_prev ( StringNode * sn ) { return ( ( char * ) afc_list_prev ( sn->nm ) ); }
 // }}}
 // {{{ afc_stringnode_get ( sn )
 /*
@@ -360,13 +360,13 @@ short afc_stringnode_is_empty (StringNode * sn)
 		NOTES: - This is a very low level function. You should only use it if you know what you are doing.
 
 			 SEE ALSO: - afc_stringnode_addr()
-		 - afc_nodemaster_get()
+		 - afc_list_get()
 @endnode
 */
 /*
 struct Node * afc_stringnode_get (StringNode * sn)
 {
-	return (afc_nodemaster_get (sn->nm));
+	return (afc_list_get (sn->nm));
 }
 */
 // }}}
@@ -388,13 +388,13 @@ struct Node * afc_stringnode_get (StringNode * sn)
 		 - This function does *never* return NULL, because even if the List is empty, it is always avaible.
 
 			 SEE ALSO: - afc_stringnode_get()
-		 - afc_nodemaster_addr()
+		 - afc_list_addr()
 @endnode
 */
 /*
 struct List * afc_stringnode_addr (StringNode * sn)
 {
-	return (afc_nodemaster_addr (sn->nm));
+	return (afc_list_addr (sn->nm));
 }
 */
 // }}}
@@ -415,13 +415,13 @@ struct List * afc_stringnode_addr (StringNode * sn)
 
 			 SEE ALSO: - afc_stringnode_pop()
 		 - afc_stringnode_clear_stack()
-		 - afc_nodemaster_push()
+		 - afc_list_push()
 @endnode
 */
 /*
 short afc_stringnode_push (StringNode * sn)
 {
-	return (afc_nodemaster_push (sn->nm));
+	return (afc_list_push (sn->nm));
 }
 */
 // }}}
@@ -449,13 +449,13 @@ short afc_stringnode_push (StringNode * sn)
 
 			 SEE ALSO: - afc_stringnode_push()
 		 - afc_stringnode_clear_stack()
-		 - afc_nodemaster_pop()
+		 - afc_list_pop()
 @endnode
 */
 /*
 char * afc_stringnode_pop (StringNode * sn, short autopos)
 {
-	return ((char *)afc_nodemaster_pop (sn->nm, autopos));
+	return ((char *)afc_list_pop (sn->nm, autopos));
 }
 */
 // }}}
@@ -474,7 +474,7 @@ char * afc_stringnode_pop (StringNode * sn, short autopos)
 	RESULTS: the (new) current string the list is pointing to.
 
 			 SEE ALSO: - afc_stringnode_clear()
-		 - afc_nodemaster_del()
+		 - afc_list_del()
 @endnode
 */
 char *afc_stringnode_del(StringNode *sn)
@@ -483,10 +483,10 @@ char *afc_stringnode_del(StringNode *sn)
 
 	if (!afc_stringnode_is_empty(sn))
 	{
-		if ((s = afc_nodemaster_obj(sn->nm)))
+		if ((s = afc_list_obj(sn->nm)))
 		{
 			afc_string_delete(s);
-			s = (char *)afc_nodemaster_del(sn->nm);
+			s = (char *)afc_list_del(sn->nm);
 		}
 	}
 
@@ -509,13 +509,13 @@ char *afc_stringnode_del(StringNode *sn)
 
 			 SEE ALSO: - afc_stringnode_push()
 		 - afc_stringnode_pop()
-		 - afc_nodemaster_clear_stack()
+		 - afc_list_clear_stack()
 @endnode
 */
 /*
 void afc_stringnode_clear_stack (StringNode * sn)
 {
-	afc_nodemaster_clear_stack (sn->nm);
+	afc_list_clear_stack (sn->nm);
 }
 */
 // }}}
@@ -538,13 +538,13 @@ void afc_stringnode_clear_stack (StringNode * sn)
 		 - afc_stringnode_prev()
 		 - afc_stringnode_next()
 		 - afc_stringnode_item()
-		 - afc_nodemaster_last()
+		 - afc_list_last()
 @endnode
 */
 /*
 char * afc_stringnode_last (StringNode * sn)
 {
-	 return ((char *)afc_nodemaster_last (sn->nm));
+	 return ((char *)afc_list_last (sn->nm));
 }
 */
 // }}}
@@ -563,7 +563,7 @@ char * afc_stringnode_last (StringNode * sn)
 	RESULTS: NONE
 
 			 SEE ALSO: - afc_stringnode_del()
-		 - afc_nodemaster_clear()
+		 - afc_list_clear()
 @endnode
 */
 int afc_stringnode_clear(StringNode *sn)
@@ -575,15 +575,15 @@ int afc_stringnode_clear(StringNode *sn)
 	if (sn->magic != AFC_STRINGNODE_MAGIC)
 		return (AFC_LOG_FAST(AFC_ERR_INVALID_POINTER));
 
-	s = (char *)afc_nodemaster_first(sn->nm);
+	s = (char *)afc_list_first(sn->nm);
 	while (s)
 	{
 		afc_string_delete(s);
 
-		s = (char *)afc_nodemaster_next(sn->nm);
+		s = (char *)afc_list_next(sn->nm);
 	}
 
-	return (afc_nodemaster_clear(sn->nm));
+	return (afc_list_clear(sn->nm));
 }
 // }}}
 // {{{ afc_stringnode_len ( sn )
@@ -600,13 +600,13 @@ int afc_stringnode_clear(StringNode *sn)
 
 	RESULTS: the number of strings in the list.
 
-			 SEE ALSO: - afc_nodemaster_len()
+			 SEE ALSO: - afc_list_len()
 @endnode
 */
 /*
 unsigned long afc_stringnode_len (StringNode * sn)
 {
-	return (afc_nodemaster_len (sn->nm));
+	return (afc_list_len (sn->nm));
 }
 */
 // }}}
@@ -633,13 +633,13 @@ unsigned long afc_stringnode_len (StringNode * sn)
 		 - afc_stringnode_last()
 		 - afc_stringnode_prev()
 		 - afc_stringnode_next()
-		 - afc_nodemaster_item()
+		 - afc_list_item()
 @endnode
 */
 /*
 char * afc_stringnode_item (StringNode * sn, unsigned long n)
 {
-	return ((char *)afc_nodemaster_item (sn->nm, n));
+	return ((char *)afc_list_item (sn->nm, n));
 }
 */
 // }}}
@@ -660,7 +660,7 @@ char * afc_stringnode_item (StringNode * sn, unsigned long n)
 
 		NOTES: - This is a low level function and should only be used if you know what you are doing.
 
-			 SEE ALSO: - afc_nodemaster_change()
+			 SEE ALSO: - afc_list_change()
 @endnode
 */
 int afc_stringnode_change(StringNode *sn, char *s)
@@ -668,10 +668,10 @@ int afc_stringnode_change(StringNode *sn, char *s)
 	char *g;
 	unsigned int len;
 
-	if (afc_nodemaster_is_empty(sn->nm))
+	if (afc_list_is_empty(sn->nm))
 		return (AFC_ERR_NO_ERROR);
 
-	if ((g = afc_nodemaster_obj(sn->nm)))
+	if ((g = afc_list_obj(sn->nm)))
 	{
 		afc_string_delete(g);
 
@@ -680,7 +680,7 @@ int afc_stringnode_change(StringNode *sn, char *s)
 		if ((g = afc_string_dup(s)) == NULL)
 			return (AFC_LOG_FAST(AFC_ERR_NO_MEMORY));
 
-		if (afc_nodemaster_change(sn->nm, g) == NULL)
+		if (afc_list_change(sn->nm, g) == NULL)
 			return (AFC_LOG(AFC_LOG_ERROR, AFC_STRINGNODE_ERR_CHANGE, "Cannot change string", NULL));
 	}
 
@@ -701,13 +701,13 @@ int afc_stringnode_change(StringNode *sn, char *s)
 
 	RESULTS: - the numerical value of the ordinal position of the string in the list
 
-			 SEE ALSO: - afc_nodemaster_pos()
+			 SEE ALSO: - afc_list_pos()
 @endnode
 */
 /*
 unsigned long afc_stringnode_pos (StringNode * sn)
 {
-	return ( afc_nodemaster_pos (sn->nm) );
+	return ( afc_list_pos (sn->nm) );
 }
 */
 // }}}
@@ -734,34 +734,34 @@ unsigned long afc_stringnode_pos (StringNode * sn)
 
 			NOTES: - This function may not be portable (it relies upon afc_string_pattern_match() )
 
-			 SEE ALSO: - afc_nodemaster_sort()
+			 SEE ALSO: - afc_list_sort()
 @endnode
 */
 char *afc_stringnode_search(StringNode *sn, char *str, short from_here, short nocase)
 {
 	char *s;
 
-	if (afc_nodemaster_is_empty(sn->nm))
+	if (afc_list_is_empty(sn->nm))
 		return (NULL);
 
-	afc_nodemaster_push(sn->nm);
+	afc_list_push(sn->nm);
 
 	if (from_here == FALSE)
-		s = (char *)afc_nodemaster_first(sn->nm);
+		s = (char *)afc_list_first(sn->nm);
 	else
-		s = (char *)afc_nodemaster_obj(sn->nm);
+		s = (char *)afc_list_obj(sn->nm);
 
 	while (s)
 	{
 		if (afc_string_pattern_match(s, str, nocase) == 0)
 		{
-			afc_nodemaster_pop(sn->nm, FALSE);
+			afc_list_pop(sn->nm, FALSE);
 			return (s);
 		}
-		s = (char *)afc_nodemaster_next(sn->nm);
+		s = (char *)afc_list_next(sn->nm);
 	}
 
-	afc_nodemaster_pop(sn->nm, TRUE);
+	afc_list_pop(sn->nm, TRUE);
 	return (NULL);
 }
 // }}}
@@ -782,33 +782,33 @@ char *afc_stringnode_search(StringNode *sn, char *str, short from_here, short no
 		INPUT: - sn			 - an handler to an already allocated StringNode structure.
 		 - nocase	 - If set to TRUE, the sort will be case insensitive.
 		 - inverted - If set to TRUE, the sort will be inverted: from Z to A and not A-Z.
-		 - fast		 - If set to TRUE, the fast sort routine in NodeMaster will be used.
+		 - fast		 - If set to TRUE, the fast sort routine in List will be used.
 
 	RESULTS: - AFC_ERR_NO_ERROR if everything went fine.
 
-			 SEE ALSO: - afc_nodemaster_sort()
+			 SEE ALSO: - afc_list_sort()
 @endnode
 */
 int afc_stringnode_sort(StringNode *sn, short nocase, short inverted, short fast)
 {
 
-	// afc_nodemaster_free_array(nm);
+	// afc_list_free_array(nm);
 
 	if (nocase)
 	{
 		if (inverted)
 		{
 			if (fast)
-				afc_nodemaster_fast_sort(sn->nm, afc_stringnode_internal_sort_nocase_inv, NULL);
+				afc_list_fast_sort(sn->nm, afc_stringnode_internal_sort_nocase_inv, NULL);
 			else
-				afc_nodemaster_sort(sn->nm, afc_stringnode_internal_sort_nocase_inv, NULL);
+				afc_list_sort(sn->nm, afc_stringnode_internal_sort_nocase_inv, NULL);
 		}
 		else
 		{
 			if (fast)
-				afc_nodemaster_fast_sort(sn->nm, afc_stringnode_internal_sort_nocase_noinv, NULL);
+				afc_list_fast_sort(sn->nm, afc_stringnode_internal_sort_nocase_noinv, NULL);
 			else
-				afc_nodemaster_sort(sn->nm, afc_stringnode_internal_sort_nocase_noinv, NULL);
+				afc_list_sort(sn->nm, afc_stringnode_internal_sort_nocase_noinv, NULL);
 		}
 	}
 	else
@@ -816,16 +816,16 @@ int afc_stringnode_sort(StringNode *sn, short nocase, short inverted, short fast
 		if (inverted)
 		{
 			if (fast)
-				afc_nodemaster_fast_sort(sn->nm, afc_stringnode_internal_sort_case_inv, NULL);
+				afc_list_fast_sort(sn->nm, afc_stringnode_internal_sort_case_inv, NULL);
 			else
-				afc_nodemaster_sort(sn->nm, afc_stringnode_internal_sort_case_inv, NULL);
+				afc_list_sort(sn->nm, afc_stringnode_internal_sort_case_inv, NULL);
 		}
 		else
 		{
 			if (fast)
-				afc_nodemaster_fast_sort(sn->nm, afc_stringnode_internal_sort_case_noinv, NULL);
+				afc_list_fast_sort(sn->nm, afc_stringnode_internal_sort_case_noinv, NULL);
 			else
-				afc_nodemaster_sort(sn->nm, afc_stringnode_internal_sort_case_noinv, NULL);
+				afc_list_sort(sn->nm, afc_stringnode_internal_sort_case_noinv, NULL);
 		}
 	}
 
@@ -857,7 +857,7 @@ int afc_stringnode_sort(StringNode *sn, short nocase, short inverted, short fast
 		 - In case the original StringNode had the internal array rappresentation of the list,
 					 it will  be reproduced in the new StringNode.
 
-			 SEE ALSO: - afc_nodemaster_sort()
+			 SEE ALSO: - afc_list_sort()
 @endnode
 */
 StringNode *afc_stringnode_clone(StringNode *sn)
@@ -875,12 +875,12 @@ StringNode *afc_stringnode_clone(StringNode *sn)
 		s = afc_stringnode_next(sn);
 	}
 
-	// Set the "is_sorted" flag inside the underlying NodeMaster
+	// Set the "is_sorted" flag inside the underlying List
 	// to the new StringNode.
 	sn2->nm->is_sorted = sn->nm->is_sorted;
 
 	if (sn->nm->is_array_valid)
-		afc_nodemaster_create_array(sn2->nm);
+		afc_list_create_array(sn2->nm);
 
 	return (sn2);
 }
@@ -1038,7 +1038,7 @@ int _afc_stringnode_set_tags(StringNode *sn, int first_tag, ...)
 }
 // }}}
 // {{{ afc_stringnode_before_first ( sn ) ************
-// int afc_stringnode_before_first ( StringNode * sn ) { return ( afc_nodemaster_before_first ( sn->nm ) ); }
+// int afc_stringnode_before_first ( StringNode * sn ) { return ( afc_list_before_first ( sn->nm ) ); }
 // }}}
 
 /* -------------------------------------------------------------------------------------------

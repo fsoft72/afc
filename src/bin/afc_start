@@ -26,7 +26,7 @@ class afc_starter:
 				 [ "InetServer",	"afc_inet_server",		"inet_server" ],
 				 [ "MD5",		"afc_md5",			"md5" ],
 				 [ "MemTracker",	"afc_mem_tracker",		"mem_tracker" ],
-				 [ "NodeMaster",	"afc_nodemaster",		"nodemaster" ],
+				 [ "List",	"afc_list",		"list" ],
 				 [ "POP3",		"afc_pop3",			"pop3" ],
 				 [ "ReadArgs",		"afc_readargs",			"readargs" ],
 				 [ "RegExp",		"afc_regexp",			"regexp" ],

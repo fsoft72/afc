@@ -23,18 +23,18 @@ int main(int argc, char *argv[])
 {
 	AFC *afc = afc_new();
 	ReadArgs *rdarg = afc_readargs_new();
-	NodeMaster *nm;
+	List *nm;
 	char *s;
 
 	afc_readargs_parse_cmd_line(rdarg, "CMD/A MULTI/M", argc, argv);
 
 	if ((nm = afc_readargs_get_by_pos(rdarg, 1)) != NULL)
 	{
-		s = afc_nodemaster_first(nm);
+		s = afc_list_first(nm);
 		while (s)
 		{
 			printf("Field: %s\n", s);
-			s = afc_nodemaster_next(nm);
+			s = afc_list_next(nm);
 		}
 	}
 

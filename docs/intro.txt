@@ -32,8 +32,8 @@ API Standardization
 -------------------
 
 AFC classes API calls are as much standardized as possible. For example, if you need to add an item to a list,
-the call would be `afc_(class_name)_add`. So the `NodeMaster` (which is a list handler class) has the
-`afc_nodemaster_add` method, and the `ArrayMaster` (which is a dynamic array handler class) has the `afc_array_add` method.
+the call would be `afc_(class_name)_add`. So the `List` (which is a list handler class) has the
+`afc_list_add` method, and the `ArrayMaster` (which is a dynamic array handler class) has the `afc_array_add` method.
 
 Tag System
 ----------

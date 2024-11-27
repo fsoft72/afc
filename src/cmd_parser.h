@@ -26,7 +26,7 @@
 #include <malloc.h>
 
 #include "base.h"
-#include "nodemaster.h"
+#include "list.h"
 #include "dictionary.h"
 #include "dynamic_class.h"
 #include "dynamic_class_master.h"
@@ -80,8 +80,8 @@ typedef int (*CommandParserCallbackEndFunction)(void *);
 struct afc_cmd_parser;
 typedef struct afc_cmd_parser CommandParser;
 
-typedef int (*CommandParserBuiltinFunction)(CommandParser *, char *, NodeMaster *);
-typedef int (*CommandParserFunction)(CommandParser *, NodeMaster *);
+typedef int (*CommandParserBuiltinFunction)(CommandParser *, char *, List *);
+typedef int (*CommandParserFunction)(CommandParser *, List *);
 
 struct afc_cmd_parser_callback
 {
@@ -102,7 +102,7 @@ struct afc_cmd_parser_token
 struct afc_cmd_parser
 {
 	unsigned long magic;
-	NodeMaster *callbacks;
+	List *callbacks;
 	Dictionary *classes;
 	void *userdata;
 	StringNode *stack;

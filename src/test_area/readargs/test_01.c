@@ -75,7 +75,7 @@ void quote_02(ReadArgs *rdarg)
 
 void multi_01(ReadArgs *rdarg)
 {
-	NodeMaster *nm;
+	List *nm;
 	char *s;
 
 	print_row();
@@ -86,19 +86,19 @@ void multi_01(ReadArgs *rdarg)
 
 	nm = afc_readargs_get_by_pos(rdarg, 2);
 
-	s = afc_nodemaster_first(nm);
+	s = afc_list_first(nm);
 	print_res("val: 01", "val01", s, 1);
 
-	s = afc_nodemaster_next(nm);
+	s = afc_list_next(nm);
 	print_res("val: 02", "val02", s, 1);
 
-	s = afc_nodemaster_next(nm);
+	s = afc_list_next(nm);
 	print_res("val: 03", "val03", s, 1);
 }
 
 void multi_02(ReadArgs *rdarg)
 {
-	NodeMaster *nm;
+	List *nm;
 	char *s;
 
 	print_row();
@@ -109,19 +109,19 @@ void multi_02(ReadArgs *rdarg)
 
 	nm = afc_readargs_get_by_pos(rdarg, 2);
 
-	s = afc_nodemaster_first(nm);
+	s = afc_list_first(nm);
 	print_res("val: 01", "val01", s, 1);
 
-	s = afc_nodemaster_next(nm);
+	s = afc_list_next(nm);
 	print_res("val: 02", "val02", s, 1);
 
-	s = afc_nodemaster_next(nm);
+	s = afc_list_next(nm);
 	print_res("val: 03", "val03", s, 1);
 }
 
 void multi_03(ReadArgs *rdarg)
 {
-	NodeMaster *nm;
+	List *nm;
 	char *s;
 
 	print_row();
@@ -132,19 +132,19 @@ void multi_03(ReadArgs *rdarg)
 
 	nm = afc_readargs_get_by_pos(rdarg, 2);
 
-	s = afc_nodemaster_first(nm);
+	s = afc_list_first(nm);
 	print_res("val: 01", "val01", s, 1);
 
-	s = afc_nodemaster_next(nm);
+	s = afc_list_next(nm);
 	print_res("val: 02", "val02", s, 1);
 
-	s = afc_nodemaster_next(nm);
+	s = afc_list_next(nm);
 	print_res("val: 03", "val03", s, 1);
 }
 
 void complex_01(ReadArgs *rdarg)
 {
-	NodeMaster *nm;
+	List *nm;
 	char *s;
 
 	print_row();
@@ -156,19 +156,19 @@ void complex_01(ReadArgs *rdarg)
 
 	nm = afc_readargs_get_by_pos(rdarg, 3);
 
-	s = afc_nodemaster_first(nm);
+	s = afc_list_first(nm);
 	print_res("val: 01", "val01", s, 1);
 
-	s = afc_nodemaster_next(nm);
+	s = afc_list_next(nm);
 	print_res("val: 02", "val02", s, 1);
 
-	s = afc_nodemaster_next(nm);
+	s = afc_list_next(nm);
 	print_res("val: 03", "val03", s, 1);
 }
 
 void complex_02(ReadArgs *rdarg)
 {
-	NodeMaster *nm;
+	List *nm;
 	char *s;
 
 	print_row();
@@ -183,19 +183,19 @@ void complex_02(ReadArgs *rdarg)
 
 	nm = afc_readargs_get_by_pos(rdarg, 5);
 
-	s = afc_nodemaster_first(nm);
+	s = afc_list_first(nm);
 	print_res("val: 01", "val01", s, 1);
 
-	s = afc_nodemaster_next(nm);
+	s = afc_list_next(nm);
 	print_res("val: 02", "val02", s, 1);
 
-	s = afc_nodemaster_next(nm);
+	s = afc_list_next(nm);
 	print_res("val: 03", "val03", s, 1);
 }
 
 void complex_03(ReadArgs *rdarg)
 {
-	NodeMaster *nm;
+	List *nm;
 	char *s;
 
 	print_row();
@@ -210,20 +210,20 @@ void complex_03(ReadArgs *rdarg)
 
 	if ((nm = afc_readargs_get_by_pos(rdarg, 5)))
 	{
-		s = afc_nodemaster_first(nm);
+		s = afc_list_first(nm);
 		print_res("val: 01", NULL, s, 1);
 
-		s = afc_nodemaster_next(nm);
+		s = afc_list_next(nm);
 		print_res("val: 02", NULL, s, 1);
 
-		s = afc_nodemaster_next(nm);
+		s = afc_list_next(nm);
 		print_res("val: 03", NULL, s, 1);
 	}
 }
 
 void complex_04(ReadArgs *rdarg)
 {
-	NodeMaster *nm;
+	List *nm;
 	char *s;
 
 	print_row();
@@ -238,13 +238,13 @@ void complex_04(ReadArgs *rdarg)
 
 	if ((nm = afc_readargs_get_by_pos(rdarg, 5)))
 	{
-		s = afc_nodemaster_first(nm);
+		s = afc_list_first(nm);
 		print_res("val: 01", NULL, s, 1);
 
-		s = afc_nodemaster_next(nm);
+		s = afc_list_next(nm);
 		print_res("val: 02", NULL, s, 1);
 
-		s = afc_nodemaster_next(nm);
+		s = afc_list_next(nm);
 		print_res("val: 03", NULL, s, 1);
 	}
 }

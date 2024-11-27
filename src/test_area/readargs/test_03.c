@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 {
 	AFC *afc = afc_new();
 	ReadArgs *rdarg = afc_readargs_new();
-	NodeMaster *nm;
+	List *nm;
 	char *s;
 
 	afc_readargs_parse(rdarg, "MULTI/M", "a b c d e \"f c\" \"\" aaa \" \"");

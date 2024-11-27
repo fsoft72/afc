@@ -5,7 +5,7 @@
 CC=gcc
 CFLAGS=-g -Wall
 
-DIRS=dir_array dir_string dir_readargs dir_nodemaster dir_hash_master
+DIRS=dir_array dir_string dir_readargs dir_list dir_hash_master
 
 all: test_utils.o $(DIRS)
 
@@ -18,8 +18,8 @@ dir_string:
 dir_readargs:
 	@cd readargs; make
 
-dir_nodemaster:
-	@cd nodemaster; make
+dir_list:
+	@cd list; make
 
 dir_hash_master:
 	@cd hash_master; make

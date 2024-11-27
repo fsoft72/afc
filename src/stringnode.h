@@ -36,7 +36,7 @@
 #include "string.h"
 
 #include "base.h"
-#include "nodemaster.h"
+#include "list.h"
 
 #ifdef MINGW
 #define index strchr
@@ -52,9 +52,9 @@ extern "C"
 #define STRINGNODE_VERSION 1
 #define STRINGNODE_REVISION 2
 
-#define AFC_STRINGNODE_ADD_HEAD AFC_NODEMASTER_ADD_HEAD
-#define AFC_STRINGNODE_ADD_TAIL AFC_NODEMASTER_ADD_TAIL
-#define AFC_STRINGNODE_ADD_HERE AFC_NODEMASTER_ADD_HERE
+#define AFC_STRINGNODE_ADD_HEAD AFC_LIST_ADD_HEAD
+#define AFC_STRINGNODE_ADD_TAIL AFC_LIST_ADD_TAIL
+#define AFC_STRINGNODE_ADD_HERE AFC_LIST_ADD_HERE
 
 	/* Error codes */
 
@@ -80,7 +80,7 @@ extern "C"
 	{
 		unsigned long magic; /* AFC Magic Number */
 
-		NodeMaster *nm; /* Pointer to our super-class */
+		List *nm; /* Pointer to our super-class */
 
 		// INTERNAL STUFF
 
@@ -102,23 +102,23 @@ extern "C"
 	int _afc_stringnode_delete(StringNode *);
 	char *afc_stringnode_add(StringNode *, const char *, unsigned long);
 #define afc_stringnode_insert(sn, txt) afc_stringnode_add(sn, txt, AFC_STRINGNODE_ADD_HERE)
-#define afc_stringnode_obj(sn) (char *)(sn ? afc_nodemaster_obj(sn->nm) : NULL)
-#define afc_stringnode_is_empty(sn) (BOOL) afc_nodemaster_is_empty(sn->nm)
-#define afc_stringnode_first(sn) (char *)afc_nodemaster_first(sn->nm)
-#define afc_stringnode_next(sn) (char *)afc_nodemaster_next(sn->nm)
-#define afc_stringnode_succ(sn) (char *)afc_nodemaster_next(sn->nm)
-#define afc_stringnode_prev(sn) (char *)afc_nodemaster_prev(sn->nm)
-#define afc_stringnode_last(sn) (char *)afc_nodemaster_last(sn->nm)
-#define afc_stringnode_item(sn, n) (char *)afc_nodemaster_item(sn->nm, n)
-#define afc_stringnode_get(sn) (struct Node *)(sn ? afc_nodemaster_get(sn->nm) : NULL)
-#define afc_stringnode_addr(sn) (struct List *)(sn ? afc_nodemaster_addr(sn->nm) : NULL)
-#define afc_stringnode_push(sn) (BOOL)(sn ? afc_nodemaster_push(sn->nm) : FALSE)
-#define afc_stringnode_pop(sn, apos) (char *)(sn ? afc_nodemaster_pop(sn->nm, apos) : NULL)
-#define afc_stringnode_clear_stack(sn) afc_nodemaster_clear_stack(sn->nm)
-#define afc_stringnode_len(sn) (sn ? afc_nodemaster_len(sn->nm) : 0)
-#define afc_stringnode_num_items(sn) (sn ? afc_nodemaster_len(sn->nm) : 0)
-#define afc_stringnode_pos(sn) (sn ? afc_nodemaster_pos(sn->nm) : 0)
-#define afc_stringnode_before_first(sn) (sn ? afc_nodemaster_before_first(sn->nm) : AFC_ERR_NULL_POINTER)
+#define afc_stringnode_obj(sn) (char *)(sn ? afc_list_obj(sn->nm) : NULL)
+#define afc_stringnode_is_empty(sn) (BOOL) afc_list_is_empty(sn->nm)
+#define afc_stringnode_first(sn) (char *)afc_list_first(sn->nm)
+#define afc_stringnode_next(sn) (char *)afc_list_next(sn->nm)
+#define afc_stringnode_succ(sn) (char *)afc_list_next(sn->nm)
+#define afc_stringnode_prev(sn) (char *)afc_list_prev(sn->nm)
+#define afc_stringnode_last(sn) (char *)afc_list_last(sn->nm)
+#define afc_stringnode_item(sn, n) (char *)afc_list_item(sn->nm, n)
+#define afc_stringnode_get(sn) (struct Node *)(sn ? afc_list_get(sn->nm) : NULL)
+#define afc_stringnode_addr(sn) (struct List *)(sn ? afc_list_addr(sn->nm) : NULL)
+#define afc_stringnode_push(sn) (BOOL)(sn ? afc_list_push(sn->nm) : FALSE)
+#define afc_stringnode_pop(sn, apos) (char *)(sn ? afc_list_pop(sn->nm, apos) : NULL)
+#define afc_stringnode_clear_stack(sn) afc_list_clear_stack(sn->nm)
+#define afc_stringnode_len(sn) (sn ? afc_list_len(sn->nm) : 0)
+#define afc_stringnode_num_items(sn) (sn ? afc_list_len(sn->nm) : 0)
+#define afc_stringnode_pos(sn) (sn ? afc_list_pos(sn->nm) : 0)
+#define afc_stringnode_before_first(sn) (sn ? afc_list_before_first(sn->nm) : AFC_ERR_NULL_POINTER)
 
 #define afc_stringnode_add_tail(sn, s) afc_stringnode_add(sn, s, AFC_STRINGNODE_ADD_TAIL)
 #define afc_stringnode_add_head(sn, s) afc_stringnode_add(sn, s, AFC_STRINGNODE_ADD_HEAD)

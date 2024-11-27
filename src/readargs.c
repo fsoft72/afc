@@ -141,7 +141,7 @@ Example 2
 
 			 SYNOPSIS: ReadArgs * afc_readargs_new ()
 
-		DESCRIPTION: Use this command to inizialize a NodeMaster object.
+		DESCRIPTION: Use this command to inizialize a List object.
 
 		INPUT: NONE
 
@@ -160,12 +160,12 @@ ReadArgs *afc_readargs_new()
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "rdargs", NULL);
 	rdargs->magic = AFC_READARGS_MAGIC; // Set the Magic value
 
-	// Create the NodeMaster for the Template Fields
-	if ((rdargs->fields = afc_nodemaster_new()) == NULL)
+	// Create the List for the Template Fields
+	if ((rdargs->fields = afc_list_new()) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "fields", NULL);
 
-	// Create the NodeMaster for the string tokens
-	if ((rdargs->str = afc_nodemaster_new()) == NULL)
+	// Create the List for the string tokens
+	if ((rdargs->str = afc_list_new()) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "str", NULL);
 
 	// Create the main string Splitter
@@ -210,8 +210,8 @@ int _afc_readargs_delete(ReadArgs *rdargs)
 	if ((res = afc_readargs_clear(rdargs)) != AFC_ERR_NO_ERROR)
 		return (res);
 
-	afc_nodemaster_delete(rdargs->str);
-	afc_nodemaster_delete(rdargs->fields);
+	afc_list_delete(rdargs->str);
+	afc_list_delete(rdargs->fields);
 	afc_stringnode_delete(rdargs->global_split);
 	afc_stringnode_delete(rdargs->local_split);
 
@@ -240,7 +240,7 @@ int _afc_readargs_delete(ReadArgs *rdargs)
 								  + N - Field is a number. Strings are not allowed.
 								  + A - Field is required. If it is left out, the parse fails.
 								  + K - The keyword must be given when filling the option.
-								  + M - Multiple strings. The result is stored inside a special NodeMaster class.
+								  + M - Multiple strings. The result is stored inside a special List class.
 
 				   - text     - The string to parse
 
@@ -270,28 +270,28 @@ int afc_readargs_parse(ReadArgs *rdargs, const char *template, const char *text)
 
 	afc_readargs_internal_parse_string(rdargs, rdargs->buffer);
 
-	// printf ( "1. %d\n", afc_nodemaster_len ( rdargs->str ) );
+	// printf ( "1. %d\n", afc_list_len ( rdargs->str ) );
 
 	afc_readargs_internal_fill_names(rdargs);
 
-	// printf ( "2. %d\n", afc_nodemaster_len ( rdargs->str ) );
+	// printf ( "2. %d\n", afc_list_len ( rdargs->str ) );
 
 	if (afc_readargs_internal_fill_keyword(rdargs) != AFC_ERR_NO_ERROR)
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_READARGS_ERR_MISSING_KEYWORD, "Keyword is missing", NULL));
 
-	// printf ( "3. %d\n", afc_nodemaster_len ( rdargs->str ) );
+	// printf ( "3. %d\n", afc_list_len ( rdargs->str ) );
 
 	afc_readargs_internal_fill_switch(rdargs);
 
-	// printf ( "4. %d\n", afc_nodemaster_len ( rdargs->str ) );
+	// printf ( "4. %d\n", afc_list_len ( rdargs->str ) );
 
 	afc_readargs_internal_fill_required(rdargs);
 
-	// printf ( "5. %d\n", afc_nodemaster_len ( rdargs->str ) );
+	// printf ( "5. %d\n", afc_list_len ( rdargs->str ) );
 
 	afc_readargs_internal_fill_all_the_rest(rdargs);
 
-	// printf ( "6. %d\n", afc_nodemaster_len ( rdargs->str ) );
+	// printf ( "6. %d\n", afc_list_len ( rdargs->str ) );
 
 	afc_readargs_internal_fill_multi(rdargs);
 
@@ -322,7 +322,7 @@ void *afc_readargs_get_by_name(ReadArgs *rdargs, const char *name)
 {
 	struct afc_readargs_data *arg;
 
-	arg = (struct afc_readargs_data *)afc_nodemaster_first(rdargs->fields);
+	arg = (struct afc_readargs_data *)afc_list_first(rdargs->fields);
 	while (arg)
 	{
 		if (strcasecmp(name, arg->name) == 0)
@@ -343,7 +343,7 @@ void *afc_readargs_get_by_name(ReadArgs *rdargs, const char *name)
 				return (arg->multi);
 		}
 
-		arg = (struct afc_readargs_data *)afc_nodemaster_next(rdargs->fields);
+		arg = (struct afc_readargs_data *)afc_list_next(rdargs->fields);
 	}
 
 	return (NULL);
@@ -373,7 +373,7 @@ void *afc_readargs_get_by_pos(ReadArgs *rdargs, int pos)
 {
 	struct afc_readargs_data *arg;
 
-	if ((arg = (struct afc_readargs_data *)afc_nodemaster_item(rdargs->fields, pos)) == NULL)
+	if ((arg = (struct afc_readargs_data *)afc_list_item(rdargs->fields, pos)) == NULL)
 		return (NULL);
 
 	if (arg->multi == NULL)
@@ -429,23 +429,23 @@ int afc_readargs_clear(ReadArgs *rdargs)
 
 	rdargs->buffer = NULL;
 
-	data = (struct afc_readargs_data *)afc_nodemaster_first(rdargs->fields);
+	data = (struct afc_readargs_data *)afc_list_first(rdargs->fields);
 	while (data)
 	{
 		afc_readargs_data_delete(data);
 
-		data = (struct afc_readargs_data *)afc_nodemaster_next(rdargs->fields);
+		data = (struct afc_readargs_data *)afc_list_next(rdargs->fields);
 	}
 
-	s = afc_nodemaster_first(rdargs->str);
+	s = afc_list_first(rdargs->str);
 	while (s)
 	{
 		afc_string_delete(s);
-		s = afc_nodemaster_next(rdargs->str);
+		s = afc_list_next(rdargs->str);
 	}
 
-	afc_nodemaster_clear(rdargs->fields);
-	afc_nodemaster_clear(rdargs->str);
+	afc_list_clear(rdargs->fields);
+	afc_list_clear(rdargs->str);
 
 	afc_stringnode_clear(rdargs->global_split);
 	afc_stringnode_clear(rdargs->local_split);
@@ -597,7 +597,7 @@ static int afc_readargs_internal_add_template(ReadArgs *rdargs, char *tok)
 			data->is_switch = TRUE;
 			break;
 		case AFC_READARGS_MODE_MULTI:
-			data->multi = afc_nodemaster_new();
+			data->multi = afc_list_new();
 			break;
 		}
 
@@ -605,7 +605,7 @@ static int afc_readargs_internal_add_template(ReadArgs *rdargs, char *tok)
 	}
 
 	afc_string_copy(data->name, name, ALL);
-	afc_nodemaster_add(rdargs->fields, data, AFC_NODEMASTER_ADD_TAIL);
+	afc_list_add(rdargs->fields, data, AFC_LIST_ADD_TAIL);
 
 	return (AFC_ERR_NO_ERROR);
 }
@@ -627,7 +627,7 @@ static void afc_readargs_internal_parse_string(ReadArgs *rdargs, char *txt)
 	{
 		if (afc_string_len(token))
 		{
-			afc_nodemaster_add(rdargs->str, afc_string_dup(token), AFC_NODEMASTER_ADD_TAIL);
+			afc_list_add(rdargs->str, afc_string_dup(token), AFC_LIST_ADD_TAIL);
 		}
 
 		token = afc_stringnode_next(rdargs->global_split);
@@ -674,7 +674,7 @@ static int afc_readargs_internal_fill_required(ReadArgs *rdargs)
 	void *s;
 	long num;
 
-	arg = (struct afc_readargs_data *)afc_nodemaster_first(rdargs->fields);
+	arg = (struct afc_readargs_data *)afc_list_first(rdargs->fields);
 
 	while (arg)
 	{
@@ -700,7 +700,7 @@ static int afc_readargs_internal_fill_required(ReadArgs *rdargs)
 			}
 		}
 
-		arg = (struct afc_readargs_data *)afc_nodemaster_next(rdargs->fields);
+		arg = (struct afc_readargs_data *)afc_list_next(rdargs->fields);
 	}
 
 	return (AFC_ERR_NO_ERROR);
@@ -712,7 +712,7 @@ static int afc_readargs_internal_fill_keyword(ReadArgs *rdarg)
 	struct afc_readargs_data *arg;
 	void *s;
 
-	arg = (struct afc_readargs_data *)afc_nodemaster_first(rdarg->fields);
+	arg = (struct afc_readargs_data *)afc_list_first(rdarg->fields);
 
 	while (arg)
 	{
@@ -724,7 +724,7 @@ static int afc_readargs_internal_fill_keyword(ReadArgs *rdarg)
 			// return ( AFC_READARGS_ERR_MISSING_KEYWORD );
 		}
 
-		arg = (struct afc_readargs_data *)afc_nodemaster_next(rdarg->fields);
+		arg = (struct afc_readargs_data *)afc_list_next(rdarg->fields);
 	}
 
 	return (AFC_ERR_NO_ERROR);
@@ -736,7 +736,7 @@ static int afc_readargs_internal_fill_switch(ReadArgs *rdarg)
 	struct afc_readargs_data *arg;
 	void *s;
 
-	arg = (struct afc_readargs_data *)afc_nodemaster_first(rdarg->fields);
+	arg = (struct afc_readargs_data *)afc_list_first(rdarg->fields);
 
 	while (arg)
 	{
@@ -748,7 +748,7 @@ static int afc_readargs_internal_fill_switch(ReadArgs *rdarg)
 				arg->data = NULL;
 		}
 
-		arg = (struct afc_readargs_data *)afc_nodemaster_next(rdarg->fields);
+		arg = (struct afc_readargs_data *)afc_list_next(rdarg->fields);
 	}
 
 	return (AFC_ERR_NO_ERROR);
@@ -759,7 +759,7 @@ static int afc_readargs_internal_fill_all_the_rest(ReadArgs *rdarg)
 {
 	struct afc_readargs_data *arg;
 
-	arg = (struct afc_readargs_data *)afc_nodemaster_first(rdarg->fields);
+	arg = (struct afc_readargs_data *)afc_list_first(rdarg->fields);
 
 	while (arg)
 	{
@@ -767,7 +767,7 @@ static int afc_readargs_internal_fill_all_the_rest(ReadArgs *rdarg)
 			if ((arg->data = afc_readargs_internal_get_first_element(rdarg, arg->is_numeric)) == NULL)
 				return (AFC_ERR_NO_ERROR);
 
-		arg = (struct afc_readargs_data *)afc_nodemaster_next(rdarg->fields);
+		arg = (struct afc_readargs_data *)afc_list_next(rdarg->fields);
 	}
 
 	return (AFC_ERR_NO_ERROR);
@@ -778,14 +778,14 @@ static int afc_readargs_internal_fill_names(ReadArgs *rdarg)
 {
 	struct afc_readargs_data *arg;
 
-	arg = (struct afc_readargs_data *)afc_nodemaster_first(rdarg->fields);
+	arg = (struct afc_readargs_data *)afc_list_first(rdarg->fields);
 
 	while (arg)
 	{
 		if ((arg->data == NULL) && (arg->multi == NULL))
 			arg->data = afc_readargs_internal_get_keyword(rdarg, arg->name, arg->is_switch, arg->is_numeric);
 
-		arg = (struct afc_readargs_data *)afc_nodemaster_next(rdarg->fields);
+		arg = (struct afc_readargs_data *)afc_list_next(rdarg->fields);
 	}
 
 	return (AFC_ERR_NO_ERROR);
@@ -797,18 +797,18 @@ static int afc_readargs_internal_fill_multi(ReadArgs *rdarg)
 	void *s;
 	struct afc_readargs_data *arg;
 
-	arg = (struct afc_readargs_data *)afc_nodemaster_first(rdarg->fields);
+	arg = (struct afc_readargs_data *)afc_list_first(rdarg->fields);
 
 	while (arg)
 	{
 		if (arg->multi != NULL)
 		{
 			while ((s = afc_readargs_internal_get_first_element(rdarg, arg->is_numeric)) != NULL)
-				afc_nodemaster_add(arg->multi, s, AFC_NODEMASTER_ADD_TAIL);
+				afc_list_add(arg->multi, s, AFC_LIST_ADD_TAIL);
 
 			return (AFC_ERR_NO_ERROR);
 		}
-		arg = (struct afc_readargs_data *)afc_nodemaster_next(rdarg->fields);
+		arg = (struct afc_readargs_data *)afc_list_next(rdarg->fields);
 	}
 
 	return (AFC_ERR_NO_ERROR);
@@ -820,12 +820,12 @@ static char *afc_readargs_internal_get_first_element(ReadArgs *rdarg, short is_n
 	char *s;
 	char *g;
 
-	if (afc_nodemaster_is_empty(rdarg->str))
+	if (afc_list_is_empty(rdarg->str))
 		return (NULL);
 
-	s = (char *)afc_nodemaster_first(rdarg->str);
+	s = (char *)afc_list_first(rdarg->str);
 
-	afc_nodemaster_del(rdarg->str);
+	afc_list_del(rdarg->str);
 	afc_readargs_internal_replace_chars(rdarg, s, 1, ' ');
 
 	if (is_numeric)
@@ -845,18 +845,18 @@ static void *afc_readargs_internal_get_keyword(ReadArgs *rdarg, char *key, short
 	char *s;
 	int num = 0;
 
-	s = (char *)afc_nodemaster_first(rdarg->str);
+	s = (char *)afc_list_first(rdarg->str);
 	while (s)
 	{
 		// If the element taken from the list is equal
 		// to the key we were searching for ...
 		if (strcasecmp(s, key) == 0)
 		{
-			// free the string inside the NodeMaster
+			// free the string inside the List
 			afc_string_delete(s);
 
-			// Delete the string inside the NodeMaster (and get the next one)
-			s = (char *)afc_nodemaster_del(rdarg->str);
+			// Delete the string inside the List (and get the next one)
+			s = (char *)afc_list_del(rdarg->str);
 
 			// If the key was a switch, we simply return a TRUE value
 			if (is_switch)
@@ -869,7 +869,7 @@ static void *afc_readargs_internal_get_keyword(ReadArgs *rdarg, char *key, short
 				if (s != NULL)
 				{
 					// Remove the item from the list of items
-					afc_nodemaster_del(rdarg->str);
+					afc_list_del(rdarg->str);
 					// Convert (char) 1 to space
 					afc_readargs_internal_replace_chars(rdarg, s, 1, ' ');
 				}
@@ -894,7 +894,7 @@ static void *afc_readargs_internal_get_keyword(ReadArgs *rdarg, char *key, short
 			return ((void *)s);
 		}
 
-		s = (char *)afc_nodemaster_next(rdarg->str);
+		s = (char *)afc_list_next(rdarg->str);
 	}
 
 	// If we haven't found anything, and the arg was a SWITCH, then
@@ -952,13 +952,13 @@ static void afc_readargs_data_delete(struct afc_readargs_data *rddata)
 		afc_string_delete(rddata->name);
 	if (rddata->multi)
 	{
-		s = afc_nodemaster_first(rddata->multi);
+		s = afc_list_first(rddata->multi);
 		while (s)
 		{
 			afc_string_delete(s);
-			s = afc_nodemaster_next(rddata->multi);
+			s = afc_list_next(rddata->multi);
 		}
-		afc_nodemaster_delete(rddata->multi);
+		afc_list_delete(rddata->multi);
 	}
 
 	if ((rddata->is_switch == FALSE) && (rddata->is_numeric == FALSE) && (rddata->data))
@@ -973,7 +973,7 @@ static void afc_readargs_data_delete(struct afc_readargs_data *rddata)
 int main()
 {
 	ReadArgs *rdarg = afc_readargs_new();
-	struct afc_nodemaster *node = NULL;
+	struct afc_list *node = NULL;
 
 	printf("Res1: %d\n",
 		   afc_readargs_parse(rdarg, "COMMAND/A,NOCASE/S,TEXT/A,MAXBYTES/K/N",

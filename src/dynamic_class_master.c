@@ -206,7 +206,7 @@ int afc_dynamic_class_master_clear(DynamicClassMaster *dcm)
 	  DESCRIPTION: 	This function loads a DynamicClass in memory. When loading, you have to specify a valid class name,
 			using the *class_name* arg, since the file loaded can be any valid dynamic class and the loader is
 			unable to know what class it actually is. So, for example, you can have a dynamic class stored in a
-			file called "foo.so", and internally instantiated like "NodeMaster".
+			file called "foo.so", and internally instantiated like "List".
 
 			INPUT: 	- dcm    	- Pointer to a valid afc_dynamic_class_master instance.
 			- class_name	- Name to assign to the class loaded

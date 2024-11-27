@@ -8,7 +8,7 @@
 			afc_regexp_replace() no longer returns an empty string if the
 			giver regex pattern is not found on the source string.
 
-		ADD:	ArrayMaster / NodeMaster / StringNode		Status: STABLE
+		ADD:	ArrayMaster / List / StringNode		Status: STABLE
 
 			Added: afc_*_add_tail(), afc_*_add_head() and afc_*_insert()
 			to add items at the end, head and current position respectively.
@@ -108,7 +108,7 @@
 26 Oct  2003:   ENH:	function: afc_*_before_first()			Status: STABLE
 
 			Added the new afc_*_before_first() method to all classes that
-			allow iteration (NodeMaster / ArrayMaster / StringNode /
+			allow iteration (List / ArrayMaster / StringNode /
 			Dictionary and HashMaster) so it is now possible to simplify
 			while() loops.
 
@@ -166,10 +166,10 @@
 
 
 
-12 Feb 2003:	ADD: 	NodeMaster					Status: STABLE
-			Added afc_nodemaster_set_clear_func() function.
+12 Feb 2003:	ADD: 	List					Status: STABLE
+			Added afc_list_set_clear_func() function.
 
-			Added afc_nodemaster_for_each() function.
+			Added afc_list_for_each() function.
 
 		ADD:	HashMaster					Status: STABLE
 			Added afc_hash_master_set_clear_func() function.

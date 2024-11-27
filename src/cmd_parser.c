@@ -36,8 +36,8 @@ static int afc_cmd_parser_internal_get_token_args(CommandParser *cmdparser, char
 static int afc_cmd_parser_internal_string_purge(CommandParser *cmdparser, char *s);
 static int afc_cmd_parser_internal_set_skip(CommandParser *cmdparser, int howmany);
 static int afc_cmd_parser_internal_goto_block_end(CommandParser *cmdparser, char **script);
-static int afc_cmd_parser_internal_keyword_if(CommandParser *cmdparser, char *script, NodeMaster *args);
-static int afc_cmd_parser_internal_function_expr(CommandParser *cmdparser, NodeMaster *args);
+static int afc_cmd_parser_internal_keyword_if(CommandParser *cmdparser, char *script, List *args);
+static int afc_cmd_parser_internal_function_expr(CommandParser *cmdparser, List *args);
 static int afc_cmd_parser_internal_add_builtins(CommandParser *cmdparser);
 
 /*
@@ -80,7 +80,7 @@ CommandParser *afc_cmd_parser_new(void)
 
 	cmdparser->magic = AFC_CMD_PARSER_MAGIC;
 
-	if ((cmdparser->callbacks = afc_nodemaster_new()) == NULL)
+	if ((cmdparser->callbacks = afc_list_new()) == NULL)
 	{
 		AFC_LOG_FAST_INFO(AFC_ERR_NO_MEMORY, "callbacks");
 		afc_cmd_parser_delete(cmdparser);
@@ -171,7 +171,7 @@ int _afc_cmd_parser_delete(CommandParser *cmdparser)
 	/* NOTE: any class contained in afc_cmd_parser should be deleted here */
 
 	if (cmdparser->callbacks)
-		afc_nodemaster_delete(cmdparser->callbacks);
+		afc_list_delete(cmdparser->callbacks);
 	if (cmdparser->classes)
 		afc_dictionary_delete(cmdparser->classes);
 	if (cmdparser->stack)
@@ -226,13 +226,13 @@ int afc_cmd_parser_clear(CommandParser *cmdparser)
 
 	if (cmdparser->callbacks)
 	{
-		cb = (CommandParserCallback *)afc_nodemaster_first(cmdparser->callbacks);
+		cb = (CommandParserCallback *)afc_list_first(cmdparser->callbacks);
 		while (cb != NULL)
 		{
 			afc_cmd_parser_internal_del_callback(cmdparser, cb);
-			cb = afc_nodemaster_next(cmdparser->callbacks);
+			cb = afc_list_next(cmdparser->callbacks);
 		}
-		afc_nodemaster_clear(cmdparser->callbacks);
+		afc_list_clear(cmdparser->callbacks);
 	}
 
 	if (cmdparser->classes)
@@ -329,7 +329,7 @@ int afc_cmd_parser_add_callback(CommandParser *cmdparser, const char *name, void
 		}
 	}
 
-	afc_nodemaster_add(cmdparser->callbacks, cb, AFC_NODEMASTER_ADD_TAIL);
+	afc_list_add(cmdparser->callbacks, cb, AFC_LIST_ADD_TAIL);
 
 	return (AFC_ERR_NO_ERROR);
 }
@@ -395,7 +395,7 @@ int afc_cmd_parser_parse_string(CommandParser *cmdparser, const char *script, vo
 
 			if (cmdparser->token->type == AFC_CMD_PARSER_TOKEN_OPEN)
 			{
-				cb = (CommandParserCallback *)afc_nodemaster_first(cmdparser->callbacks);
+				cb = (CommandParserCallback *)afc_list_first(cmdparser->callbacks);
 				found = false;
 
 				/* check if the command is an internal one, and call it */
@@ -405,7 +405,7 @@ int afc_cmd_parser_parse_string(CommandParser *cmdparser, const char *script, vo
 					afc_stringnode_add(cmdparser->stack, cmdparser->token->name, AFC_STRINGNODE_ADD_TAIL);
 
 					if ((afc_cmd_parser_internal_get_token_args(cmdparser, &myscript2, "ARGS/M")) == AFC_ERR_NO_ERROR)
-						quit = func(cmdparser, myscript2, (NodeMaster *)afc_cmd_parser_arg_get_by_name(cmdparser, "ARGS"));
+						quit = func(cmdparser, myscript2, (List *)afc_cmd_parser_arg_get_by_name(cmdparser, "ARGS"));
 				}
 
 				while ((cb != NULL) && (found == false))
@@ -428,7 +428,7 @@ int afc_cmd_parser_parse_string(CommandParser *cmdparser, const char *script, vo
 
 						found = true;
 					}
-					cb = (CommandParserCallback *)afc_nodemaster_next(cmdparser->callbacks);
+					cb = (CommandParserCallback *)afc_list_next(cmdparser->callbacks);
 				} /* while  cb != NULL */
 
 				if (found == false)
@@ -440,7 +440,7 @@ int afc_cmd_parser_parse_string(CommandParser *cmdparser, const char *script, vo
 			} /* if TOKEN_OPEN */
 			else
 			{
-				cb = (CommandParserCallback *)afc_nodemaster_first(cmdparser->callbacks);
+				cb = (CommandParserCallback *)afc_list_first(cmdparser->callbacks);
 				found = false;
 				while ((cb != NULL) && (found == false))
 				{
@@ -452,7 +452,7 @@ int afc_cmd_parser_parse_string(CommandParser *cmdparser, const char *script, vo
 							quit = afc_dynamic_class_execute(dyn, "close_callback", cmdparser->userdata, AFC_DYNAMIC_CLASS_ARG_END);
 						found = true;
 					}
-					cb = (CommandParserCallback *)afc_nodemaster_next(cmdparser->callbacks);
+					cb = (CommandParserCallback *)afc_list_next(cmdparser->callbacks);
 				} /* while cb != NULL */
 			} /* else TOKEN_CLOSE */
 
@@ -732,9 +732,9 @@ DESCRIPTION: adds a new function to the command parser. Functions are up to now 
 			 )
 
 			 A valid function should accept two parameters: a CommandParser instance and
-			 a NodeMaster instance containing the arguments passed to the function:
+			 a List instance containing the arguments passed to the function:
 
-			 int foo ( CommandParser * cmdparser, NodeMaster * args )
+			 int foo ( CommandParser * cmdparser, List * args )
 
 	 INPUT: - cmdparser - a valid CommandParser instance
 			- name - name of the function
@@ -1159,7 +1159,7 @@ static int afc_cmd_parser_internal_set_skip(CommandParser *cmdparser, int howman
 NAME: afc_cmd_parser_internal_keyword_if
 
 */
-static int afc_cmd_parser_internal_keyword_if(CommandParser *cmdparser, char *script, NodeMaster *args)
+static int afc_cmd_parser_internal_keyword_if(CommandParser *cmdparser, char *script, List *args)
 {
 	char *func_name = NULL;
 	CommandParserFunction func = NULL;
@@ -1168,13 +1168,13 @@ static int afc_cmd_parser_internal_keyword_if(CommandParser *cmdparser, char *sc
 	if ((cmdparser == NULL) || (args == NULL))
 		return (AFC_LOG_FAST(AFC_ERR_NULL_POINTER));
 
-	if ((func_name = (char *)afc_nodemaster_first(args)) != NULL)
+	if ((func_name = (char *)afc_list_first(args)) != NULL)
 	{
-		afc_nodemaster_del(args);
+		afc_list_del(args);
 		if ((func = afc_dictionary_get(cmdparser->functions, func_name)) != NULL)
 			res = func(cmdparser, args);
 
-		// FIXED: non liberavi func_name quando avevi gi� "scaricato" la stringa dal nodemaster
+		// FIXED: non liberavi func_name quando avevi gi� "scaricato" la stringa dal list
 		afc_string_delete(func_name);
 	}
 
@@ -1190,9 +1190,9 @@ static int afc_cmd_parser_internal_keyword_if(CommandParser *cmdparser, char *sc
 NAME: afc_cmd_parser_internal_function_expr
 
 */
-static int afc_cmd_parser_internal_function_expr(CommandParser *cmdparser, NodeMaster *args)
+static int afc_cmd_parser_internal_function_expr(CommandParser *cmdparser, List *args)
 {
-	if (atoi((char *)afc_nodemaster_first(args)) > 0)
+	if (atoi((char *)afc_list_first(args)) > 0)
 		return (true);
 	else
 		return (false);

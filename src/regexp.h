@@ -27,7 +27,7 @@
 #include "pcre/pcre.h"
 
 #include "base.h"
-#include "nodemaster.h"
+#include "list.h"
 #include "string.h"
 
 #ifdef __cplusplus
