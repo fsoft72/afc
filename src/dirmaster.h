@@ -124,13 +124,13 @@ extern "C"
 		char name[NAME_MAX]; /* File name (with no path) */
 
 		char cmode[16];	 /* string containing the 'mode' of the file (eg. '-rwxr-xr-x') */
-		char cuser[10];	 /* string containing the user name                             */
-		char cgroup[10]; /* string containing the group name                            */
+		char cuser[32];	 /* string containing the user name                             */
+		char cgroup[32]; /* string containing the group name                            */
 
 		char caccess[20];
 		char cmodify[20];
 		char cchange[20];
-		char csize[10];
+		char csize[20];
 
 		short hidden; /* whether this is an hidden file or not */
 

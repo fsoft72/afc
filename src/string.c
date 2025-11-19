@@ -410,7 +410,7 @@ signed long afc_string_comp(const char *s1, const char *s2, long chars)
 	else
 		chars = 0;
 
-	for (str1 = (char *)s1, str2 = (char *)s2; (*str1 == *str2) && (*str1 && *str2) && ((chars ? (long)c++ < chars : TRUE)); str1++, str2++)
+	for (str1 = (char *)s1, str2 = (char *)s2; (*str1 == *str2) && (*str1 && *str2) && ((chars == 0 || (long)c++ < chars)); str1++, str2++)
 		;
 
 	return (-(*str1 - *str2));
@@ -703,7 +703,7 @@ int afc_string_radix(char *dest, long n, int radix)
 {
 	char hexn[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_@";
 	char buf[1024]; // Flawfinder: ignore
-	int q = abs(n);
+	long q = labs(n);
 	int r = 0;
 
 	afc_string_copy(dest, "", ALL);
@@ -792,25 +792,35 @@ unsigned long int afc_string_hash(register const unsigned char *k, register unsi
 	{
 	case 11:
 		c += ((unsigned long int)k[10] << 24);
+		// fall through
 	case 10:
 		c += ((unsigned long int)k[9] << 16);
+		// fall through
 	case 9:
 		c += ((unsigned long int)k[8] << 8);
 		/* the first byte of c is reserved for the length */
+		// fall through
 	case 8:
 		b += ((unsigned long int)k[7] << 24);
+		// fall through
 	case 7:
 		b += ((unsigned long int)k[6] << 16);
+		// fall through
 	case 6:
 		b += ((unsigned long int)k[5] << 8);
+		// fall through
 	case 5:
 		b += k[4];
+		// fall through
 	case 4:
 		a += ((unsigned long int)k[3] << 24);
+		// fall through
 	case 3:
 		a += ((unsigned long int)k[2] << 16);
+		// fall through
 	case 2:
 		a += ((unsigned long int)k[1] << 8);
+		// fall through
 	case 1:
 		a += k[0];
 		/* case 0: nothing left to add */
@@ -1372,6 +1382,669 @@ int afc_string_pattern_match(const char *str, const char *pattern, short nocase)
 }
 // }}}
 #endif
+
+// {{{ afc_string_char_at ( str, index )
+/*
+@node afc_string_char_at
+
+			NAME: afc_string_char_at ( str, index ) - Returns the character at the specified index
+
+	SYNOPSIS: char afc_string_char_at ( const char * str, long index )
+
+		 DESCRIPTION: Returns the character at the specified index. Accepts negative integers to count back from the last string character.
+
+		 INPUT: - str				- The string.
+			- index 			- The index of the character to return.
+
+		RESULT: - The character at the specified index, or '\0' if out of range.
+
+	SEE ALSO:
+
+@endnode
+*/
+char afc_string_char_at(const char *str, long index)
+{
+	unsigned long len;
+
+	if (str == NULL)
+		return '\0';
+
+	len = afc_string_len(str);
+
+	if (index < 0)
+		index = len + index;
+
+	if (index < 0 || index >= (long)len)
+		return '\0';
+
+	return str[index];
+}
+// }}}
+
+// {{{ afc_string_starts_with ( str, search, position )
+/*
+@node afc_string_starts_with
+
+			NAME: afc_string_starts_with ( str, search, position ) - Checks if string starts with search string
+
+	SYNOPSIS: int afc_string_starts_with ( const char * str, const char * search, unsigned long position )
+
+		 DESCRIPTION: Determines whether a string begins with the characters of a specified string.
+
+		 INPUT: - str				- The string to check.
+			- search 			- The characters to be searched for at the start of this string.
+			- position 			- The position in this string at which to begin searching for searchString. Defaults to 0.
+
+		RESULT: - 1 if the string begins with the characters of the search string, 0 otherwise.
+
+	SEE ALSO: - afc_string_ends_with()
+
+@endnode
+*/
+int afc_string_starts_with(const char *str, const char *search, unsigned long position)
+{
+	unsigned long len, search_len;
+
+	if (str == NULL || search == NULL)
+		return 0;
+
+	len = afc_string_len(str);
+	search_len = strlen(search);
+
+	if (position > len)
+		return 0;
+
+	if (search_len > len - position)
+		return 0;
+
+	return (strncmp(str + position, search, search_len) == 0);
+}
+// }}}
+
+// {{{ afc_string_ends_with ( str, search, length )
+/*
+@node afc_string_ends_with
+
+			NAME: afc_string_ends_with ( str, search, length ) - Checks if string ends with search string
+
+	SYNOPSIS: int afc_string_ends_with ( const char * str, const char * search, unsigned long length )
+
+		 DESCRIPTION: Determines whether a string ends with the characters of a specified string.
+
+		 INPUT: - str				- The string to check.
+			- search 			- The characters to be searched for at the end of this string.
+			- length 			- If provided, it is used as the length of str. Defaults to str.length.
+
+		RESULT: - 1 if the string ends with the characters of the search string, 0 otherwise.
+
+	SEE ALSO: - afc_string_starts_with()
+
+@endnode
+*/
+int afc_string_ends_with(const char *str, const char *search, unsigned long length)
+{
+	unsigned long len, search_len;
+
+	if (str == NULL || search == NULL)
+		return 0;
+
+	len = afc_string_len(str);
+	search_len = strlen(search);
+
+	if ((long)length == ALL || length > len)
+		length = len;
+
+	if (search_len > length)
+		return 0;
+
+	return (strncmp(str + length - search_len, search, search_len) == 0);
+}
+// }}}
+
+// {{{ afc_string_repeat ( dest, str, count )
+/*
+@node afc_string_repeat
+
+			NAME: afc_string_repeat ( dest, str, count ) - Returns a new string containing the specified number of copies of the given string
+
+	SYNOPSIS: char * afc_string_repeat ( char * dest, const char * str, unsigned long count )
+
+		 DESCRIPTION: Returns a new string containing the specified number of copies of the given string.
+
+		 INPUT: - dest				- The destination string.
+			- str 				- The string to repeat.
+			- count 			- The number of times to repeat the string.
+
+		RESULT: - The destination string.
+
+	SEE ALSO:
+
+@endnode
+*/
+char *afc_string_repeat(char *dest, const char *str, unsigned long count)
+{
+	unsigned long i;
+
+	if (dest == NULL)
+		return NULL;
+
+	afc_string_clear(dest);
+
+	if (str == NULL || count == 0)
+		return dest;
+
+	for (i = 0; i < count; i++)
+	{
+		afc_string_add(dest, str, ALL);
+	}
+
+	return dest;
+}
+// }}}
+
+// {{{ afc_string_replace ( dest, str, pattern, replacement )
+/*
+@node afc_string_replace
+
+			NAME: afc_string_replace ( dest, str, pattern, replacement ) - Replaces the first occurrence of pattern with replacement
+
+	SYNOPSIS: char * afc_string_replace ( char * dest, const char * str, const char * pattern, const char * replacement )
+
+		 DESCRIPTION: Returns a new string with the first match of a pattern replaced by a replacement.
+
+		 INPUT: - dest				- The destination string.
+			- str 				- The source string.
+			- pattern 			- The string pattern to replace.
+			- replacement 			- The replacement string.
+
+		RESULT: - The destination string.
+
+	SEE ALSO: - afc_string_replace_all()
+
+@endnode
+*/
+char *afc_string_replace(char *dest, const char *str, const char *pattern, const char *replacement)
+{
+	char *pos;
+	unsigned long offset;
+
+	if (dest == NULL)
+		return NULL;
+
+	if (str == NULL)
+	{
+		afc_string_clear(dest);
+		return dest;
+	}
+
+	if (pattern == NULL || replacement == NULL)
+	{
+		afc_string_copy(dest, str, ALL);
+		return dest;
+	}
+
+	pos = strstr(str, pattern);
+
+	if (pos == NULL)
+	{
+		afc_string_copy(dest, str, ALL);
+		return dest;
+	}
+
+	offset = pos - str;
+
+	afc_string_copy(dest, str, offset);
+	afc_string_add(dest, replacement, ALL);
+	afc_string_add(dest, pos + strlen(pattern), ALL);
+
+	return dest;
+}
+// }}}
+
+// {{{ afc_string_replace_all ( dest, str, pattern, replacement )
+/*
+@node afc_string_replace_all
+
+			NAME: afc_string_replace_all ( dest, str, pattern, replacement ) - Replaces all occurrences of pattern with replacement
+
+	SYNOPSIS: char * afc_string_replace_all ( char * dest, const char * str, const char * pattern, const char * replacement )
+
+		 DESCRIPTION: Returns a new string with all matches of a pattern replaced by a replacement.
+
+		 INPUT: - dest				- The destination string.
+			- str 				- The source string.
+			- pattern 			- The string pattern to replace.
+			- replacement 			- The replacement string.
+
+		RESULT: - The destination string.
+
+	SEE ALSO: - afc_string_replace()
+
+@endnode
+*/
+char *afc_string_replace_all(char *dest, const char *str, const char *pattern, const char *replacement)
+{
+	const char *current_pos = str;
+	char *next_pos;
+	unsigned long pattern_len;
+
+	if (dest == NULL)
+		return NULL;
+
+	afc_string_clear(dest);
+
+	if (str == NULL)
+		return dest;
+
+	if (pattern == NULL || replacement == NULL || *pattern == '\0')
+	{
+		afc_string_copy(dest, str, ALL);
+		return dest;
+	}
+
+	pattern_len = strlen(pattern);
+
+	while ((next_pos = strstr(current_pos, pattern)) != NULL)
+	{
+		afc_string_add(dest, current_pos, next_pos - current_pos);
+		afc_string_add(dest, replacement, ALL);
+		current_pos = next_pos + pattern_len;
+	}
+
+	afc_string_add(dest, current_pos, ALL);
+
+	return dest;
+}
+// }}}
+
+// {{{ afc_string_pad_start ( dest, str, targetLength, padString )
+/*
+@node afc_string_pad_start
+
+			NAME: afc_string_pad_start ( dest, str, targetLength, padString ) - Pads the current string with a given string from the start
+
+	SYNOPSIS: char * afc_string_pad_start ( char * dest, const char * str, unsigned long targetLength, const char * padString )
+
+		 DESCRIPTION: Pads the current string with a given string (repeated, if needed) so that the resulting string reaches a given length. Padding is applied from the start.
+
+		 INPUT: - dest				- The destination string.
+			- str 				- The source string.
+			- targetLength 			- The length of the resulting string once the current string has been padded.
+			- padString 			- The string to pad the current string with. Defaults to " ".
+
+		RESULT: - The destination string.
+
+	SEE ALSO: - afc_string_pad_end()
+
+@endnode
+*/
+char *afc_string_pad_start(char *dest, const char *str, unsigned long targetLength, const char *padString)
+{
+	unsigned long str_len, pad_len, padding_needed, i;
+	const char *pad = (padString != NULL) ? padString : " ";
+
+	if (dest == NULL)
+		return NULL;
+
+	if (str == NULL)
+		str = "";
+
+	str_len = afc_string_len(str);
+
+	if (str_len >= targetLength)
+	{
+		afc_string_copy(dest, str, ALL);
+		return dest;
+	}
+
+	padding_needed = targetLength - str_len;
+	pad_len = strlen(pad);
+
+	afc_string_clear(dest);
+
+	for (i = 0; i < padding_needed; i++)
+	{
+		// Add one char at a time from pad string
+		char c[2] = {pad[i % pad_len], '\0'};
+		afc_string_add(dest, c, ALL);
+	}
+
+	afc_string_add(dest, str, ALL);
+
+	return dest;
+}
+// }}}
+
+// {{{ afc_string_pad_end ( dest, str, targetLength, padString )
+/*
+@node afc_string_pad_end
+
+			NAME: afc_string_pad_end ( dest, str, targetLength, padString ) - Pads the current string with a given string from the end
+
+	SYNOPSIS: char * afc_string_pad_end ( char * dest, const char * str, unsigned long targetLength, const char * padString )
+
+		 DESCRIPTION: Pads the current string with a given string (repeated, if needed) so that the resulting string reaches a given length. Padding is applied from the end.
+
+		 INPUT: - dest				- The destination string.
+			- str 				- The source string.
+			- targetLength 			- The length of the resulting string once the current string has been padded.
+			- padString 			- The string to pad the current string with. Defaults to " ".
+
+		RESULT: - The destination string.
+
+	SEE ALSO: - afc_string_pad_start()
+
+@endnode
+*/
+char *afc_string_pad_end(char *dest, const char *str, unsigned long targetLength, const char *padString)
+{
+	unsigned long str_len, pad_len, padding_needed, i;
+	const char *pad = (padString != NULL) ? padString : " ";
+
+	if (dest == NULL)
+		return NULL;
+
+	if (str == NULL)
+		str = "";
+
+	str_len = afc_string_len(str);
+
+	afc_string_copy(dest, str, ALL);
+
+	if (str_len >= targetLength)
+		return dest;
+
+	padding_needed = targetLength - str_len;
+	pad_len = strlen(pad);
+
+	for (i = 0; i < padding_needed; i++)
+	{
+		// Add one char at a time from pad string
+		char c[2] = {pad[i % pad_len], '\0'};
+		afc_string_add(dest, c, ALL);
+	}
+
+	return dest;
+}
+// }}}
+
+// {{{ afc_string_slice ( dest, str, beginIndex, endIndex )
+/*
+@node afc_string_slice
+
+			NAME: afc_string_slice ( dest, str, beginIndex, endIndex ) - Extracts a section of a string
+
+	SYNOPSIS: char * afc_string_slice ( char * dest, const char * str, long beginIndex, long endIndex )
+
+		 DESCRIPTION: Extracts a section of a string and returns it as a new string (in dest), without modifying the original string.
+
+		 INPUT: - dest				- The destination string.
+			- str 				- The source string.
+			- beginIndex 			- The zero-based index at which to begin extraction. If negative, it is treated as strLength + beginIndex.
+			- endIndex 			- The zero-based index before which to end extraction. The character at this index will not be included. If negative, it is treated as strLength + endIndex. To extract to the end of the string, pass a value >= string length (e.g. LONG_MAX).
+
+		RESULT: - The destination string.
+
+	SEE ALSO: - afc_string_mid()
+
+@endnode
+*/
+char *afc_string_slice(char *dest, const char *str, long beginIndex, long endIndex)
+{
+	unsigned long len;
+	long start, end;
+
+	if (dest == NULL)
+		return NULL;
+
+	afc_string_clear(dest);
+
+	if (str == NULL)
+		return dest;
+
+	len = afc_string_len(str);
+	start = beginIndex;
+	end = endIndex;
+
+	// Handle negative start
+	if (start < 0)
+	{
+		start = len + start;
+	}
+
+	// Clamp start
+	if (start < 0)
+		start = 0;
+	if (start >= (long)len)
+		return dest; // Empty
+
+	// Handle negative end
+	if (end < 0)
+	{
+		end = len + end;
+	}
+
+	// Clamp end
+	if (end > (long)len)
+		end = len;
+	if (end < 0)
+		end = 0;
+
+	if (end <= start)
+		return dest; // Empty
+
+	return afc_string_copy(dest, str + start, end - start);
+}
+// }}}
+
+// {{{ afc_string_index_of ( str, search, fromIndex )
+/*
+@node afc_string_index_of
+
+			NAME: afc_string_index_of ( str, search, fromIndex ) - Returns the index of the first occurrence of the specified value
+
+	SYNOPSIS: long afc_string_index_of ( const char * str, const char * search, long fromIndex )
+
+		 DESCRIPTION: Returns the index of the first occurrence of the specified value, or -1 if not found.
+
+		 INPUT: - str				- The string to search in.
+			- search 			- The string to search for.
+			- fromIndex 			- The index to start the search from.
+
+		RESULT: - The index of the first occurrence, or -1 if not found.
+
+	SEE ALSO: - afc_string_last_index_of()
+
+@endnode
+*/
+long afc_string_index_of(const char *str, const char *search, long fromIndex)
+{
+	long len;
+	char *p;
+
+	if (str == NULL || search == NULL)
+		return -1;
+
+	len = afc_string_len(str);
+
+	if (fromIndex < 0)
+		fromIndex = 0;
+
+	if (fromIndex >= len)
+		return -1;
+
+	p = strstr(str + fromIndex, search);
+
+	if (p)
+		return (long)(p - str);
+
+	return -1;
+}
+// }}}
+
+// {{{ afc_string_last_index_of ( str, search, fromIndex )
+/*
+@node afc_string_last_index_of
+
+			NAME: afc_string_last_index_of ( str, search, fromIndex ) - Returns the index of the last occurrence of the specified value
+
+	SYNOPSIS: long afc_string_last_index_of ( const char * str, const char * search, long fromIndex )
+
+		 DESCRIPTION: Returns the index of the last occurrence of the specified value, searching backwards from fromIndex.
+
+		 INPUT: - str				- The string to search in.
+			- search 			- The string to search for.
+			- fromIndex 			- The index to start the search backwards from.
+
+		RESULT: - The index of the last occurrence, or -1 if not found.
+
+	SEE ALSO: - afc_string_index_of()
+
+@endnode
+*/
+long afc_string_last_index_of(const char *str, const char *search, long fromIndex)
+{
+	long len, search_len, i;
+
+	if (str == NULL || search == NULL)
+		return -1;
+
+	len = afc_string_len(str);
+	search_len = strlen(search);
+
+	if (search_len == 0)
+		return (fromIndex >= len) ? len : fromIndex;
+
+	if (fromIndex < 0)
+		return -1; // JS behavior: if fromIndex < 0, treated as 0, but since we search backwards from 0, only match at 0 is possible if searchLen is 0, else -1. Actually JS treats negative as 0.
+
+	if (fromIndex >= len)
+		fromIndex = len;
+
+	// Start searching from min(fromIndex, len - searchLen)
+	i = fromIndex;
+	if (i > len - (long)search_len)
+		i = len - (long)search_len;
+
+	for (; i >= 0; i--)
+	{
+		if (strncmp(str + i, search, search_len) == 0)
+			return i;
+	}
+
+	return -1;
+}
+// }}}
+
+// {{{ afc_string_trim_start ( str )
+/*
+@node afc_string_trim_start
+
+			NAME: afc_string_trim_start ( str ) - Removes whitespace from the beginning of a string
+
+	SYNOPSIS: char * afc_string_trim_start ( char * str )
+
+		 DESCRIPTION: Removes whitespace from the beginning of a string. Modifies the string in place.
+
+		 INPUT: - str				- The string to trim.
+
+		RESULT: - The trimmed string.
+
+	SEE ALSO: - afc_string_trim_end()
+
+@endnode
+*/
+char *afc_string_trim_start(char *str)
+{
+	char *p;
+
+	if (str == NULL)
+		return NULL;
+
+	p = str;
+	while (isspace((unsigned char)*p))
+		p++;
+
+	if (p != str)
+	{
+		afc_string_copy(str, p, ALL);
+	}
+
+	return str;
+}
+// }}}
+
+// {{{ afc_string_trim_end ( str )
+/*
+@node afc_string_trim_end
+
+			NAME: afc_string_trim_end ( str ) - Removes whitespace from the end of a string
+
+	SYNOPSIS: char * afc_string_trim_end ( char * str )
+
+		 DESCRIPTION: Removes whitespace from the end of a string. Modifies the string in place.
+
+		 INPUT: - str				- The string to trim.
+
+		RESULT: - The trimmed string.
+
+	SEE ALSO: - afc_string_trim_start()
+
+@endnode
+*/
+char *afc_string_trim_end(char *str)
+{
+	long len;
+	char *p;
+
+	if (str == NULL)
+		return NULL;
+
+	len = afc_string_len(str);
+	if (len == 0)
+		return str;
+
+	p = str + len - 1;
+	while (p >= str && isspace((unsigned char)*p))
+		p--;
+
+	*(p + 1) = '\0';
+	afc_string_reset_len(str);
+
+	return str;
+}
+// }}}
+
+// {{{ afc_string_from_char_code ( code )
+/*
+@node afc_string_from_char_code
+
+			NAME: afc_string_from_char_code ( code ) - Returns a string created from the specified UTF-16 code unit
+
+	SYNOPSIS: char * afc_string_from_char_code ( int code )
+
+		 DESCRIPTION: Returns a string created from the specified char code.
+
+		 INPUT: - code				- The char code.
+
+		RESULT: - A new AFC string containing the character.
+
+	SEE ALSO:
+
+@endnode
+*/
+char *afc_string_from_char_code(int code)
+{
+	char *s = afc_string_new(1);
+	if (s)
+	{
+		s[0] = (char)code;
+		s[1] = '\0';
+		afc_string_reset_len(s);
+	}
+	return s;
+}
+// }}}
 
 #ifdef TEST_CLASS
 // {{{ test

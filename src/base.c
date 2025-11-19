@@ -142,7 +142,7 @@ static void afc_internal_on_exit(void);
 
 			INPUT: - NONE
 
-		  RESULTS: a valid inizialized afc structure. NULL in case of errors.
+		  RESULTS: a valid initialized afc structure. NULL in case of errors.
 
 		 SEE ALSO: - afc_delete()
 
@@ -758,7 +758,10 @@ void *_afc_realloc(void *mem, size_t size, const char *file, const char *func, c
 	if (__internal_afc_base == NULL || __internal_afc_base->tracker == NULL) /*hardening against uninit base pointer*/
 		return new_addr;
 	else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuse-after-free"
 		_afc_mem_tracker_update_size(__internal_afc_base->tracker, mem, new_addr, size, file, func, line);
+#pragma GCC diagnostic pop
 
 	return new_addr;
 }
