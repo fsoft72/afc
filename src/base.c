@@ -142,7 +142,7 @@ static void afc_internal_on_exit(void);
 
 			INPUT: - NONE
 
-		  RESULTS: a valid inizialated afc structure. NULL in case of errors.
+		  RESULTS: a valid initialized afc structure. NULL in case of errors.
 
 		 SEE ALSO: - afc_delete()
 

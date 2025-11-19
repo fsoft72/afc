@@ -92,7 +92,7 @@ extern "C"
 
 /* JS-like String API macros */
 #define afc_string_includes(str, match, pos) (afc_string_instr(str, match, pos) != NULL)
-#define afc_string_char_code_at(str, index) ((int)afc_string_char_at(str, index))
+#define afc_string_char_code_at(str, index) ((int)(unsigned char)afc_string_char_at(str, index))
 
   /* Function Prototypes */
 

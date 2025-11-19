@@ -1056,7 +1056,7 @@ static void afc_dirmaster_internal_size2string(DirMaster *dm, char *dest, unsign
 		if (dm->size_decimals)
 		{
 			snprintf(buf, 20, "%lu", size - (rbase * rsize));
-			buf[dm->size_decimals] = 0;
+			if (dm->size_decimals < sizeof(buf)) buf[dm->size_decimals] = 0;
 			snprintf(dest, 20, "%d.%.*s %s", rsize, dm->size_decimals, buf, afc_dirmaster_size_bases[count]);
 		}
 		else
