@@ -36,6 +36,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <limits.h>
 
 #ifdef MINGW
 #include <fcntl.h>
@@ -89,6 +90,10 @@ extern "C"
 #define afc_string_new(size) _afc_string_new(size, __FILE__, __FUNCTION__, __LINE__)
 #define afc_string_dup(str) _afc_string_dup(str, __FILE__, __FUNCTION__, __LINE__)
 
+/* JS-like String API macros */
+#define afc_string_includes(str, match, pos) (afc_string_instr(str, match, pos) != NULL)
+#define afc_string_char_code_at(str, index) ((int)afc_string_char_at(str, index))
+
   /* Function Prototypes */
 
   char *_afc_string_new(unsigned long numchars, const char *file, const char *func, const unsigned int line);
@@ -120,6 +125,22 @@ extern "C"
   char *afc_string_dirname(const char *path);
   char *afc_string_basename(const char *path);
   char *afc_string_utf8_to_latin1(const char *utf8);
+
+  /* New JS-like String API functions */
+  char afc_string_char_at(const char *str, long index);
+  int afc_string_starts_with(const char *str, const char *search, unsigned long position);
+  int afc_string_ends_with(const char *str, const char *search, unsigned long length);
+  char *afc_string_repeat(char *dest, const char *str, unsigned long count);
+  char *afc_string_replace(char *dest, const char *str, const char *pattern, const char *replacement);
+  char *afc_string_replace_all(char *dest, const char *str, const char *pattern, const char *replacement);
+  char *afc_string_pad_start(char *dest, const char *str, unsigned long targetLength, const char *padString);
+  char *afc_string_pad_end(char *dest, const char *str, unsigned long targetLength, const char *padString);
+  char *afc_string_slice(char *dest, const char *str, long beginIndex, long endIndex);
+  long afc_string_index_of(const char *str, const char *search, long fromIndex);
+  long afc_string_last_index_of(const char *str, const char *search, long fromIndex);
+  char *afc_string_trim_start(char *str);
+  char *afc_string_trim_end(char *str);
+  char *afc_string_from_char_code(int code);
 
 #ifdef __cplusplus
 }

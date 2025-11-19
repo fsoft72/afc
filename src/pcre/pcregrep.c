@@ -612,8 +612,8 @@ for (j = 0; j < pattern_count; j++)
   hints_list[j] = pcre_study(pattern_list[j], 0, &error);
   if (error != NULL)
     {
-    char s[16];
-    if (pattern_count == 1) s[0] = 0; else sprintf(s, " number %d", j);
+    char s[32];
+    if (pattern_count == 1) s[0] = 0; else snprintf(s, 32, " number %d", j);
     fprintf(stderr, "pcregrep: Error while studying regex%s: %s\n", s, error);
     return 2;
     }

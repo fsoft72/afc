@@ -826,7 +826,7 @@ static int afc_fileops_internal_scan_dir(FileOperations *fo, char *path, int act
 	struct dirent *file;
 	struct stat descr;
 	char dirname[AFC_FILEOPS_MAX_DIR_LEN];
-	char fullname[AFC_FILEOPS_MAX_FILE_LEN];
+	char fullname[AFC_FILEOPS_MAX_DIR_LEN];
 	int err;
 
 	if ((dir = opendir(path)) == NULL)
@@ -846,7 +846,7 @@ static int afc_fileops_internal_scan_dir(FileOperations *fo, char *path, int act
 		if ((strcmp(file->d_name, "..") == 0) || (strcmp(file->d_name, ".") == 0))
 			continue;
 
-		sprintf(fullname, "%s%s", dirname, file->d_name);
+		snprintf(fullname, sizeof(fullname), "%s%s", dirname, file->d_name);
 
 #ifdef MINGW
 		if (stat(fullname, &descr) == -1)

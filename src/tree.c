@@ -298,6 +298,12 @@ short afc_tree_is_empty(Tree *tree)
 	return (tree->first == NULL);
 }
 
+static int afc_tree_int_node_delete_wrapper(TreeNode *n)
+{
+	afc_tree_int_node_delete(n);
+	return AFC_ERR_NO_ERROR;
+}
+
 int _afc_subtree_delete(TreeNode *subtree)
 {
 	if (subtree == NULL)
@@ -311,7 +317,7 @@ int _afc_subtree_delete(TreeNode *subtree)
 			subtree->parent->child = subtree->r_sibling;
 	}
 
-	return afc_subtree_traverse(subtree, AFC_TREE_MODE_POSTORDER, (int (*)(TreeNode *))afc_tree_int_node_delete);
+	return afc_subtree_traverse(subtree, AFC_TREE_MODE_POSTORDER, afc_tree_int_node_delete_wrapper);
 }
 
 #ifdef TEST_CLASS

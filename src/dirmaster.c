@@ -847,7 +847,8 @@ FileInfo *afc_dirmaster_add_item(DirMaster *dm, char *fullname, char *fname, str
 
 	memcpy(info->st, descr, sizeof(struct stat));
 
-	strncpy(info->name, fname, NAME_MAX);
+	strncpy(info->name, fname, sizeof(info->name) - 1);
+	info->name[sizeof(info->name) - 1] = '\0';
 
 	if (S_ISDIR(descr->st_mode))
 	{
@@ -900,18 +901,24 @@ FileInfo *afc_dirmaster_add_item(DirMaster *dm, char *fullname, char *fname, str
 	{
 		pass = getpwuid(descr->st_uid);
 		if (pass != NULL)
-			strncpy(info->cuser, pass->pw_name, 10);
+		{
+			strncpy(info->cuser, pass->pw_name, sizeof(info->cuser) - 1);
+			info->cuser[sizeof(info->cuser) - 1] = '\0';
+		}
 		else
-			snprintf(info->cuser, 10, "%d", descr->st_uid);
+			snprintf(info->cuser, sizeof(info->cuser), "%d", descr->st_uid);
 	}
 
 	if (dm->conv_group)
 	{
 		grp = getgrgid(descr->st_gid);
 		if (grp)
-			strncpy(info->cgroup, grp->gr_name, 10);
+		{
+			strncpy(info->cgroup, grp->gr_name, sizeof(info->cgroup) - 1);
+			info->cgroup[sizeof(info->cgroup) - 1] = '\0';
+		}
 		else
-			snprintf(info->cgroup, 10, "%d", descr->st_gid);
+			snprintf(info->cgroup, sizeof(info->cgroup), "%d", descr->st_gid);
 	}
 
 	return (info);
@@ -1021,7 +1028,7 @@ static void afc_dirmaster_internal_size2string(DirMaster *dm, char *dest, unsign
 
 	if (dm->size_format == SIZEFORMAT_BYTES)
 	{
-		snprintf(dest, 10, "%lu %s", size, afc_dirmaster_size_bases[0]);
+		snprintf(dest, 20, "%lu %s", size, afc_dirmaster_size_bases[0]);
 		return;
 	}
 
@@ -1043,18 +1050,18 @@ static void afc_dirmaster_internal_size2string(DirMaster *dm, char *dest, unsign
 	}
 
 	if (count == 0)
-		snprintf(dest, 10, "%lu b", size);
+		snprintf(dest, 20, "%lu b", size);
 	else
 	{
 		if (dm->size_decimals)
 		{
 			snprintf(buf, 20, "%lu", size - (rbase * rsize));
 			buf[dm->size_decimals] = 0;
-			snprintf(dest, 10, "%d.%s %s", rsize, buf, afc_dirmaster_size_bases[count]);
+			snprintf(dest, 20, "%d.%.*s %s", rsize, dm->size_decimals, buf, afc_dirmaster_size_bases[count]);
 		}
 		else
 		{
-			snprintf(dest, 10, "%d %s", rsize, afc_dirmaster_size_bases[count]);
+			snprintf(dest, 20, "%d %s", rsize, afc_dirmaster_size_bases[count]);
 		}
 	}
 }
@@ -1066,13 +1073,14 @@ static int afc_dirmaster_internal_readd(DirMaster *dm, const char *path, int dat
 	struct dirent *file;
 	struct stat descr;
 	char dirname[255];
-	char fullname[255];
+	char fullname[1024];
 	FileInfo *info;
 
 	if ((dir = opendir(path)) == NULL)
 		return (errno);
 
-	strncpy(dirname, path, 255);
+	strncpy(dirname, path, sizeof(dirname) - 1);
+	dirname[sizeof(dirname) - 1] = '\0';
 
 	if (dirname[strlen(dirname) - 1] != '/')
 		strcat(dirname, "/");
@@ -1084,7 +1092,7 @@ static int afc_dirmaster_internal_readd(DirMaster *dm, const char *path, int dat
 		if ((strcmp(file->d_name, "..") == 0) || (strcmp(file->d_name, ".") == 0))
 			continue;
 
-		snprintf(fullname, 255, "%s%s", dirname, file->d_name);
+		snprintf(fullname, sizeof(fullname), "%s%s", dirname, file->d_name);
 
 		if (lstat(fullname, &descr) == 0)
 		{
