@@ -83,6 +83,7 @@ InetClient *afc_inet_client_new()
 	ic->use_ssl = FALSE;
 	ic->ssl_ctx = NULL;
 	ic->ssl = NULL;
+	ic->timeout = 0; // No timeout by default
 
 	RETURN(ic);
 
@@ -185,9 +186,19 @@ int afc_inet_client_clear(InetClient *ic)
 int afc_inet_client_open(InetClient *ic, char *url, int port)
 {
 	struct hostent *h;
+	struct timeval tv;
 
 	if ((ic->sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SOCKET, "Cannot Create the Socket", "socket() failed"));
+
+	// Set timeout if configured
+	if (ic->timeout > 0)
+	{
+		tv.tv_sec = ic->timeout;
+		tv.tv_usec = 0;
+		setsockopt(ic->sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
+		setsockopt(ic->sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof(tv));
+	}
 
 	if ((h = afc_inet_client_resolve(ic, url)) == NULL)
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_HOST_UNKNOWN, "Unable to resolve the host", NULL));
@@ -474,6 +485,10 @@ int afc_inet_client_set_tag(InetClient *ic, int tag, void *val)
 	{
 	case AFC_INET_CLIENT_TAG_USE_SSL:
 		ic->use_ssl = (BOOL)(long)val;
+		break;
+
+	case AFC_INET_CLIENT_TAG_TIMEOUT:
+		ic->timeout = (int)(long)val;
 		break;
 
 	default:

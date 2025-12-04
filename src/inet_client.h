@@ -63,7 +63,8 @@ enum
 enum
 {
 	AFC_INET_CLIENT_TAG_USE_SSL = AFC_INET_CLIENT_BASE + 100,
-	AFC_INET_CLIENT_TAG_SSL_METHOD
+	AFC_INET_CLIENT_TAG_SSL_METHOD,
+	AFC_INET_CLIENT_TAG_TIMEOUT
 };
 
 struct afc_inet_client
@@ -80,6 +81,8 @@ struct afc_inet_client
 	BOOL use_ssl;	  /* Flag to enable SSL/TLS */
 	SSL_CTX *ssl_ctx; /* SSL Context */
 	SSL *ssl;		  /* SSL Connection */
+
+	int timeout; /* Timeout in seconds (0 = no timeout) */
 };
 
 typedef struct afc_inet_client InetClient;

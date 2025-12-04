@@ -4,6 +4,95 @@
 
 ### New Features
 
+#### Enhanced HTTP Client Class
+Completely overhauled the existing HTTP client with full HTTP/1.1 support, including all major HTTP methods, automatic redirect following, SSL/TLS support, response parsing, and configurable timeouts.
+
+**Files modified:**
+- `src/http_client.h` - Enhanced with complete HTTP client API
+- `src/http_client.c` - Completely rewritten with full HTTP protocol support
+
+**Features:**
+- **Full HTTP method support**: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS
+- **Request handling**:
+  - Custom headers via Dictionary
+  - Request body support with automatic Content-Length
+  - HTTP/1.1 protocol with proper Host header
+- **Response handling**:
+  - Status code and message parsing
+  - Response headers parsing (into Dictionary)
+  - Response body capture with multiple transfer modes
+  - Chunked transfer encoding support
+  - Content-Length based reading
+- **Automatic redirect following**:
+  - Configurable via `AFC_HTTP_CLIENT_TAG_FOLLOW_REDIRECTS`
+  - Configurable maximum redirects (default: 10)
+  - Proper HTTP semantics (301/302/303 convert to GET)
+  - 307/308 preserve original method
+- **SSL/TLS support**: Both HTTP and HTTPS via InetClient's OpenSSL integration
+- **URL parsing**: Automatic protocol, host, port, and path extraction
+- **Timeout configuration**: Per-request timeout settings
+- **Connection reuse**: Automatic connection management and reconnection when needed
+- **Tag-based configuration**: Following AFC conventions
+
+**Usage examples:**
+
+Simple GET request:
+```c
+HttpClient *hc = afc_http_client_new();
+afc_http_client_get(hc, "http://example.com/api/data");
+printf("Status: %d\n", afc_http_client_get_status_code(hc));
+printf("Body: %s\n", afc_http_client_get_response_body(hc));
+afc_http_client_delete(hc);
+```
+
+POST request with JSON:
+```c
+HttpClient *hc = afc_http_client_new();
+afc_http_client_set_header(hc, "Content-Type", "application/json");
+const char *json = "{\"key\":\"value\"}";
+afc_http_client_post(hc, "https://api.example.com/data", json, strlen(json));
+afc_http_client_delete(hc);
+```
+
+With custom configuration:
+```c
+HttpClient *hc = afc_http_client_new();
+afc_http_client_set_tags(hc,
+    AFC_HTTP_CLIENT_TAG_TIMEOUT, (void *)30,
+    AFC_HTTP_CLIENT_TAG_FOLLOW_REDIRECTS, (void *)TRUE,
+    AFC_HTTP_CLIENT_TAG_MAX_REDIRECTS, (void *)5,
+    AFC_TAG_END);
+afc_http_client_set_header(hc, "User-Agent", "MyApp/1.0");
+afc_http_client_get(hc, "http://example.com/");
+afc_http_client_delete(hc);
+```
+
+**API Summary:**
+- Configuration: `afc_http_client_set_tags()`, `afc_http_client_set_header()`
+- HTTP methods: `afc_http_client_get()`, `afc_http_client_post()`, `afc_http_client_put()`, `afc_http_client_patch()`, `afc_http_client_delete_url()`, `afc_http_client_head()`, `afc_http_client_options()`
+- Generic request: `afc_http_client_request()`
+- Response access: `afc_http_client_get_status_code()`, `afc_http_client_get_status_message()`, `afc_http_client_get_response_body()`, `afc_http_client_get_response_headers()`, `afc_http_client_get_response_header()`
+
+#### Timeout Support in InetClient
+Added configurable timeout support to the base networking class for connection and I/O operations.
+
+**Files modified:**
+- `src/inet_client.h` - Added timeout field and `AFC_INET_CLIENT_TAG_TIMEOUT` tag
+- `src/inet_client.c` - Implemented timeout via `setsockopt()` with `SO_RCVTIMEO` and `SO_SNDTIMEO`
+
+**Features:**
+- Per-connection timeout configuration
+- Applies to both send and receive operations
+- Timeout in seconds (0 = no timeout, default)
+- Configurable via `afc_inet_client_set_tags()`
+
+**Usage:**
+```c
+InetClient *ic = afc_inet_client_new();
+afc_inet_client_set_tags(ic, AFC_INET_CLIENT_TAG_TIMEOUT, (void *)10, AFC_TAG_END);
+afc_inet_client_open(ic, "example.com", 80);
+```
+
 #### SMTP Client Class
 Added complete SMTP client implementation with SSL/TLS support for sending emails through services like Amazon SES.
 
