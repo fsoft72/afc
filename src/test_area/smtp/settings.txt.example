@@ -1,0 +1,26 @@
+# SMTP Settings Example
+# Copy this file to settings.txt and fill in your credentials
+# Lines starting with # are comments
+
+# SMTP Server Configuration
+host=email-smtp.us-east-1.amazonaws.com
+port=587
+username=your-smtp-username
+password=your-smtp-password
+
+# Email Configuration
+from=sender@example.com
+to=recipient@example.com
+
+# TLS/SSL Options (use one of these)
+# For STARTTLS (port 587) - recommended for most servers
+use_tls=1
+
+# For Direct SSL (port 465) - uncomment if needed
+# use_ssl=1
+
+# Authentication Method
+# auth_plain - AUTH PLAIN (Amazon SES compatible)
+# auth_login - AUTH LOGIN (Amazon SES compatible)
+# auth_none - No authentication
+auth_method=auth_login

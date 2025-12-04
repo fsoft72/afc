@@ -4,6 +4,35 @@
 
 ### New Features
 
+#### SMTP Test Example with Settings File
+Added a working SMTP test example in `src/test_area/smtp/` that demonstrates sending emails using configuration from a settings file.
+
+**Files created:**
+- `src/test_area/smtp/test_01.c` - SMTP test program with settings file support
+- `src/test_area/smtp/Makefile` - Build configuration
+- `src/test_area/smtp/settings.txt.example` - Configuration template
+- `src/test_area/smtp/README.md` - Usage documentation
+
+**Features:**
+- **Settings file parsing**: Reads SMTP configuration from `settings.txt`
+- **Full SMTP workflow**: Connect, authenticate, send email, and quit
+- **Comprehensive error handling**: Validates all required settings
+- **Multiple authentication methods**: AUTH PLAIN, AUTH LOGIN, and no auth
+- **TLS/SSL support**: STARTTLS (port 587) and direct SSL (port 465)
+- **Configuration display**: Shows all settings before connecting
+- **Example configurations**: Amazon SES, Gmail, and generic SMTP
+
+**Usage:**
+```bash
+cd src/test_area/smtp
+cp settings.txt.example settings.txt
+# Edit settings.txt with your SMTP credentials
+make
+./test_01
+```
+
+The test sends a simple email verifying the SMTP client functionality with your configured provider.
+
 #### Enhanced HTTP Client Class
 Completely overhauled the existing HTTP client with full HTTP/1.1 support, including all major HTTP methods, automatic redirect following, SSL/TLS support, response parsing, and configurable timeouts.
 
