@@ -2,16 +2,38 @@
 
 ## December 4, 2025
 
+### Bug Fixes
+
+#### SMTP Client - Fixed Response Handling and Command Formatting
+Fixed critical bugs in the SMTP client implementation that prevented it from working correctly.
+
+**Files modified:**
+- `src/smtp.c` - Fixed buffer handling and command formatting
+
+**Bugs fixed:**
+1. **Response buffer handling**: `_afc_smtp_get_response()` was not copying data from `InetClient->buf` to `SMTP->buf`, causing empty responses to be processed
+2. **Command formatting**: EHLO commands were using incorrect `afc_string_make()` syntax, causing "bad syntax" errors from SMTP servers
+
+**Technical details:**
+- Added `afc_string_copy(smtp->buf, smtp->ic->buf, ALL)` after `afc_inet_client_get()` to properly capture server responses
+- Changed EHLO commands to pass string literals directly to `_afc_smtp_send_command()` instead of pre-formatting in `smtp->tmp` (which was causing buffer aliasing)
+
+These fixes enable the SMTP client to successfully connect, perform STARTTLS negotiation, and authenticate with SMTP servers like Amazon SES.
+
 ### New Features
 
 #### SMTP Test Example with Settings File
 Added a working SMTP test example in `src/test_area/smtp/` that demonstrates sending emails using configuration from a settings file.
 
 **Files created:**
-- `src/test_area/smtp/test_01.c` - SMTP test program with settings file support
+- `src/test_area/smtp/test_01.c` - SMTP test program with settings file parser
 - `src/test_area/smtp/Makefile` - Build configuration
 - `src/test_area/smtp/settings.txt.example` - Configuration template
 - `src/test_area/smtp/README.md` - Usage documentation
+
+**Bug fixes in test program:**
+- Fixed settings parser to use `afc_string_dup()` for dictionary values (was storing pointers to reused buffer)
+- Added cleanup function `_cleanup_string()` to properly free duplicated strings
 
 **Features:**
 - **Settings file parsing**: Reads SMTP configuration from `settings.txt`

@@ -29,6 +29,15 @@
 #include <string.h>
 
 /*
+ * _cleanup_string - Free a string allocated with afc_string_dup
+ */
+static int _cleanup_string(void *str)
+{
+	if (str) _afc_string_delete((char *)str);
+	return AFC_ERR_NO_ERROR;
+}
+
+/*
  * _read_settings - Read settings from settings.txt file
  *
  * Reads key=value pairs from settings.txt, ignoring comments and empty lines.
@@ -43,6 +52,9 @@ static Dictionary *_read_settings(AFC *afc)
 
 	dict = afc_dictionary_new();
 	if (!dict) return NULL;
+
+	// Set cleanup function to free duplicated strings
+	afc_dictionary_set_clear_func(dict, _cleanup_string);
 
 	fp = fopen("settings.txt", "r");
 	if (!fp) {
@@ -88,7 +100,8 @@ static Dictionary *_read_settings(AFC *afc)
 			p--;
 		}
 
-		afc_dictionary_set(dict, key, value);
+		// Duplicate strings before storing in dictionary
+		afc_dictionary_set(dict, afc_string_dup(key), afc_string_dup(value));
 	}
 
 	fclose(fp);

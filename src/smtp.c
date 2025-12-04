@@ -317,6 +317,9 @@ int _afc_smtp_get_response(SMTP *smtp)
 	if ((res = afc_inet_client_get(smtp->ic)) != AFC_ERR_NO_ERROR)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_PROTOCOL, "Failed to get response", NULL);
 
+	// Copy response from InetClient buffer to SMTP buffer
+	afc_string_copy(smtp->buf, smtp->ic->buf, ALL);
+
 	// SMTP responses start with a 3-digit code
 	if (afc_string_len(smtp->buf) < 3)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_INVALID_RESPONSE, "Invalid response", smtp->buf);
@@ -392,8 +395,7 @@ int afc_smtp_connect(SMTP *smtp)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_PROTOCOL, "Invalid server greeting", smtp->buf);
 
 	// Send EHLO command
-	afc_string_make(smtp->tmp, "EHLO localhost", NULL);
-	if ((res = _afc_smtp_send_command(smtp, smtp->tmp)) != 250)
+	if ((res = _afc_smtp_send_command(smtp, "EHLO localhost")) != 250)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_PROTOCOL, "EHLO failed", smtp->buf);
 
 	smtp->connected = TRUE;
@@ -408,8 +410,7 @@ int afc_smtp_connect(SMTP *smtp)
 			return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_TLS_REQUIRED, "Failed to start TLS", NULL);
 
 		// Send EHLO again after STARTTLS
-		afc_string_make(smtp->tmp, "EHLO localhost", NULL);
-		if ((res = _afc_smtp_send_command(smtp, smtp->tmp)) != 250)
+		if ((res = _afc_smtp_send_command(smtp, "EHLO localhost")) != 250)
 			return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_PROTOCOL, "EHLO after STARTTLS failed", smtp->buf);
 	}
 
