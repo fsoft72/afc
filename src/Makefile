@@ -40,7 +40,7 @@ OBJS=string.o base.o base64.o list.o array.o cgi_manager.o dictionary.o dirmaste
      mem_tracker.o readargs.o regexp.o string_list.o dynamic_class.o dynamic_class_master.o \
      cmd_parser.o threader.o inet_client.o inet_server.o date_handler.o md5.o bin_tree.o dbi_manager.o \
      circular_list.o btree.o avl_tree.o  fileops.o tree.o\
-	pop3.o
+	pop3.o smtp.o
 endif
 
 LIBFLAGS=-shared
@@ -84,7 +84,7 @@ static: $(OBJS)
 
 lib: $(OBJS)
 	@echo "Creating Shared library..."
-	@$(CC) $(LIBFLAGS) -Wl,-soname,libafc.so.$(AFCVER) -o libafc.so.$(AFCVER).$(AFCREV).$(AFCMK) $(OBJS) pcre/libpcre.a
+	@$(CC) $(LIBFLAGS) -Wl,-soname,libafc.so.$(AFCVER) -o libafc.so.$(AFCVER).$(AFCREV).$(AFCMK) $(OBJS) pcre/libpcre.a -lssl -lcrypto
 
 checkdirs:
 	@echo "Checking "

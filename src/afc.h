@@ -50,6 +50,7 @@
 #include "inet_server.h"
 #include "dbi_manager.h"
 #include "pop3.h"
+#include "smtp.h"
 
 #endif
 

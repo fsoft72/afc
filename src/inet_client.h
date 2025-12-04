@@ -32,6 +32,9 @@
 #include <malloc.h>
 #include <arpa/inet.h>
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 #include "base.h"
 #include "strings.h"
 #include "exceptions.h"
@@ -50,7 +53,17 @@ enum
 	AFC_INET_CLIENT_ERR_CONNECT,
 	AFC_INET_CLIENT_ERR_RECEIVE,
 	AFC_INET_CLIENT_ERR_END_OF_STREAM,
-	AFC_INET_CLIENT_ERR_SEND
+	AFC_INET_CLIENT_ERR_SEND,
+	AFC_INET_CLIENT_ERR_SSL_INIT,
+	AFC_INET_CLIENT_ERR_SSL_CONNECT,
+	AFC_INET_CLIENT_ERR_SSL_READ,
+	AFC_INET_CLIENT_ERR_SSL_WRITE
+};
+
+enum
+{
+	AFC_INET_CLIENT_TAG_USE_SSL = AFC_INET_CLIENT_BASE + 100,
+	AFC_INET_CLIENT_TAG_SSL_METHOD
 };
 
 struct afc_inet_client
@@ -63,6 +76,10 @@ struct afc_inet_client
 	char *buf; /* Data Buffer */
 
 	FILE *fd; /* File Descriptor */
+
+	BOOL use_ssl;	  /* Flag to enable SSL/TLS */
+	SSL_CTX *ssl_ctx; /* SSL Context */
+	SSL *ssl;		  /* SSL Connection */
 };
 
 typedef struct afc_inet_client InetClient;
@@ -84,4 +101,12 @@ struct hostent *afc_inet_client_resolve(InetClient *ic, char *site_name);
 int afc_inet_client_get(InetClient *ic);
 int afc_inet_client_send(InetClient *ic, const char *str, int len);
 FILE *afc_inet_client_get_file(InetClient *ic);
+
+// SSL/TLS support functions
+#define afc_inet_client_set_tags(ic, first, ...) _afc_inet_client_set_tags(ic, first, ##__VA_ARGS__, AFC_TAG_END)
+int _afc_inet_client_set_tags(InetClient *ic, int first_tag, ...);
+int afc_inet_client_set_tag(InetClient *ic, int tag, void *val);
+int afc_inet_client_enable_ssl(InetClient *ic);
+int afc_inet_client_start_tls(InetClient *ic);
+
 #endif

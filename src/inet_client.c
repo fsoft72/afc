@@ -17,6 +17,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
+#include <stdarg.h>
 #include "inet_client.h"
 
 static const char class_name[] = "InetClient";
@@ -78,6 +79,10 @@ InetClient *afc_inet_client_new()
 
 	if ((ic->buf = afc_string_new(1024)) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "buf", NULL);
+
+	ic->use_ssl = FALSE;
+	ic->ssl_ctx = NULL;
+	ic->ssl = NULL;
 
 	RETURN(ic);
 
@@ -224,6 +229,20 @@ int afc_inet_client_open(InetClient *ic, char *url, int port)
 */
 int afc_inet_client_close(InetClient *ic)
 {
+	// Clean up SSL connection if active
+	if (ic->ssl)
+	{
+		SSL_shutdown(ic->ssl);
+		SSL_free(ic->ssl);
+		ic->ssl = NULL;
+	}
+
+	if (ic->ssl_ctx)
+	{
+		SSL_CTX_free(ic->ssl_ctx);
+		ic->ssl_ctx = NULL;
+	}
+
 	if (ic->sockfd)
 		close(ic->sockfd);
 
@@ -292,8 +311,25 @@ int afc_inet_client_get(InetClient *ic)
 {
 	int bytes;
 
-	if ((bytes = recv(ic->sockfd, ic->buf, afc_string_max(ic->buf), 0)) == -1)
-		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_RECEIVE, "recv() failed", NULL));
+	// Use SSL_read if SSL is enabled
+	if (ic->use_ssl && ic->ssl)
+	{
+		if ((bytes = SSL_read(ic->ssl, ic->buf, afc_string_max(ic->buf))) <= 0)
+		{
+			int ssl_err = SSL_get_error(ic->ssl, bytes);
+			if (ssl_err == SSL_ERROR_ZERO_RETURN)
+			{
+				afc_string_clear(ic->buf);
+				return (AFC_INET_CLIENT_ERR_END_OF_STREAM);
+			}
+			return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_READ, "SSL_read() failed", NULL));
+		}
+	}
+	else
+	{
+		if ((bytes = recv(ic->sockfd, ic->buf, afc_string_max(ic->buf), 0)) == -1)
+			return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_RECEIVE, "recv() failed", NULL));
+	}
 
 	if (bytes == 0)
 	{
@@ -339,8 +375,17 @@ int afc_inet_client_send(InetClient *ic, const char *str, int len)
 	if (len <= 0)
 		len = strlen(str);
 
-	if (send(ic->sockfd, str, len, 0) == -1)
-		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SEND, "send() failed", NULL));
+	// Use SSL_write if SSL is enabled
+	if (ic->use_ssl && ic->ssl)
+	{
+		if (SSL_write(ic->ssl, str, len) <= 0)
+			return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_WRITE, "SSL_write() failed", NULL));
+	}
+	else
+	{
+		if (send(ic->sockfd, str, len, 0) == -1)
+			return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SEND, "send() failed", NULL));
+	}
 
 	return (AFC_ERR_NO_ERROR);
 }
@@ -352,6 +397,188 @@ FILE *afc_inet_client_get_file(InetClient *ic)
 		return (ic->fd);
 
 	return (ic->fd = fdopen(ic->sockfd, "r"));
+}
+// }}}
+// {{{ afc_inet_client_set_tags ( ic, first_tag, ... )
+/*
+@node afc_inet_client_set_tags
+
+		   NAME: afc_inet_client_set_tags ( ic, first_tag, ... )  - Set tags for InetClient
+
+	   SYNOPSIS: int afc_inet_client_set_tags ( InetClient * ic, int first_tag, ... )
+
+	DESCRIPTION: Use this function to set tags for the InetClient instance.
+
+		  INPUT: - ic    - Pointer to a valid afc_inet_client instance.
+		 - first_tag - First tag to set
+		 - ... - Tag values
+
+		RESULTS: should be AFC_ERR_NO_ERROR
+
+	   SEE ALSO: - afc_inet_client_set_tag()
+
+@endnode
+*/
+int _afc_inet_client_set_tags(InetClient *ic, int first_tag, ...)
+{
+	va_list tags;
+	int tag;
+	void *val;
+	int res = AFC_ERR_NO_ERROR;
+
+	va_start(tags, first_tag);
+
+	tag = first_tag;
+
+	while (tag != AFC_TAG_END)
+	{
+		val = va_arg(tags, void *);
+
+		if ((res = afc_inet_client_set_tag(ic, tag, val)) != AFC_ERR_NO_ERROR)
+			break;
+
+		tag = va_arg(tags, int);
+	}
+
+	va_end(tags);
+
+	return res;
+}
+// }}}
+// {{{ afc_inet_client_set_tag ( ic, tag, val )
+/*
+@node afc_inet_client_set_tag
+
+		   NAME: afc_inet_client_set_tag ( ic, tag, val )  - Set a single tag
+
+	   SYNOPSIS: int afc_inet_client_set_tag ( InetClient * ic, int tag, void * val )
+
+	DESCRIPTION: Use this function to set a single tag for the InetClient instance.
+
+		  INPUT: - ic    - Pointer to a valid afc_inet_client instance.
+		 - tag   - Tag to set
+		 - val   - Tag value
+
+		RESULTS: should be AFC_ERR_NO_ERROR
+
+	   SEE ALSO: - afc_inet_client_set_tags()
+
+@endnode
+*/
+int afc_inet_client_set_tag(InetClient *ic, int tag, void *val)
+{
+	if (!ic)
+		return AFC_ERR_NULL_POINTER;
+
+	switch (tag)
+	{
+	case AFC_INET_CLIENT_TAG_USE_SSL:
+		ic->use_ssl = (BOOL)(long)val;
+		break;
+
+	default:
+		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_UNSUPPORTED_TAG, "Unsupported tag", NULL);
+	}
+
+	return AFC_ERR_NO_ERROR;
+}
+// }}}
+// {{{ afc_inet_client_enable_ssl ( ic )
+/*
+@node afc_inet_client_enable_ssl
+
+		   NAME: afc_inet_client_enable_ssl ( ic )  - Enable SSL for direct SSL connections
+
+	   SYNOPSIS: int afc_inet_client_enable_ssl ( InetClient * ic )
+
+	DESCRIPTION: Use this function to enable SSL on an already open socket (direct SSL/TLS).
+		 This should be called after afc_inet_client_open() for connections like SMTPS on port 465.
+
+		  INPUT: - ic    - Pointer to a valid afc_inet_client instance.
+
+		RESULTS: - AFC_ERR_NO_ERROR on success
+		 - AFC_INET_CLIENT_ERR_SSL_INIT on SSL context creation failure
+		 - AFC_INET_CLIENT_ERR_SSL_CONNECT on SSL handshake failure
+
+	   SEE ALSO: - afc_inet_client_start_tls()
+
+@endnode
+*/
+int afc_inet_client_enable_ssl(InetClient *ic)
+{
+	if (!ic)
+		return AFC_ERR_NULL_POINTER;
+
+	// Initialize OpenSSL library
+	SSL_library_init();
+	SSL_load_error_strings();
+	OpenSSL_add_all_algorithms();
+
+	// Create SSL context
+	const SSL_METHOD *method = TLS_client_method();
+	ic->ssl_ctx = SSL_CTX_new(method);
+	if (!ic->ssl_ctx)
+		return AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_INIT, "SSL_CTX_new() failed", NULL);
+
+	// Create SSL connection
+	ic->ssl = SSL_new(ic->ssl_ctx);
+	if (!ic->ssl)
+	{
+		SSL_CTX_free(ic->ssl_ctx);
+		ic->ssl_ctx = NULL;
+		return AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_INIT, "SSL_new() failed", NULL);
+	}
+
+	// Attach the socket to SSL
+	if (SSL_set_fd(ic->ssl, ic->sockfd) != 1)
+	{
+		SSL_free(ic->ssl);
+		SSL_CTX_free(ic->ssl_ctx);
+		ic->ssl = NULL;
+		ic->ssl_ctx = NULL;
+		return AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_INIT, "SSL_set_fd() failed", NULL);
+	}
+
+	// Perform SSL handshake
+	if (SSL_connect(ic->ssl) != 1)
+	{
+		SSL_free(ic->ssl);
+		SSL_CTX_free(ic->ssl_ctx);
+		ic->ssl = NULL;
+		ic->ssl_ctx = NULL;
+		return AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_CONNECT, "SSL_connect() failed", NULL);
+	}
+
+	ic->use_ssl = TRUE;
+
+	return AFC_ERR_NO_ERROR;
+}
+// }}}
+// {{{ afc_inet_client_start_tls ( ic )
+/*
+@node afc_inet_client_start_tls
+
+		   NAME: afc_inet_client_start_tls ( ic )  - Upgrade connection to TLS (STARTTLS)
+
+	   SYNOPSIS: int afc_inet_client_start_tls ( InetClient * ic )
+
+	DESCRIPTION: Use this function to upgrade an existing plain connection to TLS.
+		 This is used after sending a STARTTLS command (e.g., in SMTP on port 587).
+
+		  INPUT: - ic    - Pointer to a valid afc_inet_client instance.
+
+		RESULTS: - AFC_ERR_NO_ERROR on success
+		 - AFC_INET_CLIENT_ERR_SSL_INIT on SSL context creation failure
+		 - AFC_INET_CLIENT_ERR_SSL_CONNECT on SSL handshake failure
+
+	   SEE ALSO: - afc_inet_client_enable_ssl()
+
+@endnode
+*/
+int afc_inet_client_start_tls(InetClient *ic)
+{
+	// STARTTLS is the same as enable_ssl - just a semantic alias
+	return afc_inet_client_enable_ssl(ic);
 }
 // }}}
 
