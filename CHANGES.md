@@ -12,13 +12,25 @@ Fixed critical bugs in the SMTP client implementation that prevented it from wor
 
 **Bugs fixed:**
 1. **Response buffer handling**: `_afc_smtp_get_response()` was not copying data from `InetClient->buf` to `SMTP->buf`, causing empty responses to be processed
-2. **Command formatting**: EHLO commands were using incorrect `afc_string_make()` syntax, causing "bad syntax" errors from SMTP servers
+2. **Buffer aliasing in EHLO commands**: Commands were using `smtp->tmp` as both source and destination, causing "bad syntax" errors
+3. **Buffer aliasing in AUTH PLAIN**: Authentication command was reusing `smtp->tmp`, causing authentication failures
+4. **Buffer aliasing in MAIL FROM/RCPT TO**: Send commands were reusing `smtp->tmp`, causing send failures
 
 **Technical details:**
 - Added `afc_string_copy(smtp->buf, smtp->ic->buf, ALL)` after `afc_inet_client_get()` to properly capture server responses
-- Changed EHLO commands to pass string literals directly to `_afc_smtp_send_command()` instead of pre-formatting in `smtp->tmp` (which was causing buffer aliasing)
+- Changed EHLO commands to pass string literals directly to `_afc_smtp_send_command()`
+- Fixed `_afc_smtp_auth_plain()` to use a separate buffer for AUTH PLAIN command
+- Fixed `afc_smtp_send()` to use separate buffers for MAIL FROM and RCPT TO commands
 
-These fixes enable the SMTP client to successfully connect, perform STARTTLS negotiation, and authenticate with SMTP servers like Amazon SES.
+**Root cause:** `_afc_smtp_send_command()` internally uses `smtp->tmp` to format commands with CRLF. Any code that pre-formatted commands in `smtp->tmp` and then passed it as a parameter caused the same buffer to be used as both source and destination in `afc_string_make()`, resulting in corrupted commands.
+
+These fixes enable the SMTP client to successfully:
+- Connect to SMTP servers
+- Perform STARTTLS negotiation (port 587)
+- Authenticate with AUTH PLAIN and AUTH LOGIN
+- Send MAIL FROM and RCPT TO commands
+
+Testing verified with Amazon SES on port 587 with STARTTLS.
 
 ### New Features
 

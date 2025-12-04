@@ -454,10 +454,15 @@ int _afc_smtp_auth_plain(SMTP *smtp)
 	afc_string_delete(auth_str);
 
 	// Send AUTH PLAIN command
-	afc_string_make(smtp->tmp, "AUTH PLAIN %s", encoded);
+	// Build command in a separate buffer to avoid aliasing with smtp->tmp
+	char *cmd = afc_string_new(auth_len * 2 + 20);
+	afc_string_make(cmd, "AUTH PLAIN %s", encoded);
 	afc_string_delete(encoded);
 
-	if ((res = _afc_smtp_send_command(smtp, smtp->tmp)) != 235)
+	res = _afc_smtp_send_command(smtp, cmd);
+	afc_string_delete(cmd);
+
+	if (res != 235)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_AUTH, "AUTH PLAIN failed", smtp->buf);
 
 	return AFC_ERR_NO_ERROR;
@@ -605,28 +610,34 @@ int afc_smtp_send(SMTP *smtp, const char *message)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_NO_RECIPIENTS, "No recipients specified", NULL);
 
 	// MAIL FROM
-	afc_string_make(smtp->tmp, "MAIL FROM:<%s>", smtp->from);
-	if ((res = _afc_smtp_send_command(smtp, smtp->tmp)) != 250)
+	char *mail_from_cmd = afc_string_new(256);
+	afc_string_make(mail_from_cmd, "MAIL FROM:<%s>", smtp->from);
+	res = _afc_smtp_send_command(smtp, mail_from_cmd);
+	afc_string_delete(mail_from_cmd);
+	if (res != 250)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_SEND_FAILED, "MAIL FROM failed", smtp->buf);
 
 	// RCPT TO (support multiple recipients separated by comma)
 	char *to_list = afc_string_dup(smtp->to);
 	char *recipient = strtok(to_list, ",");
+	char *rcpt_to_cmd = afc_string_new(256);
 	while (recipient)
 	{
 		// Trim whitespace
 		while (*recipient == ' ')
 			recipient++;
 
-		afc_string_make(smtp->tmp, "RCPT TO:<%s>", recipient);
-		if ((res = _afc_smtp_send_command(smtp, smtp->tmp)) != 250)
+		afc_string_make(rcpt_to_cmd, "RCPT TO:<%s>", recipient);
+		if ((res = _afc_smtp_send_command(smtp, rcpt_to_cmd)) != 250)
 		{
+			afc_string_delete(rcpt_to_cmd);
 			afc_string_delete(to_list);
 			return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_SEND_FAILED, "RCPT TO failed", smtp->buf);
 		}
 
 		recipient = strtok(NULL, ",");
 	}
+	afc_string_delete(rcpt_to_cmd);
 	afc_string_delete(to_list);
 
 	// DATA command
