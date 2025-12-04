@@ -453,6 +453,15 @@ int _afc_smtp_auth_plain(SMTP *smtp)
 	afc_base64_delete(b64);
 	afc_string_delete(auth_str);
 
+	// Remove trailing CRLF added by base64 encoder
+	afc_string_trim(encoded);
+	
+	// Remove internal CRLF if any (base64 splits lines at 76 chars)
+	char *clean = afc_string_new(afc_string_max(encoded));
+	afc_string_replace_all(clean, encoded, "\r\n", "");
+	afc_string_copy(encoded, clean, ALL);
+	afc_string_delete(clean);
+
 	// Send AUTH PLAIN command
 	// Build command in a separate buffer to avoid aliasing with smtp->tmp
 	char *cmd = afc_string_new(auth_len * 2 + 20);
@@ -497,6 +506,15 @@ int _afc_smtp_auth_login(SMTP *smtp)
 					  AFC_TAG_END);
 	afc_base64_delete(b64);
 
+	// Remove trailing CRLF added by base64 encoder
+	afc_string_trim(encoded_user);
+	
+	// Remove internal CRLF
+	char *clean_user = afc_string_new(afc_string_max(encoded_user));
+	afc_string_replace_all(clean_user, encoded_user, "\r\n", "");
+	afc_string_copy(encoded_user, clean_user, ALL);
+	afc_string_delete(clean_user);
+
 	if ((res = _afc_smtp_send_command(smtp, encoded_user)) != 334)
 	{
 		afc_string_delete(encoded_user);
@@ -515,6 +533,15 @@ int _afc_smtp_auth_login(SMTP *smtp)
 					  AFC_BASE64_TAG_MEM_OUT_SIZE, pass_len * 2 + 10,
 					  AFC_TAG_END);
 	afc_base64_delete(b64);
+
+	// Remove trailing CRLF added by base64 encoder
+	afc_string_trim(encoded_pass);
+	
+	// Remove internal CRLF
+	char *clean_pass = afc_string_new(afc_string_max(encoded_pass));
+	afc_string_replace_all(clean_pass, encoded_pass, "\r\n", "");
+	afc_string_copy(encoded_pass, clean_pass, ALL);
+	afc_string_delete(clean_pass);
 
 	if ((res = _afc_smtp_send_command(smtp, encoded_pass)) != 235)
 	{
