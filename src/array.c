@@ -320,7 +320,7 @@ int afc_array_add(Array *am, void *data, int mode)
 */
 void *afc_array_item(Array *am, unsigned long item)
 {
-	if (item >= am->num_items)
+	if (am == NULL || item >= am->num_items)
 		return NULL;
 
 	return (am->mem[am->current_pos = item]);
