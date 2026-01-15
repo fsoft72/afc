@@ -115,6 +115,12 @@ int _afc_pop3_delete(POP3 *p)
 {
 	int afc_res;
 
+	if (p == NULL)
+		return AFC_LOG_FAST(AFC_ERR_NULL_POINTER);
+
+	if (p->magic != AFC_POP3_MAGIC)
+		return AFC_LOG_FAST(AFC_ERR_INVALID_POINTER);
+
 	if ((afc_res = afc_pop3_clear(p)) != AFC_ERR_NO_ERROR)
 		return (afc_res);
 
@@ -185,6 +191,12 @@ int _afc_pop3_set_tags(POP3 *p, int first_tag, ...)
 	va_list tags;
 	unsigned int tag;
 	void *val;
+
+	if (p == NULL)
+		return AFC_LOG_FAST(AFC_ERR_NULL_POINTER);
+
+	if (p->magic != AFC_POP3_MAGIC)
+		return AFC_LOG_FAST(AFC_ERR_INVALID_POINTER);
 
 	va_start(tags, first_tag);
 

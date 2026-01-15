@@ -12,3 +12,5 @@ src/test_area/string/test_[0-9][0-9]
 src/test_http_simple
 src/test_http_client
 src/test_area/smtp/settings.txt
+src/test_area/*/test_[0-9][0-9]
+src/pcre/pcregrep

@@ -68,6 +68,12 @@ int _afc_bin_tree_delete(BinTree *bt)
 {
 	int res;
 
+	if (bt == NULL)
+		return AFC_LOG_FAST(AFC_ERR_NULL_POINTER);
+
+	if (bt->magic != AFC_BIN_TREE_MAGIC)
+		return AFC_LOG_FAST(AFC_ERR_INVALID_POINTER);
+
 	if ((res = afc_bin_tree_clear(bt)) != AFC_ERR_NO_ERROR)
 		return (res);
 

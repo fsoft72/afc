@@ -154,6 +154,12 @@ int _afc_array_delete(Array *array)
 {
 	int afc_res;
 
+	if (array == NULL)
+		return AFC_LOG_FAST(AFC_ERR_NULL_POINTER);
+
+	if (array->magic != AFC_ARRAY_MAGIC)
+		return AFC_LOG_FAST(AFC_ERR_INVALID_POINTER);
+
 	if ((afc_res = afc_array_clear(array)) != AFC_ERR_NO_ERROR)
 		return afc_res;
 

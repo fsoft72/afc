@@ -185,6 +185,12 @@ int _afc_list_delete(List *nm)
 {
 	int res;
 
+	if (nm == NULL)
+		return AFC_LOG_FAST(AFC_ERR_NULL_POINTER);
+
+	if (nm->magic != AFC_LIST_MAGIC)
+		return AFC_LOG_FAST(AFC_ERR_INVALID_POINTER);
+
 	if ((res = afc_list_clear(nm)) != AFC_ERR_NO_ERROR)
 		return (res);
 
