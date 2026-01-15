@@ -33,8 +33,12 @@ On Debian/Ubuntu:
 sudo apt-get install build-essential libssl-dev
 ```
 
-On Red Hat/Fedora:
+On Red Hat/Fedora/CentOS:
 ```bash
+# For modern systems (Fedora 22+, RHEL 8+, CentOS 8+)
+sudo dnf install gcc make openssl-devel
+
+# For older systems (RHEL 7, CentOS 7)
 sudo yum install gcc make openssl-devel
 ```
 
@@ -78,9 +82,14 @@ int main(void) {
 }
 ```
 
-Compile with:
+Compile with `afc-config` (installed with AFC):
 ```bash
 gcc -o hello hello.c $(afc-config --cflags --libs)
+```
+
+Or manually specify flags:
+```bash
+gcc -o hello hello.c -I/usr/local/include -L/usr/local/lib -lafc
 ```
 
 ## 💡 Key Features
