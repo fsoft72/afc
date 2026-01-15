@@ -18,6 +18,7 @@
  *
  */
 #include <stdarg.h>
+#include <stdint.h>
 #include "smtp.h"
 
 /*
@@ -324,10 +325,9 @@ int _afc_smtp_get_response(SMTP *smtp)
 	if (afc_string_len(smtp->buf) < 3)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_INVALID_RESPONSE, "Invalid response", smtp->buf);
 
-	// Extract response code
+	// Extract response code safely
 	char code_str[4];
-	strncpy(code_str, smtp->buf, 3);
-	code_str[3] = '\0';
+	snprintf(code_str, sizeof(code_str), "%.3s", smtp->buf);
 
 	return atoi(code_str);
 }
@@ -426,24 +426,52 @@ int afc_smtp_connect(SMTP *smtp)
 int _afc_smtp_auth_plain(SMTP *smtp)
 {
 	int res;
-	char *auth_str;
-	char *encoded;
-	int auth_len;
-	Base64 *b64;
+	char *auth_str = NULL;
+	char *encoded = NULL;
+	char *clean = NULL;
+	char *cmd = NULL;
+	unsigned long user_len, pass_len, auth_len;
+	Base64 *b64 = NULL;
+
+	// Defensive NULL checks (caller should verify but check anyway)
+	if (!smtp->username || !smtp->password)
+		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_AUTH, "Missing credentials", NULL);
+
+	user_len = afc_string_len(smtp->username);
+	pass_len = afc_string_len(smtp->password);
+
+	// Check for integer overflow before allocation
+	if (user_len > SIZE_MAX - pass_len - 2)
+		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_AUTH, "Credentials too long", NULL);
 
 	// AUTH PLAIN format: base64("\0username\0password")
-	auth_len = 1 + afc_string_len(smtp->username) + 1 + afc_string_len(smtp->password);
+	auth_len = 1 + user_len + 1 + pass_len;
 	auth_str = afc_string_new(auth_len + 1);
+	if (!auth_str)
+		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_NO_MEMORY, "Failed to allocate auth_str", NULL);
 
-	// Build auth string: \0username\0password
+	// Build auth string: \0username\0password using safer memcpy
 	auth_str[0] = '\0';
-	strcpy(auth_str + 1, smtp->username);
-	auth_str[1 + afc_string_len(smtp->username)] = '\0';
-	strcpy(auth_str + 1 + afc_string_len(smtp->username) + 1, smtp->password);
+	memcpy(auth_str + 1, smtp->username, user_len);
+	auth_str[1 + user_len] = '\0';
+	memcpy(auth_str + 1 + user_len + 1, smtp->password, pass_len);
 
 	// Base64 encode
-	encoded = afc_string_new(auth_len * 2 + 10); // Allocate enough space
+	encoded = afc_string_new(auth_len * 2 + 10);
+	if (!encoded)
+	{
+		afc_string_delete(auth_str);
+		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_NO_MEMORY, "Failed to allocate encoded", NULL);
+	}
+
 	b64 = afc_base64_new();
+	if (!b64)
+	{
+		afc_string_delete(auth_str);
+		afc_string_delete(encoded);
+		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_NO_MEMORY, "Failed to create Base64", NULL);
+	}
+
 	afc_base64_encode(b64,
 					  AFC_BASE64_TAG_MEM_IN, auth_str,
 					  AFC_BASE64_TAG_MEM_IN_SIZE, auth_len,
@@ -455,16 +483,25 @@ int _afc_smtp_auth_plain(SMTP *smtp)
 
 	// Remove trailing CRLF added by base64 encoder
 	afc_string_trim(encoded);
-	
+
 	// Remove internal CRLF if any (base64 splits lines at 76 chars)
-	char *clean = afc_string_new(afc_string_max(encoded));
+	clean = afc_string_new(afc_string_max(encoded));
+	if (!clean)
+	{
+		afc_string_delete(encoded);
+		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_NO_MEMORY, "Failed to allocate clean", NULL);
+	}
 	afc_string_replace_all(clean, encoded, "\r\n", "");
 	afc_string_copy(encoded, clean, ALL);
 	afc_string_delete(clean);
 
 	// Send AUTH PLAIN command
-	// Build command in a separate buffer to avoid aliasing with smtp->tmp
-	char *cmd = afc_string_new(auth_len * 2 + 20);
+	cmd = afc_string_new(auth_len * 2 + 20);
+	if (!cmd)
+	{
+		afc_string_delete(encoded);
+		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_NO_MEMORY, "Failed to allocate cmd", NULL);
+	}
 	afc_string_make(cmd, "AUTH PLAIN %s", encoded);
 	afc_string_delete(encoded);
 
@@ -646,7 +683,8 @@ int afc_smtp_send(SMTP *smtp, const char *message)
 
 	// RCPT TO (support multiple recipients separated by comma)
 	char *to_list = afc_string_dup(smtp->to);
-	char *recipient = strtok(to_list, ",");
+	char *saveptr = NULL;
+	char *recipient = strtok_r(to_list, ",", &saveptr);
 	char *rcpt_to_cmd = afc_string_new(256);
 	while (recipient)
 	{
@@ -662,7 +700,7 @@ int afc_smtp_send(SMTP *smtp, const char *message)
 			return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_SEND_FAILED, "RCPT TO failed", smtp->buf);
 		}
 
-		recipient = strtok(NULL, ",");
+		recipient = strtok_r(NULL, ",", &saveptr);
 	}
 	afc_string_delete(rcpt_to_cmd);
 	afc_string_delete(to_list);
