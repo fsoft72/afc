@@ -869,6 +869,9 @@ static int _afc_http_client_send_request(HttpClient * hc, const char * method, c
 	char * val;
 	int res;
 
+	if (!hc || hc->magic != AFC_HTTP_CLIENT_MAGIC)
+		RAISE_RC(AFC_LOG_ERROR, AFC_ERR_INVALID_POINTER, "Invalid HttpClient object", "", AFC_ERR_INVALID_POINTER);
+
 	// Build request line
 	afc_string_clear(hc->buf);
 	afc_string_make(hc->buf, "%s /%s HTTP/1.1\r\n", method, path);
@@ -943,6 +946,9 @@ static int _afc_http_client_read_response(HttpClient * hc)
 
 	FILE * fd;
 	int res;
+
+	if (!hc || hc->magic != AFC_HTTP_CLIENT_MAGIC)
+		RAISE_RC(AFC_LOG_ERROR, AFC_ERR_INVALID_POINTER, "Invalid HttpClient object", "", AFC_ERR_INVALID_POINTER);
 
 	fd = afc_inet_client_get_file(hc->inet);
 	if (!fd)
@@ -1037,6 +1043,9 @@ static int _afc_http_client_parse_headers(HttpClient * hc, FILE * fd)
 	char * name;
 	char * value;
 
+	if (!hc || hc->magic != AFC_HTTP_CLIENT_MAGIC)
+		return AFC_ERR_INVALID_POINTER;
+
 	line = afc_string_new(1024);
 
 	while (fgets(line, afc_string_max(line), fd))
@@ -1083,6 +1092,9 @@ static int _afc_http_client_read_body(HttpClient * hc, FILE * fd)
 	int bytes_read;
 	char chunk_size_str[32];
 	int chunk_size;
+
+	if (!hc || hc->magic != AFC_HTTP_CLIENT_MAGIC)
+		return AFC_ERR_INVALID_POINTER;
 
 	// Check for Content-Length
 	content_length_str = (char *)afc_dictionary_get(hc->resp_headers, "content-length");
@@ -1165,6 +1177,9 @@ static int _afc_http_client_handle_redirect(HttpClient * hc, const char * method
 {
 	char * location;
 	int res;
+
+	if (!hc || hc->magic != AFC_HTTP_CLIENT_MAGIC)
+		return AFC_ERR_INVALID_POINTER;
 
 	if (redirect_count >= hc->max_redirects)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_HTTP_CLIENT_ERR_TOO_MANY_REDIRECTS, "Too many redirects", NULL);

@@ -313,6 +313,9 @@ int _afc_smtp_get_response(SMTP *smtp)
 {
 	int res;
 
+	if (!smtp || smtp->magic != AFC_SMTP_MAGIC)
+		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_INVALID_POINTER, "Invalid SMTP object", NULL);
+
 	afc_string_clear(smtp->buf);
 
 	if ((res = afc_inet_client_get(smtp->ic)) != AFC_ERR_NO_ERROR)
@@ -340,6 +343,9 @@ int _afc_smtp_get_response(SMTP *smtp)
  */
 int _afc_smtp_send_command(SMTP *smtp, const char *cmd)
 {
+	if (!smtp || smtp->magic != AFC_SMTP_MAGIC)
+		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_INVALID_POINTER, "Invalid SMTP object", NULL);
+
 	afc_string_make(smtp->tmp, "%s\r\n", cmd);
 
 	if (afc_inet_client_send(smtp->ic, smtp->tmp, 0) != AFC_ERR_NO_ERROR)
@@ -432,6 +438,9 @@ int _afc_smtp_auth_plain(SMTP *smtp)
 	char *cmd = NULL;
 	unsigned long user_len, pass_len, auth_len;
 	Base64 *b64 = NULL;
+
+	if (!smtp || smtp->magic != AFC_SMTP_MAGIC)
+		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_INVALID_POINTER, "Invalid SMTP object", NULL);
 
 	// Defensive NULL checks (caller should verify but check anyway)
 	if (!smtp->username || !smtp->password)
@@ -526,6 +535,9 @@ int _afc_smtp_auth_login(SMTP *smtp)
 	char *encoded_user, *encoded_pass;
 	Base64 *b64;
 	int user_len, pass_len;
+
+	if (!smtp || smtp->magic != AFC_SMTP_MAGIC)
+		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_INVALID_POINTER, "Invalid SMTP object", NULL);
 
 	// Send AUTH LOGIN command
 	if ((res = _afc_smtp_send_command(smtp, "AUTH LOGIN")) != 334)
