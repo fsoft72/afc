@@ -80,6 +80,8 @@ InetClient *afc_inet_client_new()
 	if ((ic->buf = afc_string_new(1024)) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "buf", NULL);
 
+	ic->sockfd = -1; // Initialize to invalid fd
+	ic->fd = NULL;
 	ic->use_ssl = FALSE;
 	ic->ssl_ctx = NULL;
 	ic->ssl = NULL;
@@ -254,11 +256,11 @@ int afc_inet_client_close(InetClient *ic)
 		ic->ssl_ctx = NULL;
 	}
 
-	if (ic->sockfd)
+	if (ic->sockfd >= 0)
 		close(ic->sockfd);
 
-	ic->sockfd = 0;
-	ic->fd = 0;
+	ic->sockfd = -1;
+	ic->fd = NULL;
 
 	return (AFC_ERR_NO_ERROR);
 }
@@ -322,10 +324,13 @@ int afc_inet_client_get(InetClient *ic)
 {
 	int bytes;
 
+	// Reserve 1 byte for null terminator
+	unsigned long max_read = afc_string_max(ic->buf) - 1;
+
 	// Use SSL_read if SSL is enabled
 	if (ic->use_ssl && ic->ssl)
 	{
-		if ((bytes = SSL_read(ic->ssl, ic->buf, afc_string_max(ic->buf))) <= 0)
+		if ((bytes = SSL_read(ic->ssl, ic->buf, max_read)) <= 0)
 		{
 			int ssl_err = SSL_get_error(ic->ssl, bytes);
 			if (ssl_err == SSL_ERROR_ZERO_RETURN)
@@ -338,7 +343,7 @@ int afc_inet_client_get(InetClient *ic)
 	}
 	else
 	{
-		if ((bytes = recv(ic->sockfd, ic->buf, afc_string_max(ic->buf), 0)) == -1)
+		if ((bytes = recv(ic->sockfd, ic->buf, max_read, 0)) == -1)
 			return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_RECEIVE, "recv() failed", NULL));
 	}
 
