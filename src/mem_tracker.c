@@ -1,7 +1,7 @@
 #include "mem_tracker.h"
 
-static void _memtrack_realloc(MemTracker *mt);
-static void _memtrack_realloc_free(MemTracker *mt);
+static int _memtrack_realloc(MemTracker *mt);
+static int _memtrack_realloc_free(MemTracker *mt);
 static void _memtrack_add(MemTracker *mt, MemTrackData *hd);
 static int _memtrack_find(MemTracker *mt, void *mem);
 static void _memtrack_del(MemTracker *mt, int pos);
@@ -10,15 +10,34 @@ static void _free_item(MemTracker *mt, MemTrackData *d);
 MemTracker *afc_mem_tracker_new()
 {
 	MemTracker *mt = malloc(sizeof(MemTracker));
+	if (mt == NULL)
+		return NULL;
 
 	mt->data_max = 200;
 	mt->data_cur = 0;
-	mt->data = malloc(mt->data_max * sizeof(MemTrackData));
-	memset(mt->data, 0, mt->data_max);
+	mt->data = malloc(mt->data_max * sizeof(MemTrackData *));
+	if (mt->data == NULL)
+	{
+		free(mt);
+		return NULL;
+	}
+	memset(mt->data, 0, mt->data_max * sizeof(MemTrackData *));
 
 	mt->free_cur = -1;
 	mt->free_max = 100;
 	mt->free = malloc(mt->free_max * sizeof(unsigned int));
+	if (mt->free == NULL)
+	{
+		free(mt->data);
+		free(mt);
+		return NULL;
+	}
+
+	mt->show_mallocs = FALSE;
+	mt->show_frees = FALSE;
+	mt->allocs = 0;
+	mt->frees = 0;
+	mt->alloc_bytes = 0;
 
 	return mt;
 }
@@ -184,7 +203,14 @@ static void _memtrack_add(MemTracker *mt, MemTrackData *hd)
 		pos = mt->data_cur++;
 
 	if (pos >= mt->data_max)
-		_memtrack_realloc(mt);
+	{
+		if (_memtrack_realloc(mt) != 0)
+		{
+			// Realloc failed - cannot track this allocation
+			_afc_dprintf("WARNING: MemTracker: realloc failed, allocation not tracked\n");
+			return;
+		}
+	}
 
 	mt->data[pos] = hd;
 }
@@ -215,7 +241,17 @@ static void _memtrack_del(MemTracker *mt, int pos)
 
 	cur = ++mt->free_cur;
 	if (cur >= mt->free_max)
-		_memtrack_realloc_free(mt);
+	{
+		if (_memtrack_realloc_free(mt) != 0)
+		{
+			// Realloc failed - cannot track free slot
+			_afc_dprintf("WARNING: MemTracker: realloc failed for free list\n");
+			mt->free_cur--; // Undo increment
+			// Still clear the data slot
+			mt->data[pos] = NULL;
+			return;
+		}
+	}
 
 	mt->data[pos] = NULL;
 
@@ -224,17 +260,27 @@ static void _memtrack_del(MemTracker *mt, int pos)
 // }}}
 
 // {{{ _memtrack_realloc ( mt )
-static void _memtrack_realloc(MemTracker *mt)
+static int _memtrack_realloc(MemTracker *mt)
 {
-	mt->data_max *= 2;
-	mt->data = realloc(mt->data, mt->data_max * sizeof(MemTrackData));
+	unsigned int new_max = mt->data_max * 2;
+	MemTrackData **new_data = realloc(mt->data, new_max * sizeof(MemTrackData *));
+	if (new_data == NULL)
+		return -1; // Realloc failed, original pointer still valid
+	mt->data = new_data;
+	mt->data_max = new_max;
+	return 0;
 }
 // }}}
 // {{{ _memtrack_realloc_free ( mt )
-static void _memtrack_realloc_free(MemTracker *mt)
+static int _memtrack_realloc_free(MemTracker *mt)
 {
-	mt->free_max *= 2;
-	mt->free = realloc(mt->free, mt->free_max * sizeof(int));
+	int new_max = mt->free_max * 2;
+	unsigned int *new_free = realloc(mt->free, new_max * sizeof(unsigned int));
+	if (new_free == NULL)
+		return -1; // Realloc failed, original pointer still valid
+	mt->free = new_free;
+	mt->free_max = new_max;
+	return 0;
 }
 // }}}
 // {{{ _free_item ( mt, d )
