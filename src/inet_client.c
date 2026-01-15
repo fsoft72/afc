@@ -121,6 +121,12 @@ int _afc_inet_client_delete(InetClient *ic)
 {
 	int afc_res;
 
+	if (ic == NULL)
+		return AFC_LOG_FAST(AFC_ERR_NULL_POINTER);
+
+	if (ic->magic != AFC_INET_CLIENT_MAGIC)
+		return AFC_LOG_FAST(AFC_ERR_INVALID_POINTER);
+
 	if ((afc_res = afc_inet_client_clear(ic)) != AFC_ERR_NO_ERROR)
 		return (afc_res);
 
@@ -441,6 +447,12 @@ int _afc_inet_client_set_tags(InetClient *ic, int first_tag, ...)
 	int tag;
 	void *val;
 	int res = AFC_ERR_NO_ERROR;
+
+	if (ic == NULL)
+		return AFC_LOG_FAST(AFC_ERR_NULL_POINTER);
+
+	if (ic->magic != AFC_INET_CLIENT_MAGIC)
+		return AFC_LOG_FAST(AFC_ERR_INVALID_POINTER);
 
 	va_start(tags, first_tag);
 

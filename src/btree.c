@@ -180,6 +180,12 @@ int _afc_btree_delete(BTree *btr)
 {
 	int res;
 
+	if (btr == NULL)
+		return AFC_LOG_FAST(AFC_ERR_NULL_POINTER);
+
+	if (btr->magic != AFC_BTREE_MAGIC)
+		return AFC_LOG_FAST(AFC_ERR_INVALID_POINTER);
+
 	if ((res = afc_btree_clear(btr)) != AFC_ERR_NO_ERROR)
 		return (res);
 	afc_free(btr->key_buffer);

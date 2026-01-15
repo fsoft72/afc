@@ -126,6 +126,12 @@ int _afc_hash_delete(struct afc_hash *hash)
 {
 	int afc_res;
 
+	if (hash == NULL)
+		return AFC_LOG_FAST(AFC_ERR_NULL_POINTER);
+
+	if (hash->magic != AFC_HASH_MAGIC)
+		return AFC_LOG_FAST(AFC_ERR_INVALID_POINTER);
+
 	if ((afc_res = afc_hash_clear(hash)) != AFC_ERR_NO_ERROR)
 		return afc_res;
 
