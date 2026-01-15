@@ -1,5 +1,36 @@
 # CHANGES.md
 
+## January 15, 2026
+
+### New Documentation
+
+#### Comprehensive AFC Library Documentation for LLMs
+Added complete API documentation designed for LLMs to understand and use all AFC library features.
+
+**Files created:**
+- `ai/afc.md` - Comprehensive API reference documentation
+
+**Documentation covers:**
+- **Core System**: AFC base object, memory management, exception handling
+- **String Handling**: String class with JS-like API, StringList class
+- **Data Structures**: Array, List, Hash, Dictionary, BinTree, AVLTree, BTree, Tree, CircularList
+- **Networking (Linux)**: InetClient/InetServer, SMTP, POP3, HTTP, FTP clients
+- **Utilities**: MD5, Base64, DateHandler, RegExp, FileOperations, DirMaster
+- **Web Development**: CGIManager for CGI applications
+- **Database (Linux)**: DBIManager with MySQL/PostgreSQL drivers
+- **Plugin System (Linux)**: DynamicClass and DynamicClassMaster
+- **Threading (Linux)**: Threader with mutex support
+
+**Features:**
+- Complete function signatures and usage examples
+- Tag-based configuration reference for all classes
+- Error codes and handling patterns
+- Platform availability notes (Linux vs MinGW)
+- Best practices for memory management
+- Complete working examples
+
+---
+
 ## December 4, 2025
 
 ### Bug Fixes
