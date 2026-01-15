@@ -19,7 +19,7 @@
  */
 #include "base64.h"
 
-static char eol[] = "\r\n"; /* End of line sequence */
+static const char eol[] = "\r\n"; /* End of line sequence */
 static const char class_name[] = "Base64";
 
 static int afc_base64_internal_inbuf(Base64 *b64);
@@ -28,7 +28,7 @@ static int afc_base64_internal_encode(Base64 *b64);
 static int afc_base64_internal_insig(Base64 *b64);
 static int afc_base64_internal_decode(Base64 *b64);
 static int afc_base64_internal_parse_tags(Base64 *b64, int first_tag, va_list tags);
-static int afc_base64_internal_write(Base64 *b64, void *mem, int size);
+static int afc_base64_internal_write(Base64 *b64, const void *mem, int size);
 static int afc_base64_internal_write_char(Base64 *b64, int c);
 
 Base64 *afc_base64_new(void)
@@ -236,8 +236,8 @@ static int afc_base64_internal_inbuf(Base64 *b64)
 		{
 			if (ferror(b64->fin))
 			{
-				// TODO: READ ERROR
-				exit(1);
+				b64->at_eof = TRUE;
+				return (AFC_BASE64_ERR_READ_ERROR);
 			}
 
 			b64->at_eof = TRUE;
@@ -392,18 +392,16 @@ static int afc_base64_internal_decode(Base64 *b64)
 			{
 				if (b64->error_check && (i > 0))
 				{
-					fprintf(stderr, "Input file incomplete.\n");
-					exit(1);
+					return (AFC_BASE64_ERR_INCOMPLETE_INPUT);
 				}
-				return (AFC_ERR_NO_MEMORY);
+				return (AFC_BASE64_ERR_EOF);
 			}
 
 			if (b64->dtable[c] & 0x80)
 			{
 				if (b64->error_check)
 				{
-					fprintf(stderr, "Illegal character '%c' in input file.\n", c);
-					exit(1);
+					return (AFC_BASE64_ERR_ILLEGAL_CHAR);
 				}
 
 				/* Ignoring errors: discard invalid character. */
@@ -445,7 +443,7 @@ static int afc_base64_internal_parse_tags(Base64 *b64, int first_tag, va_list ta
 	return (AFC_ERR_NO_ERROR);
 }
 
-static int afc_base64_internal_write(Base64 *b64, void *mem, int size)
+static int afc_base64_internal_write(Base64 *b64, const void *mem, int size)
 {
 	if (b64->mem_out)
 	{
@@ -476,7 +474,7 @@ static int afc_base64_internal_write_char(Base64 *b64, int c)
 		b64->mem_out_pos += 1;
 	}
 	else if (putc(((unsigned char)c), b64->fout) == EOF)
-		exit(1);
+		return (AFC_BASE64_ERR_WRITE_ERROR);
 
 	return (AFC_ERR_NO_ERROR);
 }
