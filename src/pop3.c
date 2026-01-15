@@ -280,10 +280,13 @@ int afc_pop3_stat(POP3 *p)
 
 	afc_string_list_split(p->sn, p->buf, " ");
 
-	// NOTA: la parte "s = ..." e' stata aggiunta per evitare il warning del GCC 4.1:
-	// null argument where non-null required
-	p->tot_messages = atoi((s = afc_string_list_item(p->sn, 1)));
-	p->tot_size = atoi((s = afc_string_list_item(p->sn, 2)));
+	// Parse message count - check for NULL to avoid undefined behavior
+	s = afc_string_list_item(p->sn, 1);
+	p->tot_messages = (s != NULL) ? atoi(s) : 0;
+
+	// Parse total size - check for NULL to avoid undefined behavior
+	s = afc_string_list_item(p->sn, 2);
+	p->tot_size = (s != NULL) ? atoi(s) : 0;
 
 	afc_dprintf("Messages: %d\nSize: %d\n", p->tot_messages, p->tot_size);
 
