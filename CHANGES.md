@@ -2,6 +2,52 @@
 
 ## January 15, 2026
 
+### Security and Correctness Fixes
+
+Fixed multiple security and correctness issues identified in code analysis (see ISSUES.md).
+
+#### Critical Fixes
+
+**base64.c - Removed exit() calls**
+- Library code should never terminate the host application
+- Replaced `exit(1)` with proper error returns
+- Added new error codes: `AFC_BASE64_ERR_READ_ERROR`, `AFC_BASE64_ERR_WRITE_ERROR`, `AFC_BASE64_ERR_INCOMPLETE_INPUT`, `AFC_BASE64_ERR_ILLEGAL_CHAR`
+- Added `const` qualifier to static `eol` variable
+- Updated `afc_base64_internal_write()` to accept `const void*`
+
+**inet_client.c - Buffer overflow and socket fd handling**
+- Fixed buffer overflow: now reserves 1 byte for null terminator when reading from socket/SSL
+- Initialize `sockfd` to -1 in constructor instead of leaving undefined
+- Check `sockfd >= 0` instead of `sockfd != 0` (fd 0 is valid stdin)
+- Reset `sockfd` to -1 and `fd` to NULL on close
+
+**mem_tracker.c - Memory safety improvements**
+- Check `realloc()` return value before using new pointer
+- Use temp variable to preserve original pointer on failure
+- Fix malloc size: use `sizeof(MemTrackData*)` not `sizeof(MemTrackData)`
+- Fix memset size: multiply by element size
+- Add NULL checks for all malloc/realloc calls
+- Initialize all struct fields in constructor
+
+#### High Priority Fixes
+
+**smtp.c - Security and thread safety**
+- Use `snprintf()` instead of `strncpy()` for response code extraction
+- Use `strtok_r()` instead of `strtok()` for thread-safe recipient parsing
+- Add integer overflow check for auth credential buffer size
+- Use `memcpy()` instead of `strcpy()` for safer auth string building
+- Add NULL checks for all memory allocations
+- Fix memory leaks in error paths in `_afc_smtp_auth_plain()`
+- Add defensive NULL checks for username/password
+
+**pop3.c - NULL pointer safety**
+- Check return value of `afc_string_list_item()` before passing to `atoi()`
+
+**array.c - NULL pointer safety**
+- Add NULL pointer check for array in `afc_array_item()`
+
+---
+
 ### New Documentation
 
 #### Comprehensive AFC Library Documentation for LLMs
