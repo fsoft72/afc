@@ -56,6 +56,7 @@ Main features of this class are:
 static const char class_name[] = "CGIManager";
 
 static int afc_cgi_manager_internal_dump(CGIManager *cgi, Dictionary *dict, char *message);
+static void _afc_cgi_print_html_encoded(const char *str);
 static int afc_cgi_manager_internal_get_headers(CGIManager *cgi);
 static int afc_cgi_manager_internal_method_get(CGIManager *cgi);
 static int afc_cgi_manager_internal_method_post(CGIManager *cgi);
@@ -787,16 +788,44 @@ int afc_cgi_manager_get_header_str(CGIManager *cgi, char *dest)
 /*
 	INTERNAL FUNCTIONS
 */
+/*
+ * _afc_cgi_print_html_encoded - Write a string with HTML entity encoding.
+ *
+ * Encodes <, >, &, ", ' to prevent XSS when writing user data to HTML output.
+ */
+static void _afc_cgi_print_html_encoded(const char *str)
+{
+	if (!str) return;
+	for (const char *p = str; *p; p++)
+	{
+		switch (*p)
+		{
+		case '<':  printf("&lt;"); break;
+		case '>':  printf("&gt;"); break;
+		case '&':  printf("&amp;"); break;
+		case '"':  printf("&quot;"); break;
+		case '\'': printf("&#39;"); break;
+		default:   putchar(*p); break;
+		}
+	}
+}
+
 static int afc_cgi_manager_internal_dump(CGIManager *cgi, Dictionary *dict, char *message)
 {
 	char *key;
 
 	printf("<table border=\"0\">\n");
-	printf("<tr><td colspan=\"2\" align=\"center\">%s</td></tr>\n", message);
+	printf("<tr><td colspan=\"2\" align=\"center\">");
+	_afc_cgi_print_html_encoded(message);
+	printf("</td></tr>\n");
 	key = (char *)afc_dictionary_first(dict);
 	while (key)
 	{
-		printf("<tr><td align=\"right\">%s:</td><td>%s</td></tr>\n", afc_dictionary_get_key(dict), key);
+		printf("<tr><td align=\"right\">");
+		_afc_cgi_print_html_encoded(afc_dictionary_get_key(dict));
+		printf(":</td><td>");
+		_afc_cgi_print_html_encoded(key);
+		printf("</td></tr>\n");
 		key = (char *)afc_dictionary_next(dict);
 	}
 	printf("</table>\n");
