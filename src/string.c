@@ -1277,7 +1277,8 @@ char *afc_string_utf8_to_latin1(const char *utf8)
 		return afc_string_dup(utf8);
 	}
 
-	unsigned char *s = afc_malloc(strlen(utf8) + 20);
+	unsigned int buf_size = strlen(utf8) + 20;
+	unsigned char *s = afc_malloc(buf_size);
 	unsigned int pos = 0;
 	unsigned int len = strlen(utf8);
 	unsigned char c1, c2, iso;
@@ -1290,6 +1291,7 @@ char *afc_string_utf8_to_latin1(const char *utf8)
 
 		if (c1 <= 0x7F)
 		{
+			if (xpos >= buf_size - 1) break;
 			s[xpos++] = c1;
 		}
 		else if (c1 >= 0xC0 && c1 <= 0xC7)
@@ -1297,6 +1299,7 @@ char *afc_string_utf8_to_latin1(const char *utf8)
 			if (pos == len)
 			{
 				_afc_dprintf("%s::%s - ERROR: wrong string length", __FILE__, __FUNCTION__);
+				afc_free(s);
 				return NULL;
 			}
 
@@ -1307,9 +1310,11 @@ char *afc_string_utf8_to_latin1(const char *utf8)
 			if (iso <= 0x7F)
 			{
 				_afc_dprintf("%s::%s - ERROR: Sequence longer than needed", __FILE__, __FUNCTION__);
+				afc_free(s);
 				return NULL;
 			}
 
+			if (xpos >= buf_size - 1) break;
 			s[xpos++] = iso;
 		}
 	}
