@@ -1,419 +1,409 @@
-# AFC Library Code Analysis - Security and Correctness Issues
+# AFC Security Issues
 
-**Analysis Date:** 2026-01-15
-**Analyzed By:** Claude Code
-**Scope:** Application code in src/ directory (non-test files prioritized)
-
----
-
-## CRITICAL SEVERITY ISSUES
-
-### 1. **Buffer Overflow in SMTP Response Parsing**
-**File:** `src/smtp.c:328-332`
-**Function:** `_afc_smtp_get_response()`
-
-```c
-char code_str[4];
-strncpy(code_str, smtp->buf, 3);
-code_str[3] = '\0';
-```
-
-**Issue:** While `code_str[3]` is explicitly set to null, if `smtp->buf` contains fewer than 3 characters (which is checked at line 324), the `strncpy` will not null-terminate if the source is exactly 3 characters without a null terminator. More critically, if `smtp->buf` is not properly null-terminated due to a network error, this could read beyond buffer boundaries.
-
-**Impact:** Potential buffer overflow, undefined behavior
-**Recommendation:** Use `snprintf()` instead: `snprintf(code_str, sizeof(code_str), "%.3s", smtp->buf);`
+**Analysis Date:** 2026-02-27
+**Scope:** Full codebase security audit of `src/` directory
 
 ---
 
-### 2. **strtok Modifies Input String - Memory Safety Issue**
-**File:** `src/smtp.c:648-668`
-**Function:** `afc_smtp_send()`
+## Critical
 
-```c
-char *to_list = afc_string_dup(smtp->to);
-char *recipient = strtok(to_list, ",");
-```
+### 1. Missing SSL/TLS Certificate Validation
 
-**Issue:** While the code correctly duplicates the string before using `strtok()`, `strtok()` is not thread-safe and modifies the string in place. If multiple threads use the same SMTP instance, this could cause race conditions.
+- **File:** `src/inet_client.c` (lines 539-587)
+- **Type:** Man-in-the-Middle (MITM)
+- **Description:** The SSL implementation never calls `SSL_CTX_set_verify()` or checks `SSL_get_verify_result()`. All TLS connections accept any certificate, making every encrypted connection vulnerable to interception.
+- **Fix:** Call `SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL)` and verify `SSL_get_verify_result()` returns `X509_V_OK` after handshake.
 
-**Impact:** Race condition in multi-threaded environments, potential memory corruption
-**Recommendation:** Use `strtok_r()` (thread-safe version) instead, or implement custom string splitting.
+### 2. CRLF Injection in SMTP Commands
 
----
+- **File:** `src/smtp.c` (lines 690, 707, 775-784)
+- **Type:** Protocol Command Injection
+- **Description:** Email addresses and message content are interpolated directly into SMTP commands without sanitizing `\r\n` sequences. An attacker can inject arbitrary SMTP commands via crafted email addresses (e.g., `user@example.com\r\nRCPT TO:<attacker@evil.com>`).
+- **Fix:** Strip or reject `\r` and `\n` characters from all user-supplied values before inserting them into protocol commands.
 
-### 3. **Library Code Calls exit() - Kills Host Process**
-**File:** `src/base64.c:240, 396, 407, 479`
-**Functions:** `afc_base64_internal_inbuf()`, `afc_base64_internal_decode()`
+### 3. CRLF Injection in FTP Commands
 
-```c
-if (ferror(b64->fin)) {
-    // TODO: READ ERROR
-    exit(1);
-}
-```
+- **File:** `src/ftp_client.c` (lines 178, 258, 598, 616)
+- **Type:** Protocol Command Injection
+- **Description:** Filenames, paths, usernames, and passwords are interpolated into FTP commands without CRLF filtering, enabling arbitrary FTP command injection.
+- **Fix:** Strip or reject `\r` and `\n` characters from all parameters before inserting them into FTP commands.
 
-**Issue:** Library code should NEVER call `exit()`. This terminates the entire host application, which is unacceptable behavior for a library. Applications using this library cannot gracefully handle errors.
+### 4. CRLF Injection in POP3 Commands
 
-**Impact:** Application termination, loss of data, denial of service
-**Recommendation:** Return error codes (`AFC_BASE64_ERR_*`) and let the caller decide how to handle the error.
+- **File:** `src/pop3.c` (lines 272-278)
+- **Type:** Protocol Command Injection
+- **Description:** Login credentials are directly interpolated into POP3 `USER` and `PASS` commands without filtering, enabling protocol command injection.
+- **Fix:** Strip or reject `\r` and `\n` characters from credentials before use.
 
----
+### 5. Plaintext Credential Storage Without Secure Erasure
 
-### 4. **Buffer Overflow in InetClient Response Handling**
-**File:** `src/inet_client.c:351`
-**Function:** `afc_inet_client_get()`
+- **Files:** `src/smtp.c` (lines 79-80), `src/pop3.c` (line 69)
+- **Type:** Credential Exposure
+- **Description:** Passwords are stored as plaintext in structs and freed without secure erasure (`memset`/`explicit_bzero`). Credentials are recoverable from process memory or core dumps.
+- **Fix:** Use `explicit_bzero()` on password buffers before freeing them.
 
-```c
-ic->buf[bytes] = '\0';
-```
+### 6. Arbitrary Code Execution via Plugin Loading
 
-**Issue:** After `recv()` or `SSL_read()` returns `bytes`, the code writes a null terminator at position `ic->buf[bytes]`. However, if `bytes` equals `afc_string_max(ic->buf)`, this writes beyond the allocated buffer.
+- **Files:** `src/dynamic_class_master.c` (line 236), `src/dbi_manager.c` (line 208)
+- **Type:** DLL/SO Injection, Remote Code Execution
+- **Description:** `dlopen()` is called with `RTLD_GLOBAL` on user-influenced paths. The DBI manager constructs paths with `sprintf(buf, "%s/%s", modules_path, library_name)` from controllable inputs, enabling loading of arbitrary shared objects.
+- **Fix:** Validate and canonicalize paths before `dlopen()`, remove `RTLD_GLOBAL` flag, restrict allowed plugin directories.
 
-**Impact:** Heap buffer overflow, potential code execution
-**Recommendation:** Check bounds before writing: `if (bytes < afc_string_max(ic->buf)) ic->buf[bytes] = '\0';` or allocate buffer with +1 size.
+### 7. XSS in CGI Debug Output
 
----
+- **File:** `src/cgi_manager.c` (lines 794-799)
+- **Type:** Cross-Site Scripting (XSS)
+- **Description:** User-controlled dictionary keys and values are written directly to HTML output via `printf()` without any HTML encoding in `afc_cgi_manager_internal_dump()`.
+- **Fix:** HTML-encode all user data (`<`, `>`, `&`, `"`, `'`) before writing to HTML output.
 
-### 5. **Unchecked realloc() Failures**
-**File:** `src/mem_tracker.c:230, 237`
-**Functions:** `_memtrack_realloc()`, `_memtrack_realloc_free()`
+### 8. Buffer Overflow in UTF-8 Conversion
 
-```c
-mt->data = realloc(mt->data, mt->data_max * sizeof(MemTrackData));
-```
+- **File:** `src/string.c` (lines 1280-1323)
+- **Type:** Buffer Overflow
+- **Description:** `afc_string_utf8_to_latin1()` allocates `strlen(utf8) + 20` bytes but has no bounds checking in the conversion loop. The write index `xpos` can exceed the allocated buffer size.
+- **Fix:** Track allocated size and check bounds before each write in the conversion loop.
 
-**Issue:** `realloc()` can fail and return NULL. If it fails, the original pointer is lost, causing a memory leak. Continuing to use the NULL pointer causes undefined behavior.
+### 9. Memory Corruption via Unchecked readlink()
 
-**Impact:** Memory corruption, segmentation fault, memory leak
-**Recommendation:** Store return value in temporary variable and check for NULL before assignment.
+- **File:** `src/dirmaster.c` (lines 867-868)
+- **Type:** Buffer Overflow / Memory Corruption
+- **Description:** `readlink()` returns -1 on error but the return value is never checked. When -1 is used as an array index (`tmpbuf[-1] = 0`), it causes an out-of-bounds write. This is followed by unbounded `strcat()` on the corrupted buffer.
+- **Fix:** Check `readlink()` return value for -1 before using it as an index.
 
----
+### 10. HTTP Response Splitting via Content-Type
 
-### 6. **Socket File Descriptor Check Against Wrong Value**
-**File:** `src/inet_client.c:257-258`
-**Function:** `afc_inet_client_close()`
+- **File:** `src/cgi_manager.c` (line 751)
+- **Type:** HTTP Response Splitting
+- **Description:** The `content_type` field is injected into HTTP response headers without CRLF sanitization, enabling response splitting and cache poisoning.
+- **Fix:** Strip `\r` and `\n` from all values inserted into HTTP headers.
 
-```c
-if (ic->sockfd)
-    close(ic->sockfd);
-```
+### 11. Library Code Calls exit()
 
-**Issue:** Socket file descriptors can be 0 (stdin). The code checks `if (ic->sockfd)` which treats 0 as "no socket". Socket errors return -1, not 0. A valid socket with fd=0 will never be closed.
+- **File:** `src/base64.c` (lines 240, 396, 407, 479)
+- **Type:** Denial of Service
+- **Description:** Library code calls `exit()` on file errors, terminating the entire host application. A library must never call `exit()`.
+- **Fix:** Return error codes (`AFC_BASE64_ERR_*`) and let the caller decide how to handle the error.
 
-**Impact:** Resource leak, file descriptor exhaustion
-**Recommendation:** Check `if (ic->sockfd >= 0)` or track socket state with a separate boolean flag.
+### 12. Heap Buffer Overflow in InetClient Response
 
----
+- **File:** `src/inet_client.c` (line 351)
+- **Type:** Heap Buffer Overflow
+- **Description:** After `recv()` or `SSL_read()` returns `bytes`, the code writes `ic->buf[bytes] = '\0'`. If `bytes` equals `afc_string_max(ic->buf)`, this writes beyond the allocated buffer.
+- **Fix:** Ensure `recv`/`SSL_read` reads at most `max - 1` bytes, or allocate buffer with +1 size.
 
-## HIGH SEVERITY ISSUES
+### 13. Unchecked realloc() Loses Original Pointer
 
-### 7. **Potential NULL Pointer Dereference in SMTP AUTH**
-**File:** `src/smtp.c:440-442`
-**Function:** `_afc_smtp_auth_plain()`
-
-```c
-auth_str[0] = '\0';
-strcpy(auth_str + 1, smtp->username);
-auth_str[1 + afc_string_len(smtp->username)] = '\0';
-strcpy(auth_str + 1 + afc_string_len(smtp->username) + 1, smtp->password);
-```
-
-**Issue:** While `smtp->username` and `smtp->password` are checked at line 583-584 in `afc_smtp_authenticate()`, the internal functions assume these are valid. If called directly (future refactoring), this causes NULL pointer dereference. Additionally, complex pointer arithmetic is error-prone.
-
-**Impact:** Segmentation fault, potential buffer overflow
-**Recommendation:** Add null checks in internal functions, use safer buffer building functions like `snprintf()` or structured memory copy.
+- **File:** `src/mem_tracker.c` (lines 230, 237)
+- **Type:** Memory Corruption / Memory Leak
+- **Description:** `realloc()` return value is assigned directly to `mt->data`. If `realloc()` fails and returns NULL, the original pointer is lost, causing a memory leak and subsequent NULL dereference.
+- **Fix:** Store return value in a temporary variable and check for NULL before assignment.
 
 ---
 
-### 8. **Missing Bounds Check in Array Access**
-**File:** `src/array.c:323`
-**Function:** `afc_array_item()`
+## High
 
-```c
-if (item >= am->num_items)
-    return NULL;
-return (am->mem[am->current_pos = item]);
-```
+### 14. Unbounded sprintf() in Date Handler
 
-**Issue:** The check is `>=` which is correct, but there's no check that `item` is non-negative. If `item` is a very large unsigned value wrapping from negative, it could pass this check.
+- **File:** `src/date_handler.c` (lines 429-456)
+- **Type:** Buffer Overflow
+- **Description:** `afc_date_handler_to_string()` uses `sprintf()` into a caller-provided buffer with no size parameter. Long locale-specific day/month names can overflow the destination buffer.
+- **Fix:** Accept a buffer size parameter and use `snprintf()`.
 
-**Impact:** Out-of-bounds memory access
-**Recommendation:** Add explicit check: `if (item >= am->num_items || item < 0)` (if using signed) or ensure callers never pass wrapped values.
+### 15. Integer Overflow in String Resize
 
----
+- **File:** `src/string.c` (lines 1142-1144)
+- **Type:** Integer Overflow / Undersized Allocation
+- **Description:** `afc_string_resize_copy()` doubles the buffer with `max * 2`, which can wrap around to a small value near `UINT_MAX`, causing an undersized allocation followed by overflow.
+- **Fix:** Check for overflow before doubling: `if (max > UINT_MAX / 2) return error;`.
 
-### 9. **Unsafe atoi() on Potentially NULL Pointers**
-**File:** `src/pop3.c:285-286`
-**Function:** `afc_pop3_stat()`
+### 16. Unvalidated Content-Length in CGI POST Handling
 
-```c
-p->tot_messages = atoi((s = afc_string_list_item(p->sn, 1)));
-p->tot_size = atoi((s = afc_string_list_item(p->sn, 2)));
-```
+- **File:** `src/cgi_manager.c` (lines 893-906)
+- **Type:** Integer Handling / Buffer Overflow / DoS
+- **Description:** `atoi()` on HTTP `Content-Length` returns 0 on invalid input, does not detect negative values or overflow, and has no maximum size limit. A crafted `CONTENT_LENGTH` header can cause buffer overflow or memory exhaustion.
+- **Fix:** Replace `atoi()` with `strtol()` with full error checking, validate range, and enforce a maximum POST size.
 
-**Issue:** If `afc_string_list_item()` returns NULL (item not found), passing NULL to `atoi()` is undefined behavior. While the code assigns to `s` to avoid compiler warnings, it doesn't check if `s` is NULL.
+### 17. Fixed Buffer Overflow in File Operations
 
-**Impact:** Undefined behavior, potential segmentation fault
-**Recommendation:** Check `s != NULL` before calling `atoi()`, or use safer parsing like `strtol()` with error checking.
+- **File:** `src/fileops.c` (lines 890-916)
+- **Type:** Buffer Overflow
+- **Description:** Fixed 4096-byte buffer used with `sprintf("%s/%s", dest_path, dirname)`. Paths can exceed this size, especially via symlinks.
+- **Fix:** Use dynamic allocation or `snprintf()` with `PATH_MAX`.
 
----
+### 18. Unbounded strcat() in Symlink Handling
 
-### 10. **String Length Calculation Uses Unsafe Macro**
-**File:** `src/string.c:205-208`
-**Function:** `afc_string_max()`
+- **File:** `src/dirmaster.c` (lines 870-871)
+- **Type:** Buffer Overflow
+- **Description:** `strcat(info->name, tmpbuf)` appends symlink targets (up to `PATH_MAX` bytes) to a fixed-size name field without bounds checking.
+- **Fix:** Use `strncat()` or dynamically sized buffers with length tracking.
 
-```c
-unsigned long afc_string_max(const char *str)
-{
-    return (str ? ((unsigned long)(*((unsigned long *)(str - sizeof(unsigned long) * 2)) - 1)) : 0L);
-}
-```
+### 19. Stack Buffer Overflow in DBI Module Path
 
-**Issue:** Directly dereferences memory before the string pointer without any bounds checking. If called with a non-AFC string (regular C string), this reads uninitialized/invalid memory.
+- **File:** `src/dbi_manager.c` (lines 191, 208)
+- **Type:** Stack Buffer Overflow
+- **Description:** `sprintf(buf[1024], "%s/%s", modules_path, library_name)` with no bounds checking. Long paths overflow the stack buffer.
+- **Fix:** Use `snprintf(buf, sizeof(buf), ...)` and validate total path length.
 
-**Impact:** Undefined behavior, potential segmentation fault, information disclosure
-**Recommendation:** Add magic number validation before dereferencing metadata, or clearly document that mixing AFC and C strings in this way is forbidden.
+### 20. TOCTOU Race Condition in Symlink Handling
 
----
+- **File:** `src/dirmaster.c` (lines 861-867)
+- **Type:** Time-of-Check-Time-of-Use (TOCTOU)
+- **Description:** `lstat()` checks if a file is a symlink, then `readlink()` is called later. An attacker can replace the symlink target between these calls, enabling arbitrary file reads.
+- **Fix:** Use `readlinkat()` with `O_NOFOLLOW` or `fstatat()` to avoid the race window.
 
-### 11. **SMTP Response Buffer Not Validated for Size**
-**File:** `src/smtp.c:321`
-**Function:** `_afc_smtp_get_response()`
+### 21. Unbounded sprintf() in Date Formatting
 
-```c
-afc_string_copy(smtp->buf, smtp->ic->buf, ALL);
-```
+- **File:** `src/dirmaster.c` (lines 949-970)
+- **Type:** Buffer Overflow
+- **Description:** Multiple unbounded `sprintf()` calls for date formatting, plus `strcpy(str, "#undefined")` in the default case. No buffer size is passed or checked.
+- **Fix:** Accept buffer size parameter and use `snprintf()`.
 
-**Issue:** Copies entire inet_client buffer into smtp buffer without checking if smtp->buf is large enough. If server sends response larger than smtp->buf can hold, data is silently truncated (per `afc_string_copy` bounds checking), but this could cause protocol errors.
+### 22. Weak TLS Configuration
 
-**Impact:** Protocol parsing errors, potential security bypass if truncation creates valid-looking response codes
-**Recommendation:** Check buffer size and return error if response is too large, or dynamically resize buffer.
+- **File:** `src/inet_client.c` (lines 539-587)
+- **Type:** Weak Cryptography
+- **Description:** No `SSL_CTX_set_cipher_list()` call and no minimum TLS version enforcement. OpenSSL defaults may include weak or deprecated algorithms.
+- **Fix:** Set minimum TLS 1.2 with `SSL_CTX_set_min_proto_version()` and configure a strong cipher list.
 
----
+### 23. Insecure AUTH PLAIN Credential Handling
 
-### 12. **Race Condition in Hash Table Sorting**
-**File:** `src/hash.c:253-254`
-**Function:** `afc_hash_find()`
+- **File:** `src/smtp.c` (lines 432-523)
+- **Type:** Credential Exposure
+- **Description:** AUTH PLAIN constructs plaintext credentials in intermediate buffers that are not securely erased before being freed. Base64-encoded credentials also remain in memory.
+- **Fix:** Use `explicit_bzero()` on all intermediate credential buffers before freeing.
 
-```c
-if (hm->am->is_sorted == FALSE)
-    afc_array_sort(hm->am, afc_hash_internal_sort);
-```
+### 24. Cookie Header Injection
 
-**Issue:** In multi-threaded environment, two threads could both see `is_sorted == FALSE` and both call sort, causing corruption. No mutex protection on the hash table.
+- **File:** `src/cgi_manager.c` (lines 763-770)
+- **Type:** HTTP Header Injection
+- **Description:** Cookie domain and path attributes are set from unvalidated input. An attacker can inject CRLF sequences to manipulate headers or create additional Set-Cookie directives.
+- **Fix:** Validate domain/path values and strip `\r\n` characters.
 
-**Impact:** Data corruption, incorrect search results, possible segmentation fault
-**Recommendation:** Add thread synchronization (mutex) around hash operations, or document that hash tables are not thread-safe.
+### 25. Race Condition in Server FD Set
 
----
+- **File:** `src/inet_server.c` (lines 250-290)
+- **Type:** Race Condition
+- **Description:** No mutex protection on FD set modifications while iterating in `afc_inet_server_process()`. In multithreaded use, concurrent modification causes undefined behavior.
+- **Fix:** Add mutex locking around FD set access and modification.
 
-## MEDIUM SEVERITY ISSUES
+### 26. Socket File Descriptor Check Against Wrong Value
 
-### 13. **Memory Leak in Error Paths**
-**File:** `src/smtp.c:456-469`
-**Function:** `_afc_smtp_auth_plain()`
+- **File:** `src/inet_client.c` (lines 257-258)
+- **Type:** Resource Leak
+- **Description:** Code checks `if (ic->sockfd)` but socket fd 0 is valid (stdin). Socket errors return -1, not 0. A valid socket with fd=0 will never be closed.
+- **Fix:** Check `if (ic->sockfd >= 0)` or track socket state with a separate boolean flag.
 
-**Issue:** If `afc_base64_encode()` fails or memory allocation fails after some allocations, not all allocated memory is freed. For example, if `encoded` allocation fails, `auth_str` and `b64` are already allocated.
+### 27. Unsafe atoi() on Potentially NULL Pointers (POP3)
 
-**Impact:** Memory leak on error paths
-**Recommendation:** Use TRY/EXCEPT/FINALLY pattern consistently, or ensure all error returns clean up.
+- **File:** `src/pop3.c` (lines 285-286)
+- **Type:** NULL Pointer Dereference
+- **Description:** `afc_string_list_item()` can return NULL, which is passed directly to `atoi()` without checking, causing undefined behavior.
+- **Fix:** Check for NULL before calling `atoi()`, or use `strtol()` with error checking.
 
----
+### 28. Race Condition in Hash Table Sorting
 
-### 14. **Insufficient Input Validation in HTTP Client**
-**File:** `src/http_client.c`
-**Function:** Various
+- **File:** `src/hash.c` (lines 253-254)
+- **Type:** Race Condition
+- **Description:** In multi-threaded environments, two threads can both see `is_sorted == FALSE` and both call sort simultaneously, causing data corruption.
+- **Fix:** Add mutex synchronization around hash operations, or document that hash tables are not thread-safe.
 
-**Issue:** HTTP client doesn't validate URL length or components before parsing. A maliciously crafted URL could cause buffer overflows in internal parsing functions.
+### 29. Unsafe afc_string_max() on Non-AFC Strings
 
-**Impact:** Potential buffer overflow, denial of service
-**Recommendation:** Add URL length checks and validate components before copying to fixed-size buffers.
+- **File:** `src/string.c` (lines 205-208)
+- **Type:** Out-of-Bounds Read
+- **Description:** `afc_string_max()` dereferences memory before the string pointer to read metadata. If called with a regular C string (not allocated via `afc_string_new()`), this reads uninitialized or invalid memory.
+- **Fix:** Add magic number validation before dereferencing metadata.
 
----
+### 30. strtok() Not Thread-Safe in SMTP
 
-### 15. **Integer Overflow in Buffer Size Calculation**
-**File:** `src/smtp.c:435`
-**Function:** `_afc_smtp_auth_plain()`
-
-```c
-auth_len = 1 + afc_string_len(smtp->username) + 1 + afc_string_len(smtp->password);
-```
-
-**Issue:** If username or password are extremely long (near SIZE_MAX), this addition could overflow, resulting in a small `auth_len` and subsequent buffer overflow.
-
-**Impact:** Integer overflow leading to buffer overflow
-**Recommendation:** Add overflow checks before allocation: `if (username_len > SIZE_MAX - password_len - 2) return error;`
-
----
-
-### 16. **Dichotomous Search Can Loop Infinitely**
-**File:** `src/hash.c:260-277`
-**Function:** `afc_hash_find()`
-
-**Issue:** If the array is corrupted or hash values are malformed, the dichotomous search could enter an infinite loop or access invalid memory. The termination condition relies on `min > max` which may not trigger if values wrap.
-
-**Impact:** Infinite loop, denial of service, potential crash
-**Recommendation:** Add iteration counter limit, validate array integrity before search.
+- **File:** `src/smtp.c` (lines 648-668)
+- **Type:** Race Condition
+- **Description:** `strtok()` uses static internal state and is not thread-safe. Multiple threads using SMTP simultaneously will corrupt each other's parsing state.
+- **Fix:** Use `strtok_r()` (POSIX thread-safe version).
 
 ---
 
-### 17. **Missing Magic Number Validation**
-**File:** Multiple files
-**Functions:** Various internal functions
+## Medium
 
-**Issue:** Many internal functions (prefixed with `_`) don't validate magic numbers before operating on structures. If called directly or after memory corruption, they operate on invalid data.
+### 31. Integer Overflow in Memory Tracker Realloc
 
-**Impact:** Undefined behavior, data corruption
-**Recommendation:** Add magic number checks in internal functions as well, or clearly document preconditions.
+- **File:** `src/mem_tracker.c` (lines 263-272)
+- **Type:** Integer Overflow
+- **Description:** `data_max * 2` can overflow when computing realloc size, causing an undersized allocation.
+- **Fix:** Check for overflow before doubling: `if (data_max > SIZE_MAX / (2 * sizeof(MemTrackData *))) return error;`.
 
----
+### 32. SSRF via FTP PASV Response
 
-### 18. **Base64 Encoder Modifies Constant Memory**
-**File:** `src/base64.c:22`
-**Global:** `static char eol[] = "\r\n";`
+- **File:** `src/ftp_client.c` (lines 646-740)
+- **Type:** Server-Side Request Forgery (SSRF)
+- **Description:** PASV response IP parsing trusts the server-provided IP address. A malicious FTP server can direct the client to connect to arbitrary internal hosts.
+- **Fix:** Validate that the PASV IP matches the original server IP or restrict to the same host.
 
-**Issue:** While `eol` is defined as static char array, it's passed to functions that might modify it. Though current code doesn't modify it, the pattern is unsafe.
+### 33. Port Confusion in FTP PASV Parsing
 
-**Impact:** Potential undefined behavior if code is modified
-**Recommendation:** Declare as `const char eol[] = "\r\n";` to enforce immutability.
+- **File:** `src/ftp_client.c` (lines 714-730)
+- **Type:** Integer Truncation
+- **Description:** `atoi()` result is cast to `u_char`, silently truncating values above 255 and producing incorrect port numbers.
+- **Fix:** Validate that parsed values are in the range 0-255 before casting.
 
----
+### 34. SMTP Response Code Parsing Without Validation
 
-## LOW SEVERITY ISSUES
+- **File:** `src/smtp.c` (lines 312-335)
+- **Type:** Protocol Parsing Error
+- **Description:** Response code parsing assumes the first 3 characters are digits. Non-digit characters cause `atoi()` to return 0, indistinguishable from a real error.
+- **Fix:** Validate that the first 3 bytes are ASCII digits before converting.
 
-### 19. **Inconsistent Error Handling**
-**File:** Multiple
+### 35. POP3 Unbounded Multi-line Response
 
-**Issue:** Some functions return error codes, others return NULL, others call exit(). No consistent error handling strategy.
+- **File:** `src/pop3.c` (lines 453-474)
+- **Type:** Denial of Service
+- **Description:** Multi-line responses are read until a lone "." is encountered with no size limit. A malicious server can cause memory exhaustion by sending unlimited lines.
+- **Fix:** Enforce a maximum response size limit.
 
-**Impact:** Difficult error handling for library users
-**Recommendation:** Standardize on error code returns, document error conditions.
+### 36. PostgreSQL Connection String Never Used
 
----
+- **File:** `src/dbi/postgresql.c` (lines 150-154)
+- **Type:** Logic Bug / Potential Injection
+- **Description:** The connection string is constructed with user parameters but never passed to `PQconnectdb("")` (empty string used instead). If fixed naively, the direct string interpolation is vulnerable to injection.
+- **Fix:** Use `PQconnectdbParams()` with parameterized values instead of string interpolation.
 
-### 20. **Missing const Qualifiers**
-**File:** Multiple
+### 37. No SSL Handshake Timeout
 
-**Issue:** Many functions that don't modify their parameters lack `const` qualifiers. For example, `afc_string_comp()` should take `const char *`.
+- **File:** `src/inet_client.c` (lines 203-209)
+- **Type:** Denial of Service
+- **Description:** Socket timeout only applies to socket operations, not to `SSL_connect()`. A slow or malicious server can cause indefinite hangs during TLS handshake.
+- **Fix:** Set a timer or use non-blocking SSL with `select()`/`poll()` and a timeout.
 
-**Impact:** Lost optimization opportunities, unclear API semantics
-**Recommendation:** Add `const` to all read-only parameters.
+### 38. Hardcoded EHLO Hostname
 
----
+- **File:** `src/smtp.c` (line 404)
+- **Type:** Protocol Non-compliance
+- **Description:** SMTP uses hardcoded `EHLO localhost` instead of the actual FQDN, violating RFC 5321. Strict SMTP servers may reject the connection.
+- **Fix:** Use the system's actual hostname or allow configuration via a tag.
 
-### 21. **Unsafe sprintf Usage**
-**File:** `src/string.c` and others
+### 39. Memory Leak in SMTP AUTH Error Paths
 
-**Issue:** While the code uses `afc_string_make()` which likely wraps `vsprintf()`, fixed-size buffers with sprintf-family functions are prone to overflow.
+- **File:** `src/smtp.c` (lines 456-469)
+- **Type:** Memory Leak
+- **Description:** If `afc_base64_encode()` fails or memory allocation fails partway through `_afc_smtp_auth_plain()`, not all previously allocated memory is freed.
+- **Fix:** Use consistent cleanup pattern, ensuring all error returns free allocated resources.
 
-**Impact:** Potential buffer overflow in format string operations
-**Recommendation:** Review all format string operations, use snprintf where appropriate.
+### 40. Integer Overflow in SMTP AUTH Buffer Size
 
----
+- **File:** `src/smtp.c` (line 435)
+- **Type:** Integer Overflow
+- **Description:** `auth_len = 1 + username_len + 1 + password_len` can overflow if username or password lengths are near `SIZE_MAX`, resulting in an undersized buffer allocation.
+- **Fix:** Add overflow checks: `if (username_len > SIZE_MAX - password_len - 2) return error;`.
 
-### 22. **Resource Cleanup in Constructors**
-**File:** Multiple
+### 41. Dichotomous Search Can Loop Infinitely
 
-**Issue:** Some `_new()` functions don't properly clean up all resources on failure. For example, if allocation of the 3rd member fails, first two might not be freed.
+- **File:** `src/hash.c` (lines 260-277)
+- **Type:** Denial of Service
+- **Description:** If the array is corrupted or hash values are malformed, the binary search could enter an infinite loop. The termination condition relies on `min > max` which may not trigger if values wrap.
+- **Fix:** Add an iteration counter limit.
 
-**Impact:** Memory leak on construction failure
-**Recommendation:** Use consistent TRY/EXCEPT/FINALLY pattern in all constructors.
+### 42. Missing Magic Number Validation in Internal Functions
 
----
+- **Files:** Multiple
+- **Type:** Undefined Behavior
+- **Description:** Many internal functions (prefixed with `_`) do not validate magic numbers before operating on structures. If called after memory corruption, they operate on invalid data.
+- **Fix:** Add magic number checks in internal functions or document preconditions.
 
-### 23. **Platform-Specific Code Without Proper Abstraction**
-**File:** `src/string.c:39-43`
+### 43. Insufficient Input Validation in HTTP Client
 
-```c
-#ifdef MINGW
-static const char dir_sep = '\\';
-#else
-static const char dir_sep = '/';
-#endif
-```
-
-**Issue:** Platform detection at compile time may not match runtime environment (e.g., Cygwin on Windows).
-
-**Impact:** Incorrect path handling on some platforms
-**Recommendation:** Detect path separator at runtime or provide configuration option.
-
----
-
-### 24. **No NULL Checks Before String Operations**
-**File:** `src/smtp.c` and others
-
-**Issue:** Many string operations assume pointers are non-NULL without explicit checks. While some functions do check, internal helper functions often don't.
-
-**Impact:** Potential NULL pointer dereference
-**Recommendation:** Add defensive NULL checks, especially in public API functions.
-
----
-
-### 25. **Memory Tracker Missing Thread Safety**
-**File:** `src/mem_tracker.c`
-
-**Issue:** Memory tracker maintains global state without any mutex protection. In multi-threaded applications, this causes race conditions.
-
-**Impact:** Incorrect memory tracking, possible crash
-**Recommendation:** Add mutex protection to all memory tracker operations.
+- **File:** `src/http_client.c`
+- **Type:** Buffer Overflow / DoS
+- **Description:** HTTP client does not validate URL length or components before parsing. A crafted URL could cause buffer overflows in internal parsing functions.
+- **Fix:** Add URL length checks and validate components before copying to fixed-size buffers.
 
 ---
 
-## SUMMARY STATISTICS
+## Low
 
-- **Total Issues Found:** 25
-- **Critical Severity:** 6
-- **High Severity:** 6
-- **Medium Severity:** 6
-- **Low Severity:** 7
+### 44. Memory Tracker Not Thread-Safe
 
----
+- **File:** `src/mem_tracker.c`
+- **Type:** Race Condition
+- **Description:** Memory tracker maintains global state without mutex protection. In multi-threaded applications, this causes race conditions in tracking data.
+- **Fix:** Add mutex protection to all memory tracker operations.
 
-## PRIORITIZED REMEDIATION RECOMMENDATIONS
+### 45. Base64 eol Buffer Not Declared const
 
-### Immediate Action Required (Critical):
-1. Fix exit() calls in base64.c - replace with error returns
-2. Fix buffer overflow in inet_client.c:351
-3. Fix unchecked realloc() in mem_tracker.c
-4. Fix socket descriptor check in inet_client.c:257
+- **File:** `src/base64.c` (line 22)
+- **Type:** Defensive Programming
+- **Description:** `static char eol[] = "\r\n"` is not declared `const`. While current code does not modify it, the pattern is unsafe against future changes.
+- **Fix:** Declare as `static const char eol[] = "\r\n"`.
 
-### High Priority:
-5. Add comprehensive bounds checking to SMTP auth functions
-6. Fix NULL pointer handling in POP3 parsing
-7. Add thread safety to hash table operations
+### 46. Inconsistent Error Handling Strategy
 
-### Medium Priority:
-8. Audit all error paths for memory leaks
-9. Add input validation to HTTP client URL parsing
-10. Review all integer arithmetic for overflow potential
+- **Files:** Multiple
+- **Type:** API Design
+- **Description:** Some functions return error codes, others return NULL, others call `exit()`. No consistent error handling strategy across the library.
+- **Fix:** Standardize on error code returns and document error conditions for all public APIs.
 
-### Low Priority:
-11. Standardize error handling across library
-12. Add const qualifiers to improve type safety
-13. Add thread safety to memory tracker
+### 47. Missing const Qualifiers on Read-Only Parameters
 
----
+- **Files:** Multiple
+- **Type:** API Design
+- **Description:** Many functions that do not modify their parameters lack `const` qualifiers (e.g., `afc_string_comp()` should take `const char *`).
+- **Fix:** Add `const` to all read-only parameters.
 
-## TESTING RECOMMENDATIONS
+### 48. Resource Cleanup Gaps in Constructors
 
-1. **Fuzzing:** Use AFL or libFuzzer on network protocol parsers (SMTP, POP3, HTTP)
-2. **Static Analysis:** Run Coverity, Clang Static Analyzer, or Cppcheck
-3. **Dynamic Analysis:** Use AddressSanitizer, MemorySanitizer, UndefinedBehaviorSanitizer
-4. **Thread Safety:** Use ThreadSanitizer to detect race conditions
-5. **Valgrind:** Run all tests under Valgrind to detect memory errors
+- **Files:** Multiple
+- **Type:** Memory Leak
+- **Description:** Some `_new()` functions do not properly clean up all resources on partial failure. If allocation of the Nth member fails, previously allocated members may not be freed.
+- **Fix:** Use consistent cleanup pattern in all constructors.
 
----
+### 49. Platform Detection at Compile Time May Not Match Runtime
 
-## NOTES
-
-- This analysis prioritized application code over test files as requested
-- Many issues stem from legacy C practices (pre-C99) and can be modernized
-- The library would benefit from a comprehensive security audit
-- Consider migrating to safer string handling (e.g., bstring library)
-- Thread safety should be clearly documented for all public APIs
+- **File:** `src/string.c` (lines 39-43)
+- **Type:** Portability
+- **Description:** Path separator is set at compile time via `#ifdef MINGW`. This may not match the runtime environment (e.g., Cygwin on Windows).
+- **Fix:** Detect path separator at runtime or provide a configuration option.
 
 ---
 
-**Report Generated:** 2026-01-15
-**Reviewer:** Claude Code (AI Assistant)
-**Methodology:** Manual code review with focus on buffer overflows, memory safety, integer overflows, race conditions, and error handling
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 13    |
+| High     | 17    |
+| Medium   | 13    |
+| Low      | 6     |
+| **Total** | **49** |
+
+---
+
+## Recommendations
+
+### Immediate Priority
+
+1. **Replace all `sprintf()`, `strcpy()`, `strcat()`** with bounded variants (`snprintf()`, `strncpy()`, `strncat()`) throughout the entire codebase.
+2. **Add SSL certificate verification** in `inet_client.c`.
+3. **Sanitize all protocol inputs** by stripping `\r\n` from user-controlled data before inserting into SMTP, FTP, POP3, and HTTP commands.
+4. **Remove all `exit()` calls** from library code and return error codes instead.
+
+### High Priority
+
+5. **Validate all external input** — replace `atoi()` with `strtol()` with error checking, add bounds validation on Content-Length, paths, and numeric parameters.
+6. **Secure credential handling** — use `explicit_bzero()` on all password and credential buffers before freeing.
+7. **HTML-encode CGI output** — escape `<`, `>`, `&`, `"`, `'` in all user data written to HTML.
+8. **Check all return values** — especially `readlink()`, `malloc()`, and `realloc()`.
+
+### Medium Priority
+
+9. **Restrict plugin paths** — validate and canonicalize paths before `dlopen()`, remove `RTLD_GLOBAL` flag.
+10. **Fix the PostgreSQL driver** — use `PQconnectdbParams()` instead of string interpolation.
+11. **Add size limits** to all unbounded read loops (POP3 multi-line, CGI POST body).
+12. **Set minimum TLS 1.2** and configure strong cipher suites.
+13. **Add mutex protection** to shared state in `inet_server.c`, `hash.c`, and `mem_tracker.c`.
+
+### Testing Recommendations
+
+1. **Fuzzing:** Use AFL or libFuzzer on network protocol parsers (SMTP, POP3, FTP, HTTP).
+2. **Static Analysis:** Run Coverity, Clang Static Analyzer, or Cppcheck.
+3. **Dynamic Analysis:** Use AddressSanitizer, MemorySanitizer, UndefinedBehaviorSanitizer.
+4. **Thread Safety:** Use ThreadSanitizer to detect race conditions.
+5. **Valgrind:** Run all tests under Valgrind to detect memory errors.
