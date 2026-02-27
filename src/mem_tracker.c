@@ -1,3 +1,5 @@
+#include <limits.h>
+#include <stdint.h>
 #include "mem_tracker.h"
 
 static int _memtrack_realloc(MemTracker *mt);
@@ -262,8 +264,15 @@ static void _memtrack_del(MemTracker *mt, int pos)
 // {{{ _memtrack_realloc ( mt )
 static int _memtrack_realloc(MemTracker *mt)
 {
-	unsigned int new_max = mt->data_max * 2;
-	MemTrackData **new_data = realloc(mt->data, new_max * sizeof(MemTrackData *));
+	unsigned int new_max;
+
+	/* Check for integer overflow before doubling */
+	if (mt->data_max > UINT_MAX / 2)
+		return -1;
+
+	new_max = mt->data_max * 2;
+
+	MemTrackData **new_data = realloc(mt->data, (size_t)new_max * sizeof(MemTrackData *));
 	if (new_data == NULL)
 		return -1; // Realloc failed, original pointer still valid
 	mt->data = new_data;
@@ -274,8 +283,15 @@ static int _memtrack_realloc(MemTracker *mt)
 // {{{ _memtrack_realloc_free ( mt )
 static int _memtrack_realloc_free(MemTracker *mt)
 {
-	int new_max = mt->free_max * 2;
-	unsigned int *new_free = realloc(mt->free, new_max * sizeof(unsigned int));
+	int new_max;
+
+	/* Check for integer overflow before doubling */
+	if (mt->free_max > INT_MAX / 2)
+		return -1;
+
+	new_max = mt->free_max * 2;
+
+	unsigned int *new_free = realloc(mt->free, (size_t)new_max * sizeof(unsigned int));
 	if (new_free == NULL)
 		return -1; // Realloc failed, original pointer still valid
 	mt->free = new_free;
