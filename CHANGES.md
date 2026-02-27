@@ -2,6 +2,30 @@
 
 ## February 27, 2026
 
+### Test Suite: Networking Module Tests
+
+**tests/test_inet_client.c** (new)
+- Comprehensive tests for the InetClient module: creation/deletion lifecycle, magic number verification, default field values (use_ssl, timeout, sockfd, buf), set_tag with AFC_INET_CLIENT_TAG_TIMEOUT and AFC_INET_CLIENT_TAG_USE_SSL, set_tags macro with multiple tags, clear on valid/NULL objects, delete macro NULL-setting, 100 create/delete stability cycles, full configure-clear-delete lifecycle
+
+**tests/test_inet_server.c** (new)
+- Comprehensive tests for the InetServer module: creation/deletion lifecycle, magic number verification, default field values (hash, bufsize, callbacks, data pointer), clear on valid/NULL objects, object validity after clear, delete macro NULL-setting, 100 create/delete stability cycles, 100 create-clear-delete full lifecycle cycles
+
+**tests/test_smtp.c** (new)
+- Comprehensive tests for the SMTP client module: creation/deletion lifecycle, magic number verification, default field values (ic, buf, tmp, port "25", use_tls, use_ssl, auth_method, authenticated, connected, host/username/password NULL), set_tag with HOST/PORT/USERNAME/PASSWORD/USE_TLS/USE_SSL/AUTH_METHOD/FROM/TO/SUBJECT, set_tags macro, clear resets authenticated/connected flags, clear(NULL), delete macro NULL-setting, 100 create/delete stability cycles, full Amazon SES-style configuration lifecycle
+
+**tests/test_http_client.c** (new)
+- Comprehensive tests for the HttpClient module: creation/deletion lifecycle, magic number verification, default field values (inet, req_headers, resp_headers, buf, tmp, port 80, use_ssl, isconnected, timeout, follow_redirects TRUE, max_redirects 10, status_code, host), set_tag with TIMEOUT/FOLLOW_REDIRECTS/MAX_REDIRECTS/USE_SSL, set_tags macro, set_header for custom request headers (Content-Type, Authorization, User-Agent), set_header NULL validation, clear_headers, clear resets status_code/resp_body_len, clear(NULL), delete macro NULL-setting, 100 create/delete stability cycles, full configure-header-clear-delete lifecycle
+
+**tests/test_pop3.c** (new)
+- Comprehensive tests for the POP3 client module: creation/deletion lifecycle, magic number verification, default field values (ic, sn, buf, tmp, msg hash, port "110", host/login/passwd NULL), set_tag with HOST/PORT/LOGIN/PASSWD, set_tags macro, tag overwrite verification, clear resets host/login/passwd to NULL and port to "110", clear(NULL), delete macro NULL-setting, 100 create/delete stability cycles, full configure-clear-delete lifecycle
+
+**tests/test_ftp_client.c** (new)
+- Comprehensive tests for the FtpClient module: creation/deletion lifecycle, magic number verification, default field values (inet, last_answer, last_code 0, pasv FALSE), clear resets last_code/pasv/magic/inet, clear(NULL), double clear, delete function return code, 100 create/delete stability cycles, 100 create-clear-delete full lifecycle cycles
+- NOTE: ftp_client.c is currently excluded from the library build due to reference to undefined afc_inet_client_get_binary; test file is ready for when the build issue is resolved
+
+**tests/Makefile** (updated)
+- Removed test_ftp_client from TESTS list with comment explaining ftp_client.c build issue
+
 ### Test Suite: Advanced Module Tests
 
 **tests/test_cgi_manager.c** (new)
