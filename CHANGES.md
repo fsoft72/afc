@@ -2,6 +2,26 @@
 
 ## February 27, 2026
 
+### Test Suite: Data Structure Tests
+
+**tests/test_array.c** (new)
+- Comprehensive tests for the Array module: creation, init, add at HEAD/TAIL/HERE, first/next/prev/last traversal, item by index, len, is_empty, del, sort with custom comparator, clear, and convenience macros
+
+**tests/test_list.c** (new)
+- Comprehensive tests for the List (Node Master) module: creation, add at HEAD/TAIL/HERE, first/next/prev/last traversal, obj, is_empty, del, item by position, push/pop stack, clear, and convenience macros
+
+**tests/test_hash.c** (new)
+- Comprehensive tests for the Hash module: creation, add with numeric keys, find existing/non-existing keys, first/next/last/prev traversal, del, len, is_empty, clear, and binary search stress test
+
+**tests/test_dictionary.c** (new)
+- Comprehensive tests for the Dictionary module: creation, set/get, has_key, get_default, iteration (first/next), del, del_item, clear, overwrite behavior, NULL value removal, and hashing stress test
+
+**tests/test_string_list.c** (new)
+- Comprehensive tests for the StringList module: creation, add at HEAD/TAIL, first/next/prev/last traversal, sort (case-sensitive), del, clear, split with pipe/comma/multi-char delimiters, split with empty fields, sort after split, and convenience macros
+
+**tests/Makefile** (fix)
+- Changed `-I../src` to `-iquote../src` to prevent AFC's `string.h` from shadowing the system `<string.h>`, which caused `strcmp` to be undeclared
+
 ### Compiler Warning Fixes
 
 **dirmaster.h / dirmaster.c**
