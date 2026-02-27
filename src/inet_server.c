@@ -115,6 +115,12 @@ int _afc_inet_server_delete(InetServer *is)
 {
 	int afc_res;
 
+	if (is == NULL)
+		return (AFC_ERR_NULL_POINTER);
+
+	if (is->magic != AFC_INET_SERVER_MAGIC)
+		return (AFC_ERR_INVALID_POINTER);
+
 	if ((afc_res = afc_inet_server_clear(is)) != AFC_ERR_NO_ERROR)
 		return (afc_res);
 
@@ -212,7 +218,9 @@ int afc_inet_server_create(InetServer *is, int port)
 int afc_inet_server_close(InetServer *is)
 {
 	InetConnData *data;
-	// int t;
+
+	if (is == NULL)
+		return (AFC_ERR_NULL_POINTER);
 
 	data = afc_hash_first(is->hash);
 	while (data)
