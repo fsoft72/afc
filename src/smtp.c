@@ -397,11 +397,19 @@ int afc_smtp_connect(SMTP *smtp)
 {
 	int res;
 	int port;
+	char hostname[256];
+	char ehlo_cmd[270];
 
 	if (!smtp)
 		return AFC_ERR_NULL_POINTER;
 	if (!smtp->host)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_CONNECT, "No host specified", NULL);
+
+	/* Use the system hostname for EHLO per RFC 5321 */
+	if (gethostname(hostname, sizeof(hostname)) != 0)
+		strncpy(hostname, "localhost", sizeof(hostname));
+	hostname[sizeof(hostname) - 1] = '\0';
+	snprintf(ehlo_cmd, sizeof(ehlo_cmd), "EHLO %s", hostname);
 
 	port = atoi(smtp->port);
 
@@ -421,7 +429,7 @@ int afc_smtp_connect(SMTP *smtp)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_PROTOCOL, "Invalid server greeting", smtp->buf);
 
 	// Send EHLO command
-	if ((res = _afc_smtp_send_command(smtp, "EHLO localhost")) != 250)
+	if ((res = _afc_smtp_send_command(smtp, ehlo_cmd)) != 250)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_PROTOCOL, "EHLO failed", smtp->buf);
 
 	smtp->connected = TRUE;
@@ -436,7 +444,7 @@ int afc_smtp_connect(SMTP *smtp)
 			return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_TLS_REQUIRED, "Failed to start TLS", NULL);
 
 		// Send EHLO again after STARTTLS
-		if ((res = _afc_smtp_send_command(smtp, "EHLO localhost")) != 250)
+		if ((res = _afc_smtp_send_command(smtp, ehlo_cmd)) != 250)
 			return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_PROTOCOL, "EHLO after STARTTLS failed", smtp->buf);
 	}
 
