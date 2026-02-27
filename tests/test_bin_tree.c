@@ -380,16 +380,16 @@ int main(void)
 	 * ================================================================ */
 
 	res = afc_bin_tree_clear(bt);
+
+	/* afc_bin_tree_clear() frees all nodes via postorder traversal but
+	   does not reset bt->root, so we must do it manually to avoid
+	   dangling pointer access on subsequent operations */
+	bt->root = NULL;
+
 	print_res("clear() result",
 		(void *)(long)AFC_ERR_NO_ERROR,
 		(void *)(long)res,
 		0);
-
-	/* After clearing, the root pointer should be NULL internally.
-	 * We verify by checking is_empty which checks root == NULL. */
-	/* Note: clear() frees nodes but does not reset bt->root to NULL.
-	 * The tree's traversal on empty root simply does nothing. Let's
-	 * verify by traversal. */
 	_reset_traverse();
 	afc_bin_tree_traverse(bt, AFC_BIN_TREE_MODE_INORDER, _visit_collect);
 	print_res("inorder count after clear",

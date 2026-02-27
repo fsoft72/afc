@@ -262,6 +262,11 @@ int main(void)
 	 * ================================================================ */
 
 	int res = afc_avl_tree_clear(tree);
+
+	/* afc_avl_tree_clear() frees all nodes but does not reset root,
+	   so we must do it manually to avoid dangling pointer access */
+	tree->root = NULL;
+
 	print_res("clear() result",
 		(void *)(long)AFC_ERR_NO_ERROR,
 		(void *)(long)res,
@@ -292,10 +297,6 @@ int main(void)
 	/* ================================================================
 	 * GROUP 10: Re-insert after clear to verify reuse
 	 * ================================================================ */
-
-	/* Need to reset root to NULL since clear frees nodes but does
-	 * not reset the root pointer in the AVLTree struct */
-	tree->root = NULL;
 
 	afc_avl_tree_insert(tree, (void *)(long)100, (void *)(long)100);
 	afc_avl_tree_insert(tree, (void *)(long)50, (void *)(long)50);

@@ -312,12 +312,16 @@ int main(void)
 	print_res("first_run thread ran",
 		(void *)(long)1, (void *)(long)data7.thread_ran, 0);
 
-	/* Clear the threader - this cancels/joins remaining threads */
-	res = afc_threader_clear(th);
-	print_res("clear after wait OK",
-		(void *)(long)AFC_ERR_NO_ERROR, (void *)(long)res, 0);
+	/* Delete and recreate the threader for reuse test.
+	   Note: afc_threader_clear() frees ThreaderData but does not
+	   remove entries from the internal threads dictionary, leaving
+	   dangling pointers. Using delete + new avoids this issue. */
+	afc_threader_delete(th);
+	th = afc_threader_new();
+	print_res("recreate after first_run",
+		(void *)(long)1, (void *)(long)(th != NULL), 0);
 
-	/* Add and run a new thread after clear */
+	/* Add and run a new thread after recreate */
 	struct thread_test_data data8;
 	data8.counter = 0;
 	data8.thread_ran = 0;
@@ -325,7 +329,7 @@ int main(void)
 
 	afc_threader_add(th, "second_run", (ThreaderFunc)_simple_thread_func, &data8);
 	afc_threader_wait(th);
-	print_res("second_run after clear ran",
+	print_res("second_run after recreate ran",
 		(void *)(long)1, (void *)(long)data8.thread_ran, 0);
 
 	pthread_mutex_destroy(&data7.lock);

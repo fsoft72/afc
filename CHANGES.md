@@ -2,6 +2,17 @@
 
 ## February 27, 2026
 
+### Test Suite: Segfault Fixes
+
+**tests/test_avl_tree.c** (fix)
+- Fixed segfault (exit 139) caused by dangling root pointer after `afc_avl_tree_clear()`. The clear function frees all nodes but does not reset `tree->root` to NULL, so subsequent `afc_avl_tree_find_node()` and `afc_avl_tree_get()` calls would dereference freed memory. Added `tree->root = NULL` after clear.
+
+**tests/test_bin_tree.c** (fix)
+- Fixed segfault (exit 139) caused by dangling root pointer after `afc_bin_tree_clear()`. The clear function frees all nodes via postorder traversal but does not reset `bt->root` to NULL, so subsequent `afc_bin_tree_traverse()` and `afc_bin_tree_insert()` calls would dereference freed memory. Added `bt->root = NULL` after clear.
+
+**tests/test_threader.c** (fix)
+- Fixed segfault (exit 139) in the clear-and-reuse test. The `afc_threader_clear()` function frees all ThreaderData objects but does not clear the internal threads dictionary (that line is commented out in the library source), leaving dangling pointers. On subsequent operations, the dictionary would be iterated again, accessing freed memory. Replaced the clear-and-reuse pattern with delete-and-recreate to avoid the dangling pointer issue.
+
 ### Test Suite: Networking Module Tests
 
 **tests/test_inet_client.c** (new)
