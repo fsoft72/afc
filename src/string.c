@@ -205,7 +205,22 @@ char *_afc_string_delete(char *location)
 
 unsigned long afc_string_max(const char *str)
 {
-	return (str ? ((unsigned long)(*((unsigned long *)(str - sizeof(unsigned long) * 2)) - 1)) : 0L);
+	unsigned long max_val;
+
+	if (!str) return 0L;
+
+	/* WARNING: This function reads memory before the string pointer.
+	   It must ONLY be called on strings created with afc_string_new().
+	   Passing a regular C string or stack buffer causes undefined behavior. */
+	max_val = *((unsigned long *)(str - sizeof(unsigned long) * 2));
+
+	/* Sanity check: afc_string_new() always sets max to numchars+1, so
+	   it must be at least 1. A zero or extremely large value suggests
+	   this is not a valid AFC string. */
+	if (max_val == 0 || max_val > (1UL << 30))
+		return 0L;
+
+	return max_val - 1;
 }
 // }}}
 // {{{ afc_string_len ( str )
