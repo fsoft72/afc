@@ -761,9 +761,23 @@ int afc_cgi_manager_get_header_str(CGIManager *cgi, char *dest)
 
 	if (cgi->handle_cookies)
 	{
+		/* Validate cookie path and domain for CRLF injection */
+		if (_afc_cgi_check_crlf(cgi->cookies_path) || _afc_cgi_check_crlf(cgi->cookies_domain) || _afc_cgi_check_crlf(cgi->cookies_expire))
+		{
+			afc_string_delete(tmp);
+			return (AFC_LOG(AFC_LOG_ERROR, AFC_CGI_MANAGER_ERR_NO_REQUEST, "CRLF injection in cookie attributes", NULL));
+		}
+
 		val = afc_dictionary_first(cgi->cookies);
 		while (val)
 		{
+			/* Validate cookie key and value for CRLF injection */
+			if (_afc_cgi_check_crlf(afc_dictionary_get_key(cgi->cookies)) || _afc_cgi_check_crlf(val))
+			{
+				afc_string_delete(tmp);
+				return (AFC_LOG(AFC_LOG_ERROR, AFC_CGI_MANAGER_ERR_NO_REQUEST, "CRLF injection in cookie key/value", NULL));
+			}
+
 			afc_string_make(tmp, "Set-Cookie: %s=%s; expires=%s GMT;", afc_dictionary_get_key(cgi->cookies), val, cgi->cookies_expire);
 			afc_string_add(dest, tmp, ALL);
 
