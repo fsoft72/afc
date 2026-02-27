@@ -1,5 +1,107 @@
 # CHANGES.md
 
+## February 27, 2026
+
+### Security Fixes
+
+**smtp.c - CRLF injection in SMTP commands (Issue #2)**
+- Added `_afc_smtp_check_crlf()` helper to reject strings containing CR/LF
+- Validate sender address before MAIL FROM command
+- Validate each recipient address before RCPT TO command
+- Validate from, to, and subject in `afc_smtp_send_simple()` before building message headers
+
+**ftp_client.c - CRLF injection in FTP commands (Issue #3)**
+- Added `_afc_ftp_client_check_crlf()` helper to reject strings containing CR/LF
+- Validate pathnames in CWD, MKD, RMD commands
+- Validate filenames in DELE, SIZE commands
+- Validate old/new names in RNFR/RNTO rename commands
+- Validate username and password in USER/PASS login commands
+- Validate arbitrary commands in sendcmd
+
+**pop3.c - CRLF injection in POP3 commands (Issue #4)**
+- Added `_afc_pop3_check_crlf()` helper to reject strings containing CR/LF
+- Validate login username before USER command
+- Validate password before PASS command (password not included in error detail)
+
+**cgi_manager.c - XSS in CGI debug output (Issue #7)**
+- Added `_afc_cgi_print_html_encoded()` helper to encode `<`, `>`, `&`, `"`, `'` as HTML entities
+- Encode all dictionary keys and values in `afc_cgi_manager_internal_dump()` before writing to HTML
+
+**string.c - Buffer overflow in UTF-8 conversion (Issue #8)**
+- Added bounds checking in `afc_string_utf8_to_latin1()` conversion loop
+- Track allocated buffer size and verify write index before each write
+- Free intermediate buffer on early error returns to prevent memory leaks
+
+**dirmaster.c - Memory corruption via unchecked readlink() (Issue #9)**
+- Check `readlink()` return value for -1 before using as array index
+- Skip symlink target display on readlink failure instead of writing to `tmpbuf[-1]`
+- Limit readlink to `NAME_MAX-1` to ensure room for null terminator
+
+**cgi_manager.c - HTTP response splitting via Content-Type (Issue #10)**
+- Added `_afc_cgi_check_crlf()` helper to reject strings containing CR/LF
+- Validate `content_type` before interpolating into HTTP response headers
+
+**date_handler.c - Unbounded sprintf() in date formatting (Issue #14)**
+- Added `dest_size` parameter to `afc_date_handler_to_string()`
+- Replaced all `sprintf()` with `snprintf()` using destination buffer size
+- Updated header and test callers
+
+**string.c - Integer overflow in string resize (Issue #15)**
+- Added overflow check before `max * 2` in `afc_string_resize_copy()`
+- Returns NULL if max exceeds `UINT_MAX / 2`
+
+**cgi_manager.c - Unchecked CONTENT_LENGTH parsing (Issue #16)**
+- Replaced `atoi()` with `strtol()` for CONTENT_LENGTH parsing
+- Reject non-numeric, negative, and excessively large (>10MB) values
+
+**fileops.c - Unbounded sprintf() in path construction (Issue #17)**
+- Replaced all 7 `sprintf(buf, "%s/%s", ...)` calls with `snprintf(buf, sizeof(buf), ...)`
+- Covers move_dir, move_file, copy_dir, copy_file, delete_dir functions
+
+**dirmaster.c - Unbounded strcat() in symlink handling (Issue #18)**
+- Replace `strcat()` with `strncat()` using calculated remaining buffer space
+- Prevents overflow when symlink target + " -> " exceeds `NAME_MAX`
+
+**dbi_manager.c - Stack buffer overflow in module path (Issue #19)**
+- Replaced `sprintf()` with `snprintf()` for DBI module path construction
+
+**dirmaster.c - TOCTOU race in symlink handling (Issue #20)**
+- Reorder to `readlink()` first, then `stat()` on the result
+- Check `stat()` return value; default to file kind on failure
+- Handle `readlink()` failure gracefully
+
+**dirmaster.c - Unbounded sprintf() in date formatting (Issue #21)**
+- Added `str_size` parameter to `afc_dirmaster_internal_date2string()`
+- Replaced all `sprintf()`/`strcpy()` with `snprintf()`/`strncpy()`
+
+**inet_client.c - Weak TLS configuration (Issue #22)**
+- Enforce TLS 1.2 minimum via `SSL_CTX_set_min_proto_version()`
+- Set strong cipher list `HIGH:!aNULL:!MD5:!RC4:!3DES`
+
+**smtp.c - Insecure credential buffer handling (Issue #23)**
+- Use `explicit_bzero()` to zero auth_str, encoded, and command buffers before freeing
+- Applied to both `_afc_smtp_auth_plain()` and `_afc_smtp_auth_login()`
+
+**cgi_manager.c - Cookie header injection (Issue #24)**
+- Validate cookies_path, cookies_domain, cookies_expire for CRLF injection
+- Validate per-cookie key and value before Set-Cookie header interpolation
+
+**inet_server.c - Race condition in FD set modifications (Issue #25)**
+- Added `pthread_mutex_t fd_mutex` to `InetServer` struct
+- Lock/unlock around `FD_SET`, `FD_CLR`, and master-to-read_fds copy
+- Initialize mutex in constructor, destroy in destructor
+
+**hash.c - Race condition in hash table sorting (Issue #28)**
+- Sort immediately after insertion in `afc_hash_add()` instead of lazily in `afc_hash_find()`
+- Eliminates race where concurrent `find()` calls both trigger sort
+
+**string.c - Unsafe afc_string_max() on non-AFC strings (Issue #29)**
+- Added sanity check on max value (must be 1..1GB)
+- Returns 0 for invalid values, preventing arbitrary memory reads
+- Added documentation warning about AFC-string-only precondition
+
+---
+
 ## January 15, 2026
 
 ### Security and Correctness Fixes
