@@ -762,7 +762,16 @@ TRY ( int )
 	p2 = ( u_char ) atoi ( pc1 );
 	*pc2 = ',';
 
-	sprintf ( ip, "%d.%d.%d.%d", ( int ) ip1, ( int ) ip2, ( int ) ip3, ( int ) ip4 );
+	/* Ignore server-provided IP address to prevent SSRF attacks
+	   (RFC 2577). Always use the original control connection IP. */
+	{
+		struct sockaddr_in addr;
+		socklen_t addr_len = sizeof(addr);
+		if (getpeername(fc->inet->sockfd, (struct sockaddr *)&addr, &addr_len) == 0)
+			snprintf(ip, 32, "%s", inet_ntoa(addr.sin_addr));
+		else
+			snprintf(ip, 32, "%d.%d.%d.%d", (int)ip1, (int)ip2, (int)ip3, (int)ip4);
+	}
 	*port =  ( ( int ) p1 << 8 ) |  p2;
 
 	RETURN ( AFC_ERR_NO_ERROR );
