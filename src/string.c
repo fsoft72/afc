@@ -37,11 +37,18 @@
 
 #define STRING_MAX(str) (str ? ((unsigned long)(*((unsigned long *)(str - sizeof(unsigned long) * 2)) - 1)) : 0L)
 
-#ifdef MINGW
-static const char dir_sep = '\\';
-#else
-static const char dir_sep = '/';
-#endif
+/* _find_last_sep: find the last directory separator in a path.
+   Checks both '/' and '\\' so paths work correctly regardless of
+   compile-time vs runtime platform. */
+static char *_find_last_sep(const char *path)
+{
+	char *fwd = strrchr(path, '/');
+	char *bck = strrchr(path, '\\');
+
+	if (fwd == NULL) return bck;
+	if (bck == NULL) return fwd;
+	return (fwd > bck) ? fwd : bck;
+}
 
 // {{{ docs
 /*
@@ -1205,8 +1212,8 @@ char *afc_string_dirname(const char *path)
 	if (path == NULL)
 		return (NULL);
 
-	// Search for the last "/" in the file_name
-	x = strrchr(path, dir_sep);
+	// Search for the last directory separator in the file_name
+	x = _find_last_sep(path);
 
 	// if we don't find it, simply copy all the path
 	if (x == NULL)
@@ -1232,8 +1239,8 @@ char *afc_string_basename(const char *path)
 	if (path == NULL)
 		return (NULL);
 
-	// Search for the last "/" in the file_name
-	x = strrchr(path, dir_sep);
+	// Search for the last directory separator in the file_name
+	x = _find_last_sep(path);
 
 	// if we don't find it, simply copy all the path
 	if (x == NULL)
