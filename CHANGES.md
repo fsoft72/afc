@@ -2,6 +2,17 @@
 
 ## February 27, 2026
 
+### Test Suite: Core Module Tests
+
+**tests/test_base.c** (new)
+- Comprehensive tests for the Base module: afc_new/afc_delete lifecycle, magic number verification, default field values, afc_set_tag with LOG_LEVEL/DEBUG_LEVEL/EXIT_CRITICAL, afc_set_tags multi-tag, afc_clear, error code distinctness, and tag constant values
+
+**tests/test_string.c** (new)
+- Comprehensive tests for the String module (23 sections): new/delete lifecycle, copy with full/partial/clamped lengths, len/max, add/concatenation, clear, trim/trim_start/trim_end, upper/lower, left/right/mid extraction, comp comparison, instr search, pattern_match with wildcards, make sprintf-like formatting, dirname/basename path operations, starts_with/ends_with, replace/replace_all, pad_start/pad_end, slice with negative indices, index_of/last_index_of, char_at with negative indexing, repeat, dup, reset_len, edge cases (empty strings, NULL handling, boundary lengths, minimum/large allocations)
+
+**tests/test_mem_tracker.c** (new)
+- Comprehensive tests for the Memory Tracker module: afc_track_mallocs enable/idempotency, tracker initial state, afc_malloc/afc_free tracking with allocs/frees/alloc_bytes counters, multiple allocations with selective freeing, zeroed memory verification, show_mallocs/show_frees via afc_set_tag, realloc tracking, and string allocation tracking
+
 ### Test Suite: Data Structure Tests
 
 **tests/test_array.c** (new)
