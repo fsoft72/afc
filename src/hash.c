@@ -221,6 +221,11 @@ int afc_hash_add(Hash *hm, unsigned long int hash_value, void *data)
 
 	afc_array_add(hm->am, hd, AFC_ARRAY_ADD_TAIL);
 
+	/* Sort immediately after insertion to keep the array always sorted.
+	   This eliminates the race condition where two concurrent afc_hash_find()
+	   calls could both see is_sorted==FALSE and sort simultaneously. */
+	afc_array_sort(hm->am, afc_hash_internal_sort);
+
 	return (AFC_ERR_NO_ERROR);
 }
 // }}}
@@ -255,9 +260,6 @@ void *afc_hash_find(Hash *hm, unsigned long int hash_value)
 	// if ( afc_array_is_empty ( hm->am ) ) return ( NULL );
 	if (hm->am->num_items == 0)
 		return (NULL);
-
-	if (hm->am->is_sorted == FALSE)
-		afc_array_sort(hm->am, afc_hash_internal_sort);
 
 	// max = afc_array_len ( hm->am );
 	max = hm->am->num_items;
