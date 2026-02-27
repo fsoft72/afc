@@ -794,6 +794,9 @@ char * afc_http_client_get_response_header(HttpClient * hc, const char * name)
  * URL format: [protocol://]host[:port][/path]
  * Returns: AFC_ERR_NO_ERROR on success
  */
+/* Maximum URL length to prevent excessive allocations */
+#define AFC_HTTP_CLIENT_MAX_URL_LEN 8192
+
 static int _afc_http_client_parse_url(const char * url, char ** protocol, char ** host, int * port, char ** path)
 {
 	char * url_copy;
@@ -803,7 +806,12 @@ static int _afc_http_client_parse_url(const char * url, char ** protocol, char *
 
 	if (!url) return AFC_ERR_NULL_POINTER;
 
+	/* Validate URL length */
+	if (strlen(url) > AFC_HTTP_CLIENT_MAX_URL_LEN)
+		return AFC_LOG(AFC_LOG_ERROR, AFC_HTTP_CLIENT_ERR_PARSE_URL, "URL exceeds maximum length", NULL);
+
 	url_copy = afc_string_dup(url);
+	if (!url_copy) return AFC_ERR_NO_MEMORY;
 
 	*protocol = NULL;
 	*host = NULL;
@@ -834,8 +842,23 @@ static int _afc_http_client_parse_url(const char * url, char ** protocol, char *
 	colon = strchr(p, ':');
 	if (colon)
 	{
+		long parsed_port;
+		char *endptr;
+
 		*colon = '\0';
-		*port = atoi(colon + 1);
+		parsed_port = strtol(colon + 1, &endptr, 10);
+
+		/* Validate port: must be numeric and in valid range */
+		if (*endptr != '\0' || parsed_port <= 0 || parsed_port > 65535)
+		{
+			afc_string_delete(url_copy);
+			if (*protocol) afc_string_delete(*protocol);
+			if (*path) afc_string_delete(*path);
+			*protocol = NULL;
+			*path = NULL;
+			return AFC_LOG(AFC_LOG_ERROR, AFC_HTTP_CLIENT_ERR_PARSE_URL, "Invalid port number", NULL);
+		}
+		*port = (int)parsed_port;
 	}
 	else
 	{
@@ -847,6 +870,19 @@ static int _afc_http_client_parse_url(const char * url, char ** protocol, char *
 	}
 
 	*host = afc_string_dup(p);
+
+	/* Validate host is not empty */
+	if (!*host || afc_string_len(*host) == 0)
+	{
+		afc_string_delete(url_copy);
+		if (*protocol) afc_string_delete(*protocol);
+		if (*path) afc_string_delete(*path);
+		if (*host) afc_string_delete(*host);
+		*protocol = NULL;
+		*path = NULL;
+		*host = NULL;
+		return AFC_LOG(AFC_LOG_ERROR, AFC_HTTP_CLIENT_ERR_PARSE_URL, "Empty hostname", NULL);
+	}
 
 	// Default path
 	if (!*path)
