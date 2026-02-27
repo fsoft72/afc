@@ -944,7 +944,14 @@ static int afc_cgi_manager_internal_method_post(CGIManager *cgi)
 		if ((s = afc_cgi_manager_get_val(cgi, "CONTENT_LENGTH")) == NULL)
 			return (AFC_ERR_NO_ERROR);
 
-		content_length = atoi(s); /* convert the string length to integer */
+		/* Safely parse content length with validation */
+		{
+			char *endptr;
+			long cl = strtol(s, &endptr, 10);
+			if (*endptr != '\0' || cl <= 0 || cl > 10 * 1024 * 1024)
+				return (AFC_LOG(AFC_LOG_ERROR, AFC_CGI_MANAGER_ERR_POST_READ, "Invalid or excessive CONTENT_LENGTH", s));
+			content_length = (int)cl;
+		}
 
 		if ((data = afc_malloc(sizeof(char) * content_length + 1)) == NULL)
 			return (AFC_LOG_FAST(AFC_ERR_NO_MEMORY));
