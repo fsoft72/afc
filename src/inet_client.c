@@ -575,6 +575,17 @@ int afc_inet_client_enable_ssl(InetClient *ic)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_INIT, "SSL_set_fd() failed", NULL);
 	}
 
+	// Set a handshake timeout if none is configured, to prevent
+	// indefinite blocking on slow or malicious servers
+	{
+		struct timeval tv_hs;
+		int hs_timeout = ic->timeout > 0 ? ic->timeout : 30;
+		tv_hs.tv_sec = hs_timeout;
+		tv_hs.tv_usec = 0;
+		setsockopt(ic->sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv_hs, sizeof(tv_hs));
+		setsockopt(ic->sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&tv_hs, sizeof(tv_hs));
+	}
+
 	// Perform SSL handshake
 	if (SSL_connect(ic->ssl) != 1)
 	{
