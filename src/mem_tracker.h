@@ -25,6 +25,10 @@
 #include <string.h>
 #include <malloc.h>
 
+#ifndef MINGW
+#include <pthread.h>
+#endif
+
 #ifndef AFC_BASE_H
 #include "base.h"
 #endif
@@ -81,6 +85,10 @@ extern "C"
 		unsigned int allocs;
 		unsigned int frees;
 		unsigned int alloc_bytes;
+
+#ifndef MINGW
+		pthread_mutex_t mutex; /* Mutex for thread-safe access */
+#endif
 	};
 
 	typedef struct _memtrack MemTracker;

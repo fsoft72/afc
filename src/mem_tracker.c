@@ -41,6 +41,10 @@ MemTracker *afc_mem_tracker_new()
 	mt->frees = 0;
 	mt->alloc_bytes = 0;
 
+#ifndef MINGW
+	pthread_mutex_init(&mt->mutex, NULL);
+#endif
+
 	return mt;
 }
 
@@ -63,6 +67,9 @@ void _afc_mem_tracker_delete(MemTracker *mt)
 
 	free(mt->data);
 	free(mt->free);
+#ifndef MINGW
+	pthread_mutex_destroy(&mt->mutex);
+#endif
 	free(mt);
 }
 
@@ -75,6 +82,10 @@ void *afc_mem_tracker_malloc(MemTracker *mt, size_t size, const char *file, cons
 	if ((mem = malloc(size)) == NULL)
 		return NULL;
 
+#ifndef MINGW
+	pthread_mutex_lock(&mt->mutex);
+#endif
+
 	if ((__internal_afc_base->start_log_level >= AFC_LOG_NOTICE) && (mt->show_mallocs))
 		_afc_dprintf("NOTICE: MemTracker: alloc %p (%d)\n", mem, (int)size);
 
@@ -83,6 +94,9 @@ void *afc_mem_tracker_malloc(MemTracker *mt, size_t size, const char *file, cons
 	if (hd == NULL)
 	{
 		free(mem);
+#ifndef MINGW
+		pthread_mutex_unlock(&mt->mutex);
+#endif
 		return NULL;
 	}
 
@@ -93,14 +107,18 @@ void *afc_mem_tracker_malloc(MemTracker *mt, size_t size, const char *file, cons
 
 	hd->mem = mem;
 	hd->size = size;
-	hd->file = _file; // ( file ? strdup ( file ) : NULL );
-	hd->func = _func; // ( func ? strdup ( func ) : NULL );
+	hd->file = _file;
+	hd->func = _func;
 	hd->line = line;
 
 	mt->allocs++;
 	mt->alloc_bytes += size;
 
 	_memtrack_add(mt, hd);
+
+#ifndef MINGW
+	pthread_mutex_unlock(&mt->mutex);
+#endif
 
 	return mem;
 }
@@ -131,6 +149,10 @@ void _afc_mem_tracker_free(MemTracker *mt, void *mem, const char *file, const ch
 	if (mem == NULL)
 		return;
 
+#ifndef MINGW
+	pthread_mutex_lock(&mt->mutex);
+#endif
+
 	if ((__internal_afc_base->start_log_level >= AFC_LOG_NOTICE) && (mt->show_frees))
 		_afc_dprintf("NOTICE: MemTracker: free %p\n", mem);
 
@@ -147,6 +169,10 @@ void _afc_mem_tracker_free(MemTracker *mt, void *mem, const char *file, const ch
 	{
 		_afc_dprintf("%s::%s invalid memory pointer: %p at: %s::%s (%d)\n", __FILE__, __FUNCTION__, mem, file, func, line);
 	}
+
+#ifndef MINGW
+	pthread_mutex_unlock(&mt->mutex);
+#endif
 }
 // }}}
 
@@ -177,6 +203,10 @@ void _afc_mem_tracker_update_size(MemTracker *mt, void *mem, void *new_mem, size
 	if (mem == NULL)
 		return;
 
+#ifndef MINGW
+	pthread_mutex_lock(&mt->mutex);
+#endif
+
 	if ((pos = _memtrack_find(mt, mem)) != -1)
 	{
 		hd = mt->data[pos];
@@ -191,6 +221,10 @@ void _afc_mem_tracker_update_size(MemTracker *mt, void *mem, void *new_mem, size
 	{
 		_afc_dprintf("%s::%s invalid memory pointer: %p at: %s::%s (%d)\n", __FILE__, __FUNCTION__, mem, file, func, line);
 	}
+
+#ifndef MINGW
+	pthread_mutex_unlock(&mt->mutex);
+#endif
 }
 // }}}
 
