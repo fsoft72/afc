@@ -154,6 +154,30 @@
 - Reject empty hostnames; check `afc_string_dup()` return values
 - Clean up all allocated resources on error paths
 
+**mem_tracker.c/h - Thread safety for memory tracker (Issue #44)**
+- Add `pthread_mutex_t` to `MemTracker` struct (guarded by `#ifndef MINGW`)
+- Lock/unlock mutex around `afc_mem_tracker_malloc()`, `_afc_mem_tracker_free()`, and `_afc_mem_tracker_update_size()`
+- Initialize mutex in constructor, destroy in destructor
+
+**inet_server.c/h - Library code calling exit() (Issue #46)**
+- Replace `exit(1)` in `afc_inet_server_wait()` with `AFC_LOG()` error return
+- Replace `exit(1)` calls in `afc_inet_server_create()` with proper error returns and socket cleanup
+- Add `AFC_INET_SERVER_ERR_SELECT` error code
+
+**Multiple files - Missing const qualifiers on read-only parameters (Issue #47)**
+- Add `const char *` to read-only parameters in inet_client, inet_server, cgi_manager, fileops, and regexp APIs
+- Update both headers and implementations to match
+- Add `const` to `fileop_internal_copy` struct members
+
+**dynamic_class_master.c, ftp_client.c - Resource cleanup gaps (Issue #48)**
+- Fix `dlopen()` handle leak in `afc_dynamic_class_master_load()` if `afc_dynamic_class_master_add()` fails
+- Fix double-free in `afc_ftp_client_new()` where `inet_client` was freed explicitly then again via `afc_ftp_client_delete()`
+
+**string.c - Runtime path separator detection (Issue #49)**
+- Replace compile-time `dir_sep` constant with `_find_last_sep()` helper
+- Check both `/` and `\\` at runtime for cross-platform portability
+- Fixes `afc_string_dirname()` and `afc_string_basename()`
+
 ---
 
 ## January 15, 2026
