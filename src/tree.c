@@ -172,7 +172,13 @@ TreeNode *afc_tree_insert(Tree *tree, void *val)
 	if (tree->last == NULL)
 		return tree->first = tree->last = afc_tree_int_node_new(tree, val);
 	else
-		return afc_subtree_insert_sibling(tree->first, val);
+	{
+		/* Find the last root-level sibling to maintain insertion order */
+		TreeNode *last_root = tree->first;
+		while (last_root->r_sibling != NULL)
+			last_root = last_root->r_sibling;
+		return afc_subtree_insert_sibling(last_root, val);
+	}
 }
 
 TreeNode *afc_subtree_insert_sibling(TreeNode *brother, void *val)
@@ -265,6 +271,7 @@ int afc_tree_node_postorder_visit(TreeNode *parent, int (*visitor)(TreeNode *))
 int afc_tree_traverse(Tree *t, int mode, int (*visitor)(TreeNode *))
 {
 	TreeNode *curr_node;
+	int res;
 
 	if (t == NULL)
 		return (AFC_LOG_FAST(AFC_ERR_NULL_POINTER));
@@ -272,7 +279,11 @@ int afc_tree_traverse(Tree *t, int mode, int (*visitor)(TreeNode *))
 		return (AFC_LOG_FAST(AFC_ERR_INVALID_POINTER));
 
 	for (curr_node = t->first; curr_node != NULL; curr_node = curr_node->r_sibling)
-		afc_subtree_traverse(curr_node, mode, visitor);
+	{
+		res = afc_subtree_traverse(curr_node, mode, visitor);
+		if (res != AFC_ERR_NO_ERROR)
+			return res;
+	}
 
 	return AFC_ERR_NO_ERROR;
 }
@@ -309,6 +320,8 @@ int _afc_subtree_delete(TreeNode *subtree)
 	if (subtree == NULL)
 		return (AFC_LOG_FAST(AFC_ERR_INVALID_POINTER));
 
+	Tree *tree = subtree->tree;
+
 	if (subtree->parent)
 	{
 		if (subtree->parent->last_child == subtree)
@@ -316,6 +329,16 @@ int _afc_subtree_delete(TreeNode *subtree)
 		if (subtree->parent->child == subtree)
 			subtree->parent->child = subtree->r_sibling;
 	}
+	else
+	{
+		if (tree->first == subtree)
+			tree->first = subtree->r_sibling;
+	}
+
+	if (subtree->l_sibling)
+		subtree->l_sibling->r_sibling = subtree->r_sibling;
+	if (subtree->r_sibling)
+		subtree->r_sibling->l_sibling = subtree->l_sibling;
 
 	return afc_subtree_traverse(subtree, AFC_TREE_MODE_POSTORDER, afc_tree_int_node_delete_wrapper);
 }

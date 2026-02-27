@@ -266,6 +266,7 @@ void *afc_list_add(List *nm, void *s, unsigned long mode)
 	case AFC_LIST_ADD_HERE:
 		Insert(nm->lst, nn, nm->pos);
 		nm->pos = nm->pos->ln_Succ;
+		nm->npos++;
 		break;
 
 	case AFC_LIST_ADD_HEAD:

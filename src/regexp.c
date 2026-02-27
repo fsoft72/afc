@@ -249,7 +249,7 @@ int afc_regexp_match(RegExp *regexp, const char *str, const int startpos)
 	if ((regexp->str = afc_string_dup(str)) == NULL)
 		return (AFC_LOG_FAST(AFC_ERR_NO_MEMORY));
 
-	regexp->matches = pcre_exec(regexp->pattern, regexp->hints, str, strlen(str), startpos, regexp->options, regexp->ovector, AFC_REGEXP_MAX_OSIZE);
+	regexp->matches = pcre_exec(regexp->pattern, regexp->hints, str, strlen(str), startpos, 0, regexp->ovector, AFC_REGEXP_MAX_OSIZE);
 
 	if (regexp->matches <= 0)
 		return (AFC_REGEXP_ERR_NO_MATCH);
@@ -439,11 +439,12 @@ int afc_regexp_replace(RegExp *regexp, char *dest, const char *str, const char *
 
 		afc_string_copy(buf, dest, ALL);
 
+		regexp->replaces++;
+
 		if (replace_all == FALSE)
 			break;
 
 		start_pos = new_start_pos;
-		regexp->replaces++;
 	}
 
 	afc_string_delete(buf);

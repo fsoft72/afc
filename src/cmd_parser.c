@@ -973,7 +973,7 @@ static int afc_cmd_parser_internal_get_next_token(CommandParser *cmdparser, char
 		space = index(bra, ' ');
 		ket = index(bra, ')');
 
-		token_end = ((ket != NULL) && (ket < space)) ? ket : space;
+		token_end = (ket != NULL && (space == NULL || ket < space)) ? ket : space;
 
 		if (token_end != NULL)
 		{

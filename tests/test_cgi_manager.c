@@ -84,7 +84,7 @@ int main(void)
 
 	/* Setting a cookie should auto-enable cookie handling */
 	print_res("handle_cookies auto-enabled",
-		(void *)(long)1, (void *)(long)cgi->handle_cookies, 0);
+		(void *)(long)TRUE, (void *)(long)cgi->handle_cookies, 0);
 
 	/* Retrieve the cookie (keys are uppercased internally) */
 	char *val = afc_cgi_manager_get_cookie(cgi, "session_id");
@@ -215,7 +215,7 @@ int main(void)
 	afc_cgi_manager_set_tag(cgi,
 		AFC_CGI_MANAGER_TAG_HANDLE_COOKIES, (void *)(long)TRUE);
 	print_res("handle_cookies re-enabled",
-		(void *)(long)1, (void *)(long)cgi->handle_cookies, 0);
+		(void *)(long)TRUE, (void *)(long)cgi->handle_cookies, 0);
 
 	print_row();
 

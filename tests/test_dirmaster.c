@@ -48,9 +48,9 @@ int main(void)
 	print_res("dirmaster_new != NULL",
 		(void *)(long)1, (void *)(long)(dm != NULL), 0);
 
-	/* Should be empty right after creation */
+	/* Should be empty right after creation (afc_array_is_empty returns 1 for true, not TRUE) */
 	print_res("is_empty after new",
-		(void *)(long)TRUE, (void *)(long)afc_dirmaster_is_empty(dm), 0);
+		(void *)(long)1, (void *)(long)afc_dirmaster_is_empty(dm), 0);
 
 	print_res("len after new == 0",
 		(void *)(long)0, (void *)(long)afc_dirmaster_len(dm), 0);
@@ -222,7 +222,7 @@ int main(void)
 	print_res("len after clear == 0",
 		(void *)(long)0, (void *)(long)afc_dirmaster_len(dm), 0);
 	print_res("is_empty after clear",
-		(void *)(long)TRUE, (void *)(long)afc_dirmaster_is_empty(dm), 0);
+		(void *)(long)1, (void *)(long)afc_dirmaster_is_empty(dm), 0);
 
 	print_row();
 
