@@ -30,6 +30,7 @@
 @endnode
 */
 
+#include <limits.h>
 #include "string.h"
 
 #include <unistd.h>
@@ -1141,6 +1142,7 @@ char *afc_string_resize_copy(char **dest, const char *str)
 
 	if ((strlen(str) + afc_string_len(*dest)) > (max - 3))
 	{
+		if (max > UINT_MAX / 2) return NULL;
 		str_new = afc_string_new(max * 2);
 		afc_string_copy(str_new, *dest, ALL);
 
