@@ -63,9 +63,7 @@ FtpClient * afc_ftp_client_new ( void )
 	if ( ( fc->last_answer = afc_string_new ( 1024 ) ) == NULL )
         {
                 AFC_LOG_FAST_INFO ( AFC_ERR_NO_MEMORY, "last_answer" );
-		afc_inet_client_delete ( fc->inet );
                 afc_ftp_client_delete ( fc);
-		
                 return ( NULL );
         }
 

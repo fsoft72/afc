@@ -252,7 +252,12 @@ int afc_dynamic_class_master_load(DynamicClassMaster *dcm, const char *class_nam
 	// These functions can be omitted in the plugin declaration
 	info = dlsym(handler, "dynamic_class_get_info");
 
-	afc_dynamic_class_master_add(dcm, class_name, handler, new_inst, del_inst, info);
+	int res = afc_dynamic_class_master_add(dcm, class_name, handler, new_inst, del_inst, info);
+	if (res != AFC_ERR_NO_ERROR)
+	{
+		dlclose(handler);
+		return (res);
+	}
 
 	return (AFC_ERR_NO_ERROR);
 }
