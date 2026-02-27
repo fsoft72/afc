@@ -858,18 +858,21 @@ FileInfo *afc_dirmaster_add_item(DirMaster *dm, char *fullname, char *fname, str
 	{
 		if (S_ISLNK(descr->st_mode))
 		{
-			stat(fullname, &lnk);
-			if (S_ISDIR(lnk.st_mode))
-				info->kind = FINFO_KIND_LINK | FINFO_KIND_DIR;
-			else
-				info->kind = FINFO_KIND_LINK | FINFO_KIND_FILE;
-
+			/* Read the symlink target first, then stat the target.
+			   This reduces the TOCTOU window vs. doing stat() on the
+			   original path, as we stat() only what readlink() returned. */
 			lnklen = readlink(fullname, tmpbuf, NAME_MAX - 1);
 			if (lnklen >= 0)
 			{
 				size_t namelen, remaining;
 
 				tmpbuf[lnklen] = 0;
+
+				/* Determine link target kind using stat() result */
+				if (stat(fullname, &lnk) == 0 && S_ISDIR(lnk.st_mode))
+					info->kind = FINFO_KIND_LINK | FINFO_KIND_DIR;
+				else
+					info->kind = FINFO_KIND_LINK | FINFO_KIND_FILE;
 
 				namelen = strlen(info->name);
 				remaining = sizeof(info->name) - namelen - 1;
@@ -882,6 +885,11 @@ FileInfo *afc_dirmaster_add_item(DirMaster *dm, char *fullname, char *fname, str
 					if (remaining > 0)
 						strncat(info->name, tmpbuf, remaining);
 				}
+			}
+			else
+			{
+				/* readlink() failed - symlink may have been removed/replaced */
+				info->kind = FINFO_KIND_LINK | FINFO_KIND_FILE;
 			}
 		}
 		else
