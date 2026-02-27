@@ -205,7 +205,7 @@ DynamicClass *afc_dbi_manager_new_instance(DBIManager *dbi, const char *class_na
 			s = library_name;
 		else
 		{
-			sprintf(buf, "%s/%s", dbi->modules_path, library_name);
+			snprintf(buf, sizeof(buf), "%s/%s", dbi->modules_path, library_name);
 			s = buf;
 		}
 
