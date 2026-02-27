@@ -2,6 +2,23 @@
 
 ## February 27, 2026
 
+### Test Suite: Tree and List Data Structure Tests
+
+**tests/test_bin_tree.c** (new)
+- Comprehensive tests for the BinTree (Binary Tree) module: creation/deletion, custom int comparator via set_compare_func, insert/get with integer keys, is_empty, inorder/preorder/postorder traversal verification, del leaf/internal/root nodes, clear, non-existing key edge cases
+
+**tests/test_btree.c** (new)
+- Comprehensive tests for the BTree (B-Tree) module: creation/deletion, init with branching factor and lt/eq/create_key/write_node/read_key/read_node callbacks, add/find with integer entries, del existing/non-existing keys, clear, re-insert after clear
+
+**tests/test_avl_tree.c** (new)
+- Comprehensive tests for the AVLTree (AVL Tree) module: creation/deletion, insert with integer key/val pairs, find_node/find_node_min/find_node_max, get, non-existing key lookups, self-balancing height verification, clear, re-insert after clear
+
+**tests/test_circular_list.c** (new)
+- Comprehensive tests for the CircularList module: creation/deletion, init with max_elems, add items, next/prev navigation, circular wrapping verification, obj macro, del current item until empty, clear, max element limit enforcement
+
+**tests/test_tree.c** (new)
+- Comprehensive tests for the Tree (generic multi-way tree) module: creation/deletion, is_empty, insert root nodes, subtree_insert_child/subtree_insert_sibling, parent/child/sibling structure verification, preorder/postorder traversal, invalid mode handling, subtree_delete, clear, re-insert after clear
+
 ### Test Suite: Utility and Encoding Module Tests
 
 **tests/test_base64.c** (new)
