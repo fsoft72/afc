@@ -37,6 +37,23 @@ static int afc_pop3_internal_cmd(POP3 *p, const char *cmd, short multi);
 
 static int afc_pop3_internal_del_msg(Hash *hm, void *msg);
 
+/*
+ * _afc_pop3_check_crlf - Check if a string contains CR or LF characters.
+ *
+ * Returns 0 if clean, 1 if CRLF found.
+ * Prevents CRLF injection in POP3 protocol commands.
+ */
+static int _afc_pop3_check_crlf(const char *str)
+{
+	if (!str) return 0;
+	for (const char *p = str; *p; p++)
+	{
+		if (*p == '\r' || *p == '\n')
+			return 1;
+	}
+	return 0;
+}
+
 // {{{ afc_pop3_new ()
 /*
 @node afc_pop3_new
@@ -269,11 +286,18 @@ int afc_pop3_login(POP3 *p)
 
 	afc_dprintf("Sending user: %s\n", p->login);
 
+	if (_afc_pop3_check_crlf(p->login))
+		return AFC_LOG(AFC_LOG_ERROR, AFC_POP3_ERR_PROTOCOL, "CRLF injection in login", p->login);
+
 	afc_string_make(p->tmp, "USER %s", p->login);
 	if ((res = afc_pop3_internal_cmd(p, p->tmp, FALSE)) != AFC_ERR_NO_ERROR)
 		return (res);
 
 	afc_dprintf("Sending password: %s\n", p->passwd);
+
+	if (_afc_pop3_check_crlf(p->passwd))
+		return AFC_LOG(AFC_LOG_ERROR, AFC_POP3_ERR_PROTOCOL, "CRLF injection in password", NULL);
+
 	afc_string_make(p->tmp, "PASS %s", p->passwd);
 	if ((res = afc_pop3_internal_cmd(p, p->tmp, FALSE)) != AFC_ERR_NO_ERROR)
 		return (res);
