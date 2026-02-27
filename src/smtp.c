@@ -31,6 +31,23 @@
 
 static const char class_name[] = "SMTP";
 
+/*
+ * _afc_smtp_check_crlf - Check if a string contains CR or LF characters.
+ *
+ * Returns 0 if clean, 1 if CRLF found.
+ * Prevents CRLF injection in SMTP protocol commands.
+ */
+static int _afc_smtp_check_crlf(const char *str)
+{
+	if (!str) return 0;
+	for (const char *p = str; *p; p++)
+	{
+		if (*p == '\r' || *p == '\n')
+			return 1;
+	}
+	return 0;
+}
+
 // {{{ afc_smtp_new ()
 /*
 @node afc_smtp_new
@@ -685,7 +702,9 @@ int afc_smtp_send(SMTP *smtp, const char *message)
 	if (!smtp->to)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_NO_RECIPIENTS, "No recipients specified", NULL);
 
-	// MAIL FROM
+	// MAIL FROM - validate against CRLF injection
+	if (_afc_smtp_check_crlf(smtp->from))
+		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_PROTOCOL, "CRLF injection in sender address", smtp->from);
 	char *mail_from_cmd = afc_string_new(256);
 	afc_string_make(mail_from_cmd, "MAIL FROM:<%s>", smtp->from);
 	res = _afc_smtp_send_command(smtp, mail_from_cmd);
@@ -703,6 +722,14 @@ int afc_smtp_send(SMTP *smtp, const char *message)
 		// Trim whitespace
 		while (*recipient == ' ')
 			recipient++;
+
+		// Validate against CRLF injection
+		if (_afc_smtp_check_crlf(recipient))
+		{
+			afc_string_delete(rcpt_to_cmd);
+			afc_string_delete(to_list);
+			return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_PROTOCOL, "CRLF injection in recipient address", recipient);
+		}
 
 		afc_string_make(rcpt_to_cmd, "RCPT TO:<%s>", recipient);
 		if ((res = _afc_smtp_send_command(smtp, rcpt_to_cmd)) != 250)
@@ -763,6 +790,14 @@ int afc_smtp_send_simple(SMTP *smtp, const char *from, const char *to, const cha
 
 	if (!smtp)
 		return AFC_ERR_NULL_POINTER;
+
+	// Validate against CRLF injection in message headers
+	if (_afc_smtp_check_crlf(from))
+		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_PROTOCOL, "CRLF injection in sender address", NULL);
+	if (_afc_smtp_check_crlf(to))
+		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_PROTOCOL, "CRLF injection in recipient address", NULL);
+	if (_afc_smtp_check_crlf(subject))
+		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_PROTOCOL, "CRLF injection in subject", NULL);
 
 	// Set FROM, TO, SUBJECT
 	afc_smtp_set_tags(smtp,
