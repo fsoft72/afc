@@ -32,6 +32,13 @@
 #include "test_utils.h"
 #include "../src/hash.h"
 
+/** Returns the hash length as a long, avoiding sign-compare warning in afc_hash_len macro. */
+static long _hash_len(Hash *hm)
+{
+	if (!hm) return -1;
+	return (long)afc_array_len(hm->am);
+}
+
 /* Hash key constants for test clarity */
 #define HASH_KEY_ALPHA   100
 #define HASH_KEY_BETA    200
@@ -50,7 +57,7 @@ int main(void)
 	Hash *hm = afc_hash_new();
 	print_res("hash_new != NULL", (void *)(long)1, (void *)(long)(hm != NULL), 0);
 	print_res("is_empty after new", (void *)(long)1, (void *)(long)afc_hash_is_empty(hm), 0);
-	print_res("len after new", (void *)(long)0, (void *)(long)afc_hash_len(hm), 0);
+	print_res("len after new", (void *)(long)0, (void *)(long)_hash_len(hm), 0);
 
 	print_row();
 
@@ -67,7 +74,7 @@ int main(void)
 	res = afc_hash_add(hm, HASH_KEY_BETA, "beta");
 	print_res("add beta OK", (void *)(long)AFC_ERR_NO_ERROR, (void *)(long)res, 0);
 
-	print_res("len after 3 adds", (void *)(long)3, (void *)(long)afc_hash_len(hm), 0);
+	print_res("len after 3 adds", (void *)(long)3, (void *)(long)_hash_len(hm), 0);
 	print_res("is_empty false", (void *)(long)0, (void *)(long)afc_hash_is_empty(hm), 0);
 
 	print_row();
@@ -141,7 +148,7 @@ int main(void)
 	afc_hash_next(hm); /* now pointing at beta (key 200) */
 
 	void *next = afc_hash_del(hm);
-	print_res("len after del", (void *)(long)2, (void *)(long)afc_hash_len(hm), 0);
+	print_res("len after del", (void *)(long)2, (void *)(long)_hash_len(hm), 0);
 
 	/* After deleting beta, the next item should be gamma */
 	print_res("del returns gamma", "gamma", (char *)next, 1);
@@ -163,7 +170,7 @@ int main(void)
 	 * 8. afc_hash_clear()
 	 * ---------------------------------------------------------------- */
 	afc_hash_clear(hm);
-	print_res("len after clear", (void *)(long)0, (void *)(long)afc_hash_len(hm), 0);
+	print_res("len after clear", (void *)(long)0, (void *)(long)_hash_len(hm), 0);
 	print_res("is_empty after clear", (void *)(long)1, (void *)(long)afc_hash_is_empty(hm), 0);
 
 	/* first() on empty hash should return NULL */
@@ -176,7 +183,7 @@ int main(void)
 	 * 9. Edge case: add after clear, verify recovery
 	 * ---------------------------------------------------------------- */
 	afc_hash_add(hm, HASH_KEY_DELTA, "delta");
-	print_res("len after re-add", (void *)(long)1, (void *)(long)afc_hash_len(hm), 0);
+	print_res("len after re-add", (void *)(long)1, (void *)(long)_hash_len(hm), 0);
 
 	s = (char *)afc_hash_find(hm, HASH_KEY_DELTA);
 	print_res("find delta after re-add", "delta", s, 1);
@@ -202,7 +209,7 @@ int main(void)
 		/* Store the key value as the data pointer for simplicity */
 		afc_hash_add(hm, i, (void *)(long)i);
 	}
-	print_res("len after 10 adds", (void *)(long)10, (void *)(long)afc_hash_len(hm), 0);
+	print_res("len after 10 adds", (void *)(long)10, (void *)(long)_hash_len(hm), 0);
 
 	/* Verify every element is findable */
 	int all_found = 1;

@@ -14,3 +14,9 @@ src/test_http_client
 src/test_area/smtp/settings.txt
 src/test_area/*/test_[0-9][0-9]
 src/pcre/pcregrep
+
+# Pattern to ignore binaries in tests/
+tests/*
+!tests/
+!tests/*.c
+
