@@ -867,9 +867,21 @@ FileInfo *afc_dirmaster_add_item(DirMaster *dm, char *fullname, char *fname, str
 			lnklen = readlink(fullname, tmpbuf, NAME_MAX - 1);
 			if (lnklen >= 0)
 			{
+				size_t namelen, remaining;
+
 				tmpbuf[lnklen] = 0;
-				strcat(info->name, " -> ");
-				strcat(info->name, tmpbuf);
+
+				namelen = strlen(info->name);
+				remaining = sizeof(info->name) - namelen - 1;
+
+				if (remaining > 4)
+				{
+					strncat(info->name, " -> ", remaining);
+					namelen += 4;
+					remaining = sizeof(info->name) - namelen - 1;
+					if (remaining > 0)
+						strncat(info->name, tmpbuf, remaining);
+				}
 			}
 		}
 		else
