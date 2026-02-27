@@ -9,6 +9,23 @@ static int afc_ftp_client_internal_store_active ( FtpClient * fc, char * command
 static int afc_ftp_client_internal_store_passive ( FtpClient * fc, char * command, afc_ftp_client_store_callback callback, void * param, int block_size, BOOL lines );
 
 /*
+ * _afc_ftp_client_check_crlf - Check if a string contains CR or LF characters.
+ *
+ * Returns 0 if clean, 1 if CRLF found.
+ * Prevents CRLF injection in FTP protocol commands.
+ */
+static int _afc_ftp_client_check_crlf(const char *str)
+{
+	if (!str) return 0;
+	for (const char *p = str; *p; p++)
+	{
+		if (*p == '\r' || *p == '\n')
+			return 1;
+	}
+	return 0;
+}
+
+/*
 @node afc_ftp_client_new
 
            NAME: afc_ftp_client_new () - Initializes a new FtpClient instance.
@@ -173,7 +190,9 @@ TRY ( int )
 	cmd = afc_string_new ( 1024 );
 	answer = afc_string_new ( 1024 );
 
-	afc_dprintf ( "%s: changing remote directory to %s\n", __FUNCTION__, pathname ); 
+	afc_dprintf ( "%s: changing remote directory to %s\n", __FUNCTION__, pathname );
+
+	if ( _afc_ftp_client_check_crlf ( pathname ) ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_CWD, "CRLF injection in pathname", pathname, AFC_FTP_CLIENT_ERR_CWD );
 
 	afc_string_make ( cmd, "CWD %s\r\n", pathname );
 
@@ -213,7 +232,9 @@ TRY ( int )
 	cmd = afc_string_new ( 1024 );
 	answer = afc_string_new ( 1024 );
 
-	afc_dprintf ( "%s: deleting file %s\n", __FUNCTION__, filename ); 
+	afc_dprintf ( "%s: deleting file %s\n", __FUNCTION__, filename );
+
+	if ( _afc_ftp_client_check_crlf ( filename ) ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_DELE, "CRLF injection in filename", filename, AFC_FTP_CLIENT_ERR_DELE );
 
 	afc_string_make ( cmd, "DELE %s\r\n", filename );
 
@@ -253,7 +274,9 @@ TRY ( int )
 	cmd = afc_string_new ( 1024 );
 	answer = afc_string_new ( 1024 );
 
-	afc_dprintf ( "%s: Creating directory %s\n", __FUNCTION__, pathname ); 
+	afc_dprintf ( "%s: Creating directory %s\n", __FUNCTION__, pathname );
+
+	if ( _afc_ftp_client_check_crlf ( pathname ) ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_MKD, "CRLF injection in pathname", pathname, AFC_FTP_CLIENT_ERR_MKD );
 
 	afc_string_make ( cmd, "MKD %s\r\n", pathname );
 
@@ -293,7 +316,9 @@ TRY ( int )
 	cmd = afc_string_new ( 1024 );
 	answer = afc_string_new ( 1024 );
 
-	afc_dprintf ( "%s: Deleting directory %s\n", __FUNCTION__, pathname ); 
+	afc_dprintf ( "%s: Deleting directory %s\n", __FUNCTION__, pathname );
+
+	if ( _afc_ftp_client_check_crlf ( pathname ) ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_RMD, "CRLF injection in pathname", pathname, AFC_FTP_CLIENT_ERR_RMD );
 
 	afc_string_make ( cmd, "RMD %s\r\n", pathname );
 
@@ -418,7 +443,9 @@ TRY ( int )
 	cmd = afc_string_new ( 1024 );
 	answer = afc_string_new ( 1024 );
 
-	afc_dprintf ( "%s: Changing name for %s\n", __FUNCTION__, oldname ); 
+	afc_dprintf ( "%s: Changing name for %s\n", __FUNCTION__, oldname );
+
+	if ( _afc_ftp_client_check_crlf ( oldname ) ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_RENAME, "CRLF injection in filename", oldname, AFC_FTP_CLIENT_ERR_RENAME );
 
 	afc_string_make ( cmd, "RNFR %s\r\n", oldname );
 
@@ -434,7 +461,9 @@ TRY ( int )
 		RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_RENAME, "Cannot rename file", oldname, AFC_FTP_CLIENT_ERR_RENAME );
 	}
 		
-	afc_dprintf ( "%s: Renaming file to %s\n", __FUNCTION__, newname ); 
+	afc_dprintf ( "%s: Renaming file to %s\n", __FUNCTION__, newname );
+
+	if ( _afc_ftp_client_check_crlf ( newname ) ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_RENAME, "CRLF injection in filename", newname, AFC_FTP_CLIENT_ERR_RENAME );
 
 	afc_string_make ( cmd, "RNTO %s\r\n", newname );
 
@@ -475,7 +504,9 @@ TRY ( int )
 	cmd = afc_string_new ( 1024 );
 	answer = afc_string_new ( 1024 );
 
-	afc_dprintf ( "%s: Sending command %s\n", __FUNCTION__, command ); 
+	afc_dprintf ( "%s: Sending command %s\n", __FUNCTION__, command );
+
+	if ( _afc_ftp_client_check_crlf ( command ) ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_SENDCMD, "CRLF injection in command", command, AFC_FTP_CLIENT_ERR_SENDCMD );
 
 	afc_string_make ( cmd, "%s\r\n", command );
 
@@ -512,7 +543,9 @@ TRY ( int )
 	cmd = afc_string_new ( 1024 );
 	answer = afc_string_new ( 1024 );
 
-	afc_dprintf ( "%s: Getting file size for %s\n", __FUNCTION__, filename ); 
+	afc_dprintf ( "%s: Getting file size for %s\n", __FUNCTION__, filename );
+
+	if ( _afc_ftp_client_check_crlf ( filename ) ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_SIZE, "CRLF injection in filename", filename, AFC_FTP_CLIENT_ERR_SIZE );
 
 	afc_string_make ( cmd, "SIZE %s\r\n", filename );
 
@@ -593,7 +626,9 @@ TRY ( int )
 	cmd = afc_string_new ( 1024 );
 	answer = afc_string_new ( 1024 );
 
-	afc_dprintf ( "%s: sending username %s\n", __FUNCTION__, username ); 
+	afc_dprintf ( "%s: sending username %s\n", __FUNCTION__, username );
+
+	if ( _afc_ftp_client_check_crlf ( username ) ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_LOGIN, "CRLF injection in username", username, AFC_FTP_CLIENT_ERR_LOGIN );
 
 	afc_string_make ( cmd, "USER %s\r\n", username );
 
@@ -612,7 +647,9 @@ TRY ( int )
 	if ( code == 230 ) RETURN ( AFC_ERR_NO_ERROR );
 
 	afc_dprintf ( "%s: sending password %s\n", __FUNCTION__, password );
-	
+
+	if ( _afc_ftp_client_check_crlf ( password ) ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_LOGIN, "CRLF injection in password", "", AFC_FTP_CLIENT_ERR_LOGIN );
+
 	afc_string_make ( cmd, "PASS %s\r\n", password );
 
 	res = afc_inet_client_send ( fc->inet, cmd, afc_string_len ( cmd ) );
