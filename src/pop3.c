@@ -475,9 +475,13 @@ static int afc_pop3_internal_get_line(POP3 *p)
 }
 // }}}
 // {{{ afc_pop3_internal_get_multi_line ( p )
+/* Maximum total bytes for multi-line POP3 responses (10 MB) */
+#define AFC_POP3_MAX_MULTILINE_SIZE (10 * 1024 * 1024)
+
 static int afc_pop3_internal_get_multi_line(POP3 *p)
 {
 	int res;
+	size_t total_size = 0;
 
 	if ((res = afc_pop3_internal_get_response(p)) != AFC_ERR_NO_ERROR)
 		return (res);
@@ -489,6 +493,10 @@ static int afc_pop3_internal_get_multi_line(POP3 *p)
 	while (afc_string_comp(p->buf, ".", 1) != 0)
 	{
 		afc_dprintf("LINE: '%s'\n", p->buf);
+
+		total_size += afc_string_len(p->buf);
+		if (total_size > AFC_POP3_MAX_MULTILINE_SIZE)
+			return (AFC_LOG(AFC_LOG_ERROR, AFC_POP3_ERR_PROTOCOL, "Multi-line response exceeded size limit", NULL));
 
 		afc_string_list_add(p->sn, p->buf, AFC_STRING_LIST_ADD_TAIL);
 		afc_pop3_internal_get_line(p);
