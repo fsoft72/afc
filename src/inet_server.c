@@ -174,16 +174,14 @@ int afc_inet_server_create(InetServer *is, int port)
 
 	// Create the listener
 	if ((is->listener = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-	{
-		perror("socket");
-		exit(1);
-	}
+		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_SERVER_ERR_SOCKET, "Cannot create socket", "socket() failed"));
 
 	// I can reuse the addr
 	if (setsockopt(is->listener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1)
 	{
-		perror("setsockopt");
-		exit(1);
+		close(is->listener);
+		is->listener = -1;
+		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_SERVER_ERR_SOCKET, "Cannot set socket options", "setsockopt() failed"));
 	}
 
 	// bind
@@ -194,15 +192,17 @@ int afc_inet_server_create(InetServer *is, int port)
 
 	if (bind(is->listener, (struct sockaddr *)&is->myaddr, sizeof(is->myaddr)) == -1)
 	{
-		perror("bind");
-		exit(1);
+		close(is->listener);
+		is->listener = -1;
+		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_SERVER_ERR_SOCKET, "Cannot bind socket", "bind() failed"));
 	}
 
 	// listen (prepare for connection)
 	if (listen(is->listener, 10) == -1)
 	{
-		perror("listen");
-		exit(1);
+		close(is->listener);
+		is->listener = -1;
+		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_SERVER_ERR_SOCKET, "Cannot listen on socket", "listen() failed"));
 	}
 
 	// Aggiungo listener al master set
@@ -242,10 +242,7 @@ int afc_inet_server_wait(InetServer *is)
 	is->active = 0;
 
 	if (select(is->fdmax + 1, &is->read_fds, NULL, NULL, NULL) == -1)
-	{
-		perror("select");
-		exit(1);
-	}
+		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_SERVER_ERR_SELECT, "select() failed", NULL));
 
 	return (AFC_ERR_NO_ERROR);
 }
