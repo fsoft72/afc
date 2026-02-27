@@ -110,8 +110,8 @@ extern "C"
 	int afc_regexp_set_options(RegExp *regexp, const int options);
 
 	int afc_regexp_set_buffer(RegExp *, int);
-	int afc_regexp_replace(RegExp *, char *, char *, char *, char *, short);
-	int afc_regexp_compute_replace_size(RegExp *regexp, char *str, char *str_re, char *replace, short replace_all);
+	int afc_regexp_replace(RegExp *, char *, const char *, const char *, const char *, short);
+	int afc_regexp_compute_replace_size(RegExp *regexp, const char *str, const char *str_re, const char *replace, short replace_all);
 	int afc_regexp_get_sub_string(RegExp *regexp, char *dest, int pos);
 	int afc_regexp_get_pos(RegExp *regexp, int pos, struct afc_regexp_pos *retval);
 #ifdef __cplusplus

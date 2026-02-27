@@ -92,8 +92,8 @@ extern "C"
 
 	struct fileop_internal_copy
 	{
-		char *source; // Source File (including path) to copy
-		char *dest;	  // Dest File name (including path) where to copy
+		const char *source; // Source File (including path) to copy
+		const char *dest;	  // Dest File name (including path) where to copy
 		char *buffer; // Copy Buffer
 		int bufsize;  // Size of the Copy Buffer ( in bytes )
 	};
@@ -160,20 +160,20 @@ extern "C"
 #ifndef MINGW
 	int afc_fileops_set_tags(FileOperations *fo, int first_tag, ...);
 	int afc_fileops_set_tag(FileOperations *, int, void *);
-	int afc_fileops_exists_full(FileOperations *, char *, char *);
-	int afc_fileops_chmod(FileOperations *, char *, int);
-	int afc_fileops_chown(FileOperations *, char *, int, int);
-	int afc_fileops_utime(FileOperations *, char *, struct utimbuf *);
+	int afc_fileops_exists_full(FileOperations *, const char *, const char *);
+	int afc_fileops_chmod(FileOperations *, const char *, int);
+	int afc_fileops_chown(FileOperations *, const char *, int, int);
+	int afc_fileops_utime(FileOperations *, const char *, struct utimbuf *);
 #endif // MINGW
 
-	int afc_fileops_exists(FileOperations *, char *);
-	int afc_fileops_del(FileOperations *, char *);
+	int afc_fileops_exists(FileOperations *, const char *);
+	int afc_fileops_del(FileOperations *, const char *);
 
 #ifndef MINGW
-	int afc_fileops_mkdir(FileOperations *, char *);
-	int afc_fileops_copy(FileOperations *, char *, char *);
-	int afc_fileops_move(FileOperations *, char *, char *);
-	int afc_fileops_link(FileOperations *, char *, char *);
+	int afc_fileops_mkdir(FileOperations *, const char *);
+	int afc_fileops_copy(FileOperations *, const char *, const char *);
+	int afc_fileops_move(FileOperations *, const char *, const char *);
+	int afc_fileops_link(FileOperations *, const char *, const char *);
 #endif // MINGW
 
 #ifdef __cplusplus

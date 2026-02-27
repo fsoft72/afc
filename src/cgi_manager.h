@@ -121,14 +121,14 @@ extern "C"
 	int afc_cgi_manager_clear(CGIManager *);
 
 	int afc_cgi_manager_get_data(CGIManager *);
-	char *afc_cgi_manager_get_val(CGIManager *, char *);
+	char *afc_cgi_manager_get_val(CGIManager *, const char *);
 	int afc_cgi_manager_write_header(CGIManager *);
-	int afc_cgi_manager_set_content_type(CGIManager *, char *);
-	int afc_cgi_manager_set_cookie(CGIManager *, char *, char *);
-	char *afc_cgi_manager_get_cookie(CGIManager *, char *);
-	int afc_cgi_manager_set_cookie_domain(CGIManager *, char *);
+	int afc_cgi_manager_set_content_type(CGIManager *, const char *);
+	int afc_cgi_manager_set_cookie(CGIManager *, const char *, const char *);
+	char *afc_cgi_manager_get_cookie(CGIManager *, const char *);
+	int afc_cgi_manager_set_cookie_domain(CGIManager *, const char *);
 	int afc_cgi_manager_set_cookie_expire(CGIManager *, int);
-	int afc_cgi_manager_set_cookie_path(CGIManager *, char *);
+	int afc_cgi_manager_set_cookie_path(CGIManager *, const char *);
 	int afc_cgi_manager_set_tag(CGIManager *, int, void *);
 
 	int afc_cgi_manager_debug_dump(CGIManager *cgi);

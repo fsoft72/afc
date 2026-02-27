@@ -191,7 +191,7 @@ int afc_inet_client_clear(InetClient *ic)
 			 - afc_inet_client_get()
 @endnode
 */
-int afc_inet_client_open(InetClient *ic, char *url, int port)
+int afc_inet_client_open(InetClient *ic, const char *url, int port)
 {
 	struct hostent *h;
 	struct timeval tv;
@@ -291,7 +291,7 @@ int afc_inet_client_close(InetClient *ic)
 
 @endnode
 */
-struct hostent *afc_inet_client_resolve(InetClient *ic, char *url)
+struct hostent *afc_inet_client_resolve(InetClient *ic, const char *url)
 {
 	struct hostent *h;
 

@@ -333,7 +333,7 @@ int afc_fileops_set_tag(FileOperations *fo, int attr, void *val)
 	SEE ALSO: - afc_fileops_exists()
 @endnode
 */
-int afc_fileops_exists_full(FileOperations *fo, char *dir, char *fname)
+int afc_fileops_exists_full(FileOperations *fo, const char *dir, const char *fname)
 {
 	int res;
 	char *path;
@@ -383,10 +383,10 @@ NOT IN:	Win32
 		 - afc_fileops_set_tags()
 @endnode
 */
-int afc_fileops_chown(FileOperations *fo, char *fname, int uid, int gid)
+int afc_fileops_chown(FileOperations *fo, const char *fname, int uid, int gid)
 {
 	if (fo->update_funct)
-		fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, fname, fo->update_info);
+		fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, (void *)fname, fo->update_info);
 
 	if ((chown(fname, uid, gid)) == -1)
 	{
@@ -432,7 +432,7 @@ NOT IN: Win32
 		 - afc_fileops_mkdir()
 @endnode
 */
-int afc_fileops_move(FileOperations *fo, char *source, char *dest)
+int afc_fileops_move(FileOperations *fo, const char *source, const char *dest)
 {
 	int res;
 
@@ -440,13 +440,13 @@ int afc_fileops_move(FileOperations *fo, char *source, char *dest)
 
 	if (errno == EXDEV)
 	{
-		afc_fileops_internal_physical_move(fo, source, dest);
+		afc_fileops_internal_physical_move(fo, (char *)source, (char *)dest);
 	}
 	else
 	{
 
 		if (fo->update_funct)
-			fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, source, fo->update_info);
+			fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, (void *)source, fo->update_info);
 
 		if (res != 0)
 		{
@@ -490,7 +490,7 @@ NOT IN: Win32
 		 - afc_fileops_mkdir()
 @endnode
 */
-int afc_fileops_copy(FileOperations *fo, char *source, char *dest)
+int afc_fileops_copy(FileOperations *fo, const char *source, const char *dest)
 {
 	struct stat st;
 	int err;
@@ -513,7 +513,7 @@ int afc_fileops_copy(FileOperations *fo, char *source, char *dest)
 		if ((err = afc_fileops_mkdir(fo, fo->foc->dest)) != AFC_ERR_NO_ERROR)
 			return (err);
 
-		if ((err = afc_fileops_internal_scan_dir(fo, fo->foc->source, afc_fileops_internal_copy_new_file, afc_fileops_internal_copy_new_dir, NULL, fo->foc->dest)) != AFC_ERR_NO_ERROR)
+		if ((err = afc_fileops_internal_scan_dir(fo, (char *)fo->foc->source, afc_fileops_internal_copy_new_file, afc_fileops_internal_copy_new_dir, NULL, (void *)fo->foc->dest)) != AFC_ERR_NO_ERROR)
 			return (err);
 	}
 	else
@@ -550,7 +550,7 @@ NOT IN: Win32
 		 - afc_fileops_mkdir()
 @endnode
 */
-int afc_fileops_link(FileOperations *fo, char *src, char *dest)
+int afc_fileops_link(FileOperations *fo, const char *src, const char *dest)
 {
 	if (symlink(src, dest) == -1)
 	{
@@ -584,12 +584,12 @@ int afc_fileops_link(FileOperations *fo, char *src, char *dest)
 			 SEE ALSO: - afc_fileops_exists_full()
 @endnode
 */
-int afc_fileops_exists(FileOperations *fo, char *fname)
+int afc_fileops_exists(FileOperations *fo, const char *fname)
 {
 	struct stat f;
 
 	if (fo->update_funct)
-		fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, fname, fo->update_info);
+		fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, (void *)fname, fo->update_info);
 
 	if ((stat(fname, &f)) != 0)
 	{
@@ -631,10 +631,10 @@ int afc_fileops_exists(FileOperations *fo, char *fname)
 		 - afc_fileops_set_tags()
 @endnode
 */
-int afc_fileops_chmod(FileOperations *fo, char *fname, int mode)
+int afc_fileops_chmod(FileOperations *fo, const char *fname, int mode)
 {
 	if (fo->update_funct)
-		fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, fname, fo->update_info);
+		fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, (void *)fname, fo->update_info);
 
 	if ((chmod(fname, mode)) == -1)
 	{
@@ -676,10 +676,10 @@ int afc_fileops_chmod(FileOperations *fo, char *fname, int mode)
 		 - afc_fileops_set_tags()
 @endnode
 */
-int afc_fileops_utime(FileOperations *fo, char *fname, struct utimbuf *times)
+int afc_fileops_utime(FileOperations *fo, const char *fname, struct utimbuf *times)
 {
 	if (fo->update_funct)
-		fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, fname, fo->update_info);
+		fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, (void *)fname, fo->update_info);
 
 	if (utime(fname, times) == -1)
 	{
@@ -719,7 +719,7 @@ int afc_fileops_utime(FileOperations *fo, char *fname, struct utimbuf *times)
 		 - afc_fileops_move()
 @endnode
 */
-int afc_fileops_del(FileOperations *fo, char *fname)
+int afc_fileops_del(FileOperations *fo, const char *fname)
 {
 	struct stat st;
 	int err;
@@ -736,11 +736,11 @@ int afc_fileops_del(FileOperations *fo, char *fname)
 	}
 
 	if (fo->update_funct)
-		fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, fname, fo->update_info);
+		fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, (void *)fname, fo->update_info);
 
 	if (S_ISDIR(st.st_mode))
 	{
-		if ((err = afc_fileops_internal_scan_dir(fo, fname, afc_fileops_internal_del_file, afc_fileops_internal_del_dir, NULL, fname)) == AFC_ERR_NO_ERROR)
+		if ((err = afc_fileops_internal_scan_dir(fo, (char *)fname, afc_fileops_internal_del_file, afc_fileops_internal_del_dir, NULL, (void *)fname)) == AFC_ERR_NO_ERROR)
 		{
 			if (rmdir(fname) == -1)
 			{
@@ -793,10 +793,10 @@ int afc_fileops_del(FileOperations *fo, char *fname)
 		 - afc_fileops_move()
 @endnode
 */
-int afc_fileops_mkdir(FileOperations *fo, char *name)
+int afc_fileops_mkdir(FileOperations *fo, const char *name)
 {
 	if (fo->update_funct)
-		fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, name, fo->update_info);
+		fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, (void *)name, fo->update_info);
 
 #ifdef MINGW
 	if (mkdir(name) != 0)
@@ -1095,7 +1095,7 @@ static int afc_fileops_copy_internal_copy(FileOperations *fo)
 	fstat(src, &st);
 
 	if (fo->update_funct)
-		quit = fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, fo->foc->source, fo->update_info);
+		quit = fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, (void *)fo->foc->source, fo->update_info);
 	if (fo->update_funct)
 		quit = fo->update_funct(AFC_FILEOPS_UPDATE_MODE_SIZE, (void *)st.st_size, fo->update_info);
 

@@ -290,7 +290,7 @@ int afc_cgi_manager_get_data(CGIManager *cgi)
 		 SEE ALSO: - afc_cgi_manager_get_cookie()
 @endnode
 */
-char *afc_cgi_manager_get_val(CGIManager *cgi, char *name)
+char *afc_cgi_manager_get_val(CGIManager *cgi, const char *name)
 {
 	char *str = afc_string_dup(name);
 	char *s;
@@ -377,7 +377,7 @@ int afc_cgi_manager_write_header(CGIManager *cgi)
 		 - afc_cgi_manager_write_header()
 @endnode
 */
-int afc_cgi_manager_set_content_type(CGIManager *cgi, char *type)
+int afc_cgi_manager_set_content_type(CGIManager *cgi, const char *type)
 {
 	afc_string_copy(cgi->content_type, type, ALL);
 
@@ -410,7 +410,7 @@ int afc_cgi_manager_set_content_type(CGIManager *cgi, char *type)
 
 @endnode
 */
-int afc_cgi_manager_set_cookie(CGIManager *cgi, char *key, char *value)
+int afc_cgi_manager_set_cookie(CGIManager *cgi, const char *key, const char *value)
 {
 	TRY(int)
 
@@ -459,7 +459,7 @@ int afc_cgi_manager_set_cookie(CGIManager *cgi, char *key, char *value)
 
 @endnode
 */
-char *afc_cgi_manager_get_cookie(CGIManager *cgi, char *key)
+char *afc_cgi_manager_get_cookie(CGIManager *cgi, const char *key)
 {
 	char *k = afc_string_dup(key);
 	char *s;
@@ -500,7 +500,7 @@ char *afc_cgi_manager_get_cookie(CGIManager *cgi, char *key)
 
 @endnode
 */
-int afc_cgi_manager_set_cookie_domain(CGIManager *cgi, char *dom)
+int afc_cgi_manager_set_cookie_domain(CGIManager *cgi, const char *dom)
 {
 	afc_string_copy(cgi->cookies_domain, dom, ALL);
 
@@ -529,7 +529,7 @@ int afc_cgi_manager_set_cookie_domain(CGIManager *cgi, char *dom)
 
 @endnode
 */
-int afc_cgi_manager_set_cookie_path(CGIManager *cgi, char *path)
+int afc_cgi_manager_set_cookie_path(CGIManager *cgi, const char *path)
 {
 	afc_string_copy(cgi->cookies_path, path, ALL);
 

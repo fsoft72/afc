@@ -398,7 +398,7 @@ int afc_regexp_set_buffer(RegExp *regexp, int size)
 			 SEE ALSO: - afc_regexp_compute_replace_size()
 @endnode
 */
-int afc_regexp_replace(RegExp *regexp, char *dest, char *str, char *str_re, char *replace, short replace_all)
+int afc_regexp_replace(RegExp *regexp, char *dest, const char *str, const char *str_re, const char *replace, short replace_all)
 {
 	int err;
 	struct afc_regexp_pos coords;
@@ -477,7 +477,7 @@ int afc_regexp_replace(RegExp *regexp, char *dest, char *str, char *str_re, char
 	SEE ALSO: - afc_regexp_replace()
 @endnode
 */
-int afc_regexp_compute_replace_size(RegExp *regexp, char *str, char *str_re, char *replace, short replace_all)
+int afc_regexp_compute_replace_size(RegExp *regexp, const char *str, const char *str_re, const char *replace, short replace_all)
 {
 	int err;
 	struct afc_regexp_pos coords;

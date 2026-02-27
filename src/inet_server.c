@@ -316,7 +316,7 @@ int afc_inet_server_process(InetServer *is)
 }
 // }}}
 // {{{ afc_inet_server_send ( is, data, str ) ***********
-int afc_inet_server_send(InetServer *is, InetConnData *data, char *str)
+int afc_inet_server_send(InetServer *is, InetConnData *data, const char *str)
 {
 	if (FD_ISSET(data->fd, &is->master))
 	{

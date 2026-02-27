@@ -126,7 +126,7 @@ int afc_inet_server_create(InetServer *is, int port);
 int afc_inet_server_close(InetServer *is);
 int afc_inet_server_wait(InetServer *is);
 int afc_inet_server_process(InetServer *is);
-int afc_inet_server_send(InetServer *is, InetConnData *data, char *str);
+int afc_inet_server_send(InetServer *is, InetConnData *data, const char *str);
 int afc_inet_server_close_conn(InetServer *is, InetConnData *data);
 
 #endif
