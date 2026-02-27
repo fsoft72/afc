@@ -2,6 +2,26 @@
 
 ## February 27, 2026
 
+### Test Suite: Utility and Encoding Module Tests
+
+**tests/test_base64.c** (new)
+- Comprehensive tests for the Base64 module: creation, memory-to-memory encoding of known strings ("Hello, World!", "abc", "a", "ab"), decoding of known encoded data, round-trip encode/decode verification for text and binary data, padding edge cases (0, 1, 2 pad characters)
+
+**tests/test_md5.c** (new)
+- Comprehensive tests for the MD5 module: creation, MD5 of empty string, "abc", "hello world", single char "a", "message digest", full lowercase alphabet, clear and re-use, incremental updates (chunked feeding), single-byte-at-a-time feeding
+
+**tests/test_date_handler.c** (new)
+- Comprehensive tests for the DateHandler module: creation, set/verify known date, date validation (valid leap year 2024/2000, invalid non-leap Feb 29 for 2023/1900, invalid month 13, invalid Apr 31), day of week calculation, Julian date round-trip, add/subtract days across year/month boundaries, to_string in YYYYMMDD/DDMMYYYY/MMDDYYYY/TEXT modes, set_today verification
+
+**tests/test_readargs.c** (new)
+- Comprehensive tests for the ReadArgs module: creation, simple two-field parsing, get_by_name/get_by_pos access, keyword-ordered arguments, switch fields (/S) set and unset, keyword numeric fields (/K/N), quoted multi-word strings, multi-value fields (/M) with list iteration, clear and re-parse, NULL and empty input handling
+
+**tests/test_regexp.c** (new)
+- Comprehensive tests for the RegExp module: creation, compile valid patterns, match and no-match scenarios, capture group extraction via get_sub_string, replace single and global occurrences, replace with no match, case-insensitive matching via set_options (AFC_REGEXP_OPT_NOCASE), clear and re-use, match with start position offset, NULL and empty string matching
+
+**tests/test_fileops.c** (new)
+- Comprehensive tests for the FileOperations module: creation, exists for non-existent file returns NOT_FOUND, create and verify file existence, copy file and verify both exist with matching content, delete file and verify removal, mkdir and verify directory, mkdir on existing dir (non-blocking default), delete directory, move/rename file, recursive directory copy, delete non-existent file returns error; all paths under /tmp/afc_test_* for safety
+
 ### Test Suite: Core Module Tests
 
 **tests/test_base.c** (new)
