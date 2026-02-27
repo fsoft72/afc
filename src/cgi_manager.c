@@ -57,6 +57,7 @@ static const char class_name[] = "CGIManager";
 
 static int afc_cgi_manager_internal_dump(CGIManager *cgi, Dictionary *dict, char *message);
 static void _afc_cgi_print_html_encoded(const char *str);
+static int _afc_cgi_check_crlf(const char *str);
 static int afc_cgi_manager_internal_get_headers(CGIManager *cgi);
 static int afc_cgi_manager_internal_method_get(CGIManager *cgi);
 static int afc_cgi_manager_internal_method_post(CGIManager *cgi);
@@ -749,6 +750,13 @@ int afc_cgi_manager_get_header_str(CGIManager *cgi, char *dest)
 	if ((tmp = afc_string_new(8192)) == NULL)
 		return (AFC_LOG_FAST(AFC_ERR_NO_MEMORY));
 
+	// Validate content_type against HTTP response splitting
+	if (_afc_cgi_check_crlf(cgi->content_type))
+	{
+		afc_string_delete(tmp);
+		return (AFC_LOG(AFC_LOG_ERROR, AFC_CGI_MANAGER_ERR_NO_REQUEST, "CRLF injection in content_type", NULL));
+	}
+
 	afc_string_make(dest, "Content-type: %s;\r\n", cgi->content_type);
 
 	if (cgi->handle_cookies)
@@ -788,6 +796,23 @@ int afc_cgi_manager_get_header_str(CGIManager *cgi, char *dest)
 /*
 	INTERNAL FUNCTIONS
 */
+/*
+ * _afc_cgi_check_crlf - Check if a string contains CR or LF characters.
+ *
+ * Returns 0 if clean, 1 if CRLF found.
+ * Prevents HTTP response splitting via header injection.
+ */
+static int _afc_cgi_check_crlf(const char *str)
+{
+	if (!str) return 0;
+	for (const char *p = str; *p; p++)
+	{
+		if (*p == '\r' || *p == '\n')
+			return 1;
+	}
+	return 0;
+}
+
 /*
  * _afc_cgi_print_html_encoded - Write a string with HTML entity encoding.
  *
