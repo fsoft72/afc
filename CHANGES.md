@@ -2,6 +2,23 @@
 
 ## February 27, 2026
 
+### Test Suite: Advanced Module Tests
+
+**tests/test_cgi_manager.c** (new)
+- Comprehensive tests for the CGIManager module: creation/deletion, default content type verification, set_content_type, set/get cookies with case-insensitive keys, cookie overwrite, missing cookie returns NULL, cookie domain/path/expire configuration, header string generation with and without cookies, set_tag for cookie handling toggle, clear, and edge cases (NULL pointer, no-cookie header)
+
+**tests/test_dirmaster.c** (new)
+- Comprehensive tests for the DirMaster module: creation/deletion, default format values, set_tag for date/size/conversion formats, scan_dir on /tmp with non-empty verification, first/next traversal with count validation, indexed and last access, conversion field population (cmodify/cmode/cuser), clear and re-scan, set_tags multi-tag macro, non-existent directory scan error, and NULL pointer edge case
+
+**tests/test_dynamic_class.c** (new)
+- Comprehensive tests for the DynamicClass module: creation/deletion, add_method with find_method verification, execute simple/with-args/error-returning methods, multiple executions, non-existent method error, set_var/get_var for numeric/string/pointer kinds, variable overwrite, missing variable returns NULL, method reading variables via dc pointer with result/result_type, clear resets methods and variables, and reuse after clear
+
+**tests/test_cmd_parser.c** (new)
+- Comprehensive tests for the CommandParser module: creation/deletion, DynamicClassMaster plugin registration (box/item commands), parse simple script with argument verification, nested command parsing with open/close callback counting, NULL/empty script edge cases, unknown command error, unmatched bracket detection, clear and re-registration, and NULL pointer edge case
+
+**tests/test_threader.c** (new)
+- Comprehensive tests for the Threader module: creation/deletion, simple thread spawn with flag verification, counter thread with INCREMENT_COUNT increments, multiple threads sharing mutex-protected counter, slow thread verifying wait() blocks until completion, duplicate thread name rejection, NULL pointer clear error, and clear-and-reuse with new thread after clear
+
 ### Test Suite: Tree and List Data Structure Tests
 
 **tests/test_bin_tree.c** (new)
