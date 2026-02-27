@@ -679,12 +679,23 @@ ENDTRY
 }
 
 
+/* _afc_ftp_client_parse_pasv_octet - Parse and validate a PASV octet (0-255).
+ *
+ * Returns the parsed value, or -1 on invalid input.
+ */
+static int _afc_ftp_client_parse_pasv_octet(const char *str)
+{
+	int val = atoi(str);
+	if (val < 0 || val > 255) return -1;
+	return val;
+}
+
 //Internal Functions
 static int afc_ftp_client_internal_pasv ( FtpClient * fc, char * ip, int * port )
 {
 TRY ( int )
 	char * cmd, * answer;
-	u_char ip1, ip2, ip3, ip4, p1, p2;
+	int ip1, ip2, ip3, ip4, p1, p2;
 	char * pc1, * pc2;
 	int res, code;
 
@@ -715,52 +726,58 @@ TRY ( int )
 	if ( !pc2 ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_PASV, "Bad passive response", answer, AFC_FTP_CLIENT_ERR_PASV );
 		
 	*pc2 = 0;
-	ip1 = ( u_char ) atoi ( pc1 );
+	ip1 = _afc_ftp_client_parse_pasv_octet ( pc1 );
 	*pc2 = ',';
+	if ( ip1 < 0 ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_PASV, "Invalid PASV octet", answer, AFC_FTP_CLIENT_ERR_PASV );
 
 	pc1 = pc2 + 1;
 
 	pc2 = strchr ( pc1, ',' );
 	if ( !pc2 ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_PASV, "Bad passive response", answer, AFC_FTP_CLIENT_ERR_PASV );
-		
+
 	*pc2 = 0;
-	ip2 = ( u_char ) atoi ( pc1 );
+	ip2 = _afc_ftp_client_parse_pasv_octet ( pc1 );
 	*pc2 = ',';
+	if ( ip2 < 0 ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_PASV, "Invalid PASV octet", answer, AFC_FTP_CLIENT_ERR_PASV );
 
 	pc1 = pc2 + 1;
 
 	pc2 = strchr ( pc1, ',' );
 	if ( !pc2 ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_PASV, "Bad passive response", answer, AFC_FTP_CLIENT_ERR_PASV );
-		
+
 	*pc2 = 0;
-	ip3 = ( u_char ) atoi ( pc1 );
+	ip3 = _afc_ftp_client_parse_pasv_octet ( pc1 );
 	*pc2 = ',';
+	if ( ip3 < 0 ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_PASV, "Invalid PASV octet", answer, AFC_FTP_CLIENT_ERR_PASV );
 
 	pc1 = pc2 + 1;
 	pc2 = strchr ( pc1, ',' );
 	if ( !pc2 ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_PASV, "Bad passive response", answer, AFC_FTP_CLIENT_ERR_PASV );
-		
+
 	*pc2 = 0;
-	ip4 = ( u_char ) atoi ( pc1 );
+	ip4 = _afc_ftp_client_parse_pasv_octet ( pc1 );
 	*pc2 = ',';
+	if ( ip4 < 0 ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_PASV, "Invalid PASV octet", answer, AFC_FTP_CLIENT_ERR_PASV );
 
 	pc1 = pc2 + 1;
 
 	pc2 = strchr ( pc1, ',' );
 	if ( !pc2 ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_PASV, "Bad passive response", answer, AFC_FTP_CLIENT_ERR_PASV );
-		
+
 	*pc2 = 0;
-	p1 = ( u_char ) atoi ( pc1 );
+	p1 = _afc_ftp_client_parse_pasv_octet ( pc1 );
 	*pc2 = ',';
+	if ( p1 < 0 ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_PASV, "Invalid PASV port octet", answer, AFC_FTP_CLIENT_ERR_PASV );
 
 	pc1 = pc2 + 1;
 
 	pc2 = strchr ( pc1, ')' );
 	if ( !pc2 ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_PASV, "Bad passive response", answer, AFC_FTP_CLIENT_ERR_PASV );
-		
+
 	*pc2 = 0;
-	p2 = ( u_char ) atoi ( pc1 );
+	p2 = _afc_ftp_client_parse_pasv_octet ( pc1 );
 	*pc2 = ',';
+	if ( p2 < 0 ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_PASV, "Invalid PASV port octet", answer, AFC_FTP_CLIENT_ERR_PASV );
 
 	/* Ignore server-provided IP address to prevent SSRF attacks
 	   (RFC 2577). Always use the original control connection IP. */
