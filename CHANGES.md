@@ -100,6 +100,60 @@
 - Returns 0 for invalid values, preventing arbitrary memory reads
 - Added documentation warning about AFC-string-only precondition
 
+**mem_tracker.c - Integer overflow in realloc size (Issue #31)**
+- Add overflow checks before doubling `data_max` and `free_max`
+- Prevents undersized allocation from wrapped values
+
+**ftp_client.c - SSRF via FTP PASV response (Issue #32)**
+- Ignore server-provided IP in PASV; use `getpeername()` to get original server IP per RFC 2577
+- Prevents malicious FTP server from redirecting data connections to internal hosts
+
+**ftp_client.c - Port confusion in PASV parsing (Issue #33)**
+- Add `_afc_ftp_client_parse_pasv_octet()` helper that validates 0-255 range
+- Use `int` instead of `u_char` to detect out-of-range values before truncation
+
+**smtp.c - SMTP response code parsing without digit validation (Issue #34)**
+- Validate first 3 bytes are ASCII digits before parsing response code
+- Compute code from digit values instead of `atoi()` which returns 0 for non-numeric
+
+**pop3.c - Unbounded multi-line response (Issue #35)**
+- Track total bytes and enforce 10 MB limit in `afc_pop3_internal_get_multi_line()`
+- Prevents memory exhaustion from malicious server sending unlimited data
+
+**dbi/postgresql.c - Connection string injection (Issue #36)**
+- Replace unused `PQconnectdb("")` with `PQconnectdbParams()` using parameterized arrays
+- Fixes logic bug and prevents connection string injection
+
+**inet_client.c - No SSL handshake timeout (Issue #37)**
+- Apply `SO_RCVTIMEO`/`SO_SNDTIMEO` before `SSL_connect()`
+- Default 30-second timeout if none configured; prevents indefinite blocking
+
+**smtp.c - Hardcoded EHLO localhost (Issue #38)**
+- Use `gethostname()` for EHLO command per RFC 5321
+- Falls back to "localhost" if `gethostname()` fails
+
+**smtp.c - Memory leak in AUTH LOGIN error paths (Issue #39)**
+- Add NULL checks after `afc_string_new()` and `afc_base64_new()` allocations
+- Free all previously allocated resources on each error return
+
+**smtp.c - Integer overflow in AUTH buffer size (Issue #40)**
+- Add overflow check for `auth_len * 2 + 10` base64 buffer calculation
+- Complements existing overflow check on `auth_len` itself
+
+**hash.c - Binary search infinite loop (Issue #41)**
+- Add iteration counter limited to `num_items + 1`
+- Terminates and returns NULL if limit exceeded on corrupted data
+
+**inet_server.c - Missing magic/NULL validation in delete (Issue #42)**
+- Add NULL pointer and magic number checks to `_afc_inet_server_delete()`
+- Add NULL check to `afc_inet_server_close()`
+
+**http_client.c - Insufficient URL input validation (Issue #43)**
+- Add 8192-byte URL length limit
+- Validate port range 1-65535 using `strtol()` instead of `atoi()`
+- Reject empty hostnames; check `afc_string_dup()` return values
+- Clean up all allocated resources on error paths
+
 ---
 
 ## January 15, 2026
