@@ -552,6 +552,10 @@ int afc_inet_client_enable_ssl(InetClient *ic)
 	if (!ic->ssl_ctx)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_INIT, "SSL_CTX_new() failed", NULL);
 
+	// Enforce TLS 1.2 minimum and strong cipher list
+	SSL_CTX_set_min_proto_version(ic->ssl_ctx, TLS1_2_VERSION);
+	SSL_CTX_set_cipher_list(ic->ssl_ctx, "HIGH:!aNULL:!MD5:!RC4:!3DES");
+
 	// Create SSL connection
 	ic->ssl = SSL_new(ic->ssl_ctx);
 	if (!ic->ssl)
