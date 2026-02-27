@@ -505,6 +505,9 @@ int _afc_smtp_auth_plain(SMTP *smtp)
 					  AFC_BASE64_TAG_MEM_OUT_SIZE, auth_len * 2 + 10,
 					  AFC_TAG_END);
 	afc_base64_delete(b64);
+
+	/* Zero credential data before freeing */
+	explicit_bzero(auth_str, auth_len);
 	afc_string_delete(auth_str);
 
 	// Remove trailing CRLF added by base64 encoder
@@ -525,13 +528,20 @@ int _afc_smtp_auth_plain(SMTP *smtp)
 	cmd = afc_string_new(auth_len * 2 + 20);
 	if (!cmd)
 	{
+		explicit_bzero(encoded, afc_string_len(encoded));
 		afc_string_delete(encoded);
 		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_NO_MEMORY, "Failed to allocate cmd", NULL);
 	}
 	afc_string_make(cmd, "AUTH PLAIN %s", encoded);
+
+	/* Zero encoded credentials before freeing */
+	explicit_bzero(encoded, afc_string_len(encoded));
 	afc_string_delete(encoded);
 
 	res = _afc_smtp_send_command(smtp, cmd);
+
+	/* Zero command buffer containing credentials before freeing */
+	explicit_bzero(cmd, afc_string_len(cmd));
 	afc_string_delete(cmd);
 
 	if (res != 235)
@@ -583,9 +593,11 @@ int _afc_smtp_auth_login(SMTP *smtp)
 
 	if ((res = _afc_smtp_send_command(smtp, encoded_user)) != 334)
 	{
+		explicit_bzero(encoded_user, afc_string_len(encoded_user));
 		afc_string_delete(encoded_user);
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_AUTH, "Username rejected", smtp->buf);
 	}
+	explicit_bzero(encoded_user, afc_string_len(encoded_user));
 	afc_string_delete(encoded_user);
 
 	// Send base64-encoded password
@@ -611,9 +623,11 @@ int _afc_smtp_auth_login(SMTP *smtp)
 
 	if ((res = _afc_smtp_send_command(smtp, encoded_pass)) != 235)
 	{
+		explicit_bzero(encoded_pass, afc_string_len(encoded_pass));
 		afc_string_delete(encoded_pass);
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_AUTH, "Password rejected", smtp->buf);
 	}
+	explicit_bzero(encoded_pass, afc_string_len(encoded_pass));
 	afc_string_delete(encoded_pass);
 
 	return AFC_ERR_NO_ERROR;
