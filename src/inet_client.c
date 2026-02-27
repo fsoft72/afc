@@ -458,7 +458,7 @@ int _afc_inet_client_set_tags(InetClient *ic, int first_tag, ...)
 
 	tag = first_tag;
 
-	while (tag != AFC_TAG_END)
+	while ((unsigned int)tag != AFC_TAG_END)
 	{
 		val = va_arg(tags, void *);
 

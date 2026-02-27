@@ -220,7 +220,7 @@ int _afc_smtp_set_tags(SMTP *smtp, int first_tag, ...)
 
 	tag = first_tag;
 
-	while (tag != AFC_TAG_END)
+	while ((unsigned int)tag != AFC_TAG_END)
 	{
 		val = va_arg(tags, void *);
 

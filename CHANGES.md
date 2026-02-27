@@ -2,6 +2,19 @@
 
 ## February 27, 2026
 
+### Compiler Warning Fixes
+
+**dirmaster.h / dirmaster.c**
+- Increased date string buffers from 20 to 64 bytes to fix `-Wformat-truncation` warnings
+- Fixed sign-compare warning in `afc_dirmaster_internal_size2string` by casting `size_decimals` to `size_t`
+
+**inet_client.c / smtp.c / http_client.c**
+- Fixed sign-compare warnings when comparing `int tag` with `AFC_TAG_END` (unsigned) by casting to `unsigned int`
+
+**http_client.c**
+- Fixed sign-compare warnings in `_afc_http_client_read_body` by casting `afc_string_max()` return to `int`
+- Fixed `-Wunused-result` warning on `fgets()` call by handling return value
+
 ### Security Fixes
 
 **smtp.c - CRLF injection in SMTP commands (Issue #2)**

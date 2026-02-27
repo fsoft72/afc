@@ -229,7 +229,7 @@ int _afc_http_client_set_tags(HttpClient * hc, int first_tag, ...)
 
 	tag = first_tag;
 
-	while (tag != AFC_TAG_END)
+	while ((unsigned int)tag != AFC_TAG_END)
 	{
 		val = va_arg(tags, void *);
 
@@ -1158,7 +1158,7 @@ static int _afc_http_client_read_body(HttpClient * hc, FILE * fd)
 			// Read chunk data
 			while (chunk_size > 0)
 			{
-				int to_read = chunk_size < afc_string_max(hc->buf) ? chunk_size : afc_string_max(hc->buf);
+				int to_read = chunk_size < (int)afc_string_max(hc->buf) ? chunk_size : (int)afc_string_max(hc->buf);
 				bytes_read = fread(hc->buf, 1, to_read, fd);
 				if (bytes_read <= 0)
 					break;
@@ -1170,7 +1170,7 @@ static int _afc_http_client_read_body(HttpClient * hc, FILE * fd)
 			}
 
 			// Read trailing CRLF after chunk data
-			fgets(chunk_size_str, sizeof(chunk_size_str), fd);
+			if (fgets(chunk_size_str, sizeof(chunk_size_str), fd) == NULL) { /* consume trailing CRLF */ }
 		}
 	}
 	// Handle Content-Length
@@ -1180,7 +1180,7 @@ static int _afc_http_client_read_body(HttpClient * hc, FILE * fd)
 
 		while (content_length > 0)
 		{
-			int to_read = content_length < afc_string_max(hc->buf) ? content_length : afc_string_max(hc->buf);
+			int to_read = content_length < (int)afc_string_max(hc->buf) ? content_length : (int)afc_string_max(hc->buf);
 			bytes_read = fread(hc->buf, 1, to_read, fd);
 			if (bytes_read <= 0)
 				break;

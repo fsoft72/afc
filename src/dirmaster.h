@@ -127,9 +127,9 @@ extern "C"
 		char cuser[32];	 /* string containing the user name                             */
 		char cgroup[32]; /* string containing the group name                            */
 
-		char caccess[20];
-		char cmodify[20];
-		char cchange[20];
+		char caccess[64];
+		char cmodify[64];
+		char cchange[64];
 		char csize[20];
 
 		short hidden; /* whether this is an hidden file or not */
