@@ -256,6 +256,8 @@ void *afc_hash_find(Hash *hm, unsigned long int hash_value)
 {
 	HashData *hd;
 	register int max, pos, min = 0;
+	int iterations = 0;
+	int max_iterations;
 
 	// if ( afc_array_is_empty ( hm->am ) ) return ( NULL );
 	if (hm->am->num_items == 0)
@@ -265,8 +267,16 @@ void *afc_hash_find(Hash *hm, unsigned long int hash_value)
 	max = hm->am->num_items;
 	pos = max / 2;
 
+	/* Binary search on N items requires at most ceil(log2(N)) + 1 iterations.
+	   Use num_items as a safe upper bound to prevent infinite loops on
+	   corrupted data. */
+	max_iterations = max + 1;
+
 	while (pos != -1)
 	{
+		if (++iterations > max_iterations)
+			return (NULL);
+
 		if ((hd = (HashData *)afc_array_item(hm->am, pos)) == NULL)
 			return (NULL);
 
