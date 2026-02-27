@@ -90,5 +90,5 @@ int afc_date_handler_is_valid(DateHandler *dh, int year, int month, int day);
 int afc_date_handler_get_day_of_week(DateHandler *dh);
 long afc_date_handler_get_julian(DateHandler *dh);
 int afc_date_handler_add_days(DateHandler *dh, int days);
-int afc_date_handler_to_string(DateHandler *dh, char *dest, int mode);
+int afc_date_handler_to_string(DateHandler *dh, char *dest, size_t dest_size, int mode);
 #endif

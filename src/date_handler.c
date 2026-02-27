@@ -398,13 +398,14 @@ int afc_date_handler_add_days(DateHandler *dh, int days)
 
 		   NAME: afc_date_handler_to_string ( dh, dest, mode )  - Converts current date to string
 
-	   SYNOPSIS: int afc_date_handler_to_string ( DateHandler * dh, char * dest, int mode )
+	   SYNOPSIS: int afc_date_handler_to_string ( DateHandler * dh, char * dest, size_t dest_size, int mode )
 
 	DESCRIPTION: This method converts the current date in DateHandler into a string, using
 		 the format specified with the /mode/ variable.
 
 		  INPUT: - dh    	- Pointer to a valid afc_date_handler instance.
 		 - dest		- Destination buffer where to copy the string to.
+		 - dest_size	- Size of the destination buffer in bytes.
 		 - mode		- Valid string format. Values are:
 
 					+ AFC_DATE_HANDLER_MODE_FULL	 	- A full date: wday day month year (dd/mm/yyyy)
@@ -420,35 +421,36 @@ int afc_date_handler_add_days(DateHandler *dh, int days)
 
 @endnode
 */
-int afc_date_handler_to_string(DateHandler *dh, char *dest, int mode)
+int afc_date_handler_to_string(DateHandler *dh, char *dest, size_t dest_size, int mode)
 {
+	if (!dest || dest_size == 0) return AFC_ERR_NULL_POINTER;
 
 	switch (mode)
 	{
 	case AFC_DATE_HANDLER_MODE_TEXT:
-		sprintf(dest, "%s %2.2d %s %d", dh->week_names[afc_date_handler_get_day_of_week(dh)],
+		snprintf(dest, dest_size, "%s %2.2d %s %d", dh->week_names[afc_date_handler_get_day_of_week(dh)],
 				dh->day, dh->month_names[dh->month - 1],
 				dh->year);
 		break;
 
 	case AFC_DATE_HANDLER_MODE_FULL:
-		sprintf(dest, "%s %2.2d %s %d (%2.2d/%2.2d/%4.4d)", dh->week_names[afc_date_handler_get_day_of_week(dh)],
+		snprintf(dest, dest_size, "%s %2.2d %s %d (%2.2d/%2.2d/%4.4d)", dh->week_names[afc_date_handler_get_day_of_week(dh)],
 				dh->day, dh->month_names[dh->month - 1],
 				dh->year,
 				dh->day, dh->month, dh->year);
 		break;
 
 	case AFC_DATE_HANDLER_MODE_MMDDYYYY:
-		sprintf(dest, "%2.2d/%2.2d/%4.4d", dh->month, dh->day, dh->year);
+		snprintf(dest, dest_size, "%2.2d/%2.2d/%4.4d", dh->month, dh->day, dh->year);
 		break;
 
 	case AFC_DATE_HANDLER_MODE_DDMMYYYY:
-		sprintf(dest, "%2.2d/%2.2d/%4.4d", dh->day, dh->month, dh->year);
+		snprintf(dest, dest_size, "%2.2d/%2.2d/%4.4d", dh->day, dh->month, dh->year);
 		break;
 
 	case AFC_DATE_HANDLER_MODE_YYYYMMDD:
 	default:
-		sprintf(dest, "%4.4d/%2.2d/%2.2d", dh->year, dh->month, dh->day);
+		snprintf(dest, dest_size, "%4.4d/%2.2d/%2.2d", dh->year, dh->month, dh->day);
 		break;
 	}
 
@@ -496,12 +498,12 @@ int main(int argc, char *argv[])
 
 	// afc_date_handler_set ( dh, 1972, 1, 10 );
 	afc_date_handler_set_today(dh);
-	afc_date_handler_to_string(dh, buf, 0);
+	afc_date_handler_to_string(dh, buf, sizeof(buf), 0);
 	printf("Date: %s\n", buf);
 
 	afc_date_handler_set(dh, 1972, 2, 30);
 	afc_date_handler_add_days(dh, 366);
-	afc_date_handler_to_string(dh, buf, 0);
+	afc_date_handler_to_string(dh, buf, sizeof(buf), 0);
 
 	printf("Date: %s\n", buf);
 
