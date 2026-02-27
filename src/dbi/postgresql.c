@@ -134,7 +134,6 @@ static int pgsql_method_init(DynamicClass *dc)
 static int pgsql_method_connect(DynamicClass *dc)
 {
 	char *host, *dbname, *login, *pwd;
-	char *conninfo;
 	DBpgsql *db;
 
 	db = DB_GET_DATA(dc);
@@ -147,16 +146,16 @@ static int pgsql_method_connect(DynamicClass *dc)
 	login = afc_array_next(dc->args);
 	pwd = afc_array_next(dc->args);
 
-	conninfo = afc_string_new(1024);
-
-	afc_string_make(conninfo, "host = '%s' dbname = '%s' user = '%s' password = '%s'", host, dbname, login, pwd);
-
-	db->connection = PQconnectdb(""); // conninfo );
+	/* Use parameterized connection to prevent injection via
+	   crafted host/dbname/login/pwd values */
+	{
+		const char *keywords[] = {"host", "dbname", "user", "password", NULL};
+		const char *values[] = {host, dbname, login, pwd, NULL};
+		db->connection = PQconnectdbParams(keywords, values, 0);
+	}
 
 	if (PQstatus(db->connection) == CONNECTION_BAD)
 		printf("Error connecting\n");
-
-	afc_string_delete(conninfo);
 
 	return (AFC_ERR_NO_ERROR);
 }
