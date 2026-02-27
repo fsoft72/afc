@@ -584,7 +584,16 @@ int _afc_smtp_auth_login(SMTP *smtp)
 	// Send base64-encoded username
 	user_len = afc_string_len(smtp->username);
 	encoded_user = afc_string_new(user_len * 2 + 10);
+	if (!encoded_user)
+		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_NO_MEMORY, "Failed to allocate encoded_user", NULL);
+
 	b64 = afc_base64_new();
+	if (!b64)
+	{
+		afc_string_delete(encoded_user);
+		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_NO_MEMORY, "Failed to create Base64", NULL);
+	}
+
 	afc_base64_encode(b64,
 					  AFC_BASE64_TAG_MEM_IN, smtp->username,
 					  AFC_BASE64_TAG_MEM_IN_SIZE, user_len,
@@ -595,9 +604,14 @@ int _afc_smtp_auth_login(SMTP *smtp)
 
 	// Remove trailing CRLF added by base64 encoder
 	afc_string_trim(encoded_user);
-	
+
 	// Remove internal CRLF
 	char *clean_user = afc_string_new(afc_string_max(encoded_user));
+	if (!clean_user)
+	{
+		afc_string_delete(encoded_user);
+		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_NO_MEMORY, "Failed to allocate clean_user", NULL);
+	}
 	afc_string_replace_all(clean_user, encoded_user, "\r\n", "");
 	afc_string_copy(encoded_user, clean_user, ALL);
 	afc_string_delete(clean_user);
@@ -614,7 +628,16 @@ int _afc_smtp_auth_login(SMTP *smtp)
 	// Send base64-encoded password
 	pass_len = afc_string_len(smtp->password);
 	encoded_pass = afc_string_new(pass_len * 2 + 10);
+	if (!encoded_pass)
+		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_NO_MEMORY, "Failed to allocate encoded_pass", NULL);
+
 	b64 = afc_base64_new();
+	if (!b64)
+	{
+		afc_string_delete(encoded_pass);
+		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_NO_MEMORY, "Failed to create Base64", NULL);
+	}
+
 	afc_base64_encode(b64,
 					  AFC_BASE64_TAG_MEM_IN, smtp->password,
 					  AFC_BASE64_TAG_MEM_IN_SIZE, pass_len,
@@ -625,9 +648,14 @@ int _afc_smtp_auth_login(SMTP *smtp)
 
 	// Remove trailing CRLF added by base64 encoder
 	afc_string_trim(encoded_pass);
-	
+
 	// Remove internal CRLF
 	char *clean_pass = afc_string_new(afc_string_max(encoded_pass));
+	if (!clean_pass)
+	{
+		afc_string_delete(encoded_pass);
+		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_NO_MEMORY, "Failed to allocate clean_pass", NULL);
+	}
 	afc_string_replace_all(clean_pass, encoded_pass, "\r\n", "");
 	afc_string_copy(encoded_pass, clean_pass, ALL);
 	afc_string_delete(clean_pass);
