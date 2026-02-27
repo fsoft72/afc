@@ -76,6 +76,7 @@ InetServer *afc_inet_server_new()
 	if (is == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "is", NULL);
 	is->magic = AFC_INET_SERVER_MAGIC;
+	pthread_mutex_init(&is->fd_mutex, NULL);
 	if ((is->hash = afc_hash_new()) == NULL)
 		RAISE_FAST_RC(AFC_ERR_NO_MEMORY, "hash", NULL);
 	is->bufsize = AFC_INET_SERVER_DEFAULT_BUFSIZE;
@@ -119,6 +120,7 @@ int _afc_inet_server_delete(InetServer *is)
 
 	afc_inet_server_close(is);
 	afc_hash_delete(is->hash);
+	pthread_mutex_destroy(&is->fd_mutex);
 	afc_free(is);
 
 	return (AFC_ERR_NO_ERROR);
@@ -225,7 +227,9 @@ int afc_inet_server_close(InetServer *is)
 // {{{ afc_inet_server_wait ( is ) ***************
 int afc_inet_server_wait(InetServer *is)
 {
+	pthread_mutex_lock(&is->fd_mutex);
 	is->read_fds = is->master; // copy it
+	pthread_mutex_unlock(&is->fd_mutex);
 
 	is->active = 0;
 
@@ -264,9 +268,11 @@ int afc_inet_server_process(InetServer *is)
 					if ((data = afc_inet_server_create_conn_data(is, is->newfd)) == NULL)
 						return (AFC_LOG_FAST_INFO(AFC_ERR_NO_MEMORY, "data"));
 
+					pthread_mutex_lock(&is->fd_mutex);
 					FD_SET(is->newfd, &is->master); // Add newfd to the master set
 					if (is->newfd > is->fdmax)
 						is->fdmax = is->newfd; // keep track of the maximum fd
+					pthread_mutex_unlock(&is->fd_mutex);
 				}
 			}
 			else
@@ -327,7 +333,9 @@ int afc_inet_server_close_conn(InetServer *is, InetConnData *data)
 		data->cb_close(is, data);
 
 	close(data->fd);
+	pthread_mutex_lock(&is->fd_mutex);
 	FD_CLR(data->fd, &is->master);
+	pthread_mutex_unlock(&is->fd_mutex);
 
 	if (data->buf)
 		afc_string_delete(data->buf);

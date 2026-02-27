@@ -32,6 +32,8 @@
 #include <malloc.h>
 #include <arpa/inet.h>
 
+#include <pthread.h>
+
 #include "base.h"
 #include "strings.h"
 #include "hash.h"
@@ -103,6 +105,8 @@ struct afc_inet_server
 	InetServerCBReceive cb_receive;
 
 	void *data; /* Generic Data Pointer */
+
+	pthread_mutex_t fd_mutex; /* Mutex protecting master/read_fds sets */
 };
 
 typedef struct afc_inet_server InetServer;
