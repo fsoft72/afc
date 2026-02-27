@@ -889,7 +889,7 @@ static int afc_fileops_internal_move_dir(FileOperations *fo, struct stat *descr,
 	char *dest_path = (char *)info;
 	char buf[4096];
 
-	sprintf(buf, "%s/%s", dest_path, dirname);
+	snprintf(buf, sizeof(buf), "%s/%s", dest_path, dirname);
 
 	if ((err = afc_fileops_mkdir(fo, buf)) != AFC_ERR_NO_ERROR)
 		return (err);
@@ -913,7 +913,7 @@ static int afc_fileops_internal_move_file(FileOperations *fo, struct stat *descr
 	char *dest_path = (char *)info;
 	char buf[4096];
 
-	sprintf(buf, "%s/%s", dest_path, filename);
+	snprintf(buf, sizeof(buf), "%s/%s", dest_path, filename);
 
 	fo->foc->source = fullname;
 	fo->foc->dest = buf;
@@ -938,7 +938,7 @@ static int afc_fileops_internal_del_dir(FileOperations *fo, struct stat *descr, 
 	char *dest_path = (char *)info;
 	char buf[4096];
 
-	sprintf(buf, "%s/%s", dest_path, dirname);
+	snprintf(buf, sizeof(buf), "%s/%s", dest_path, dirname);
 
 	if ((err = afc_fileops_internal_scan_dir(fo, buf, afc_fileops_internal_del_file, afc_fileops_internal_del_dir, NULL, buf)) != AFC_ERR_NO_ERROR)
 		return (err);
@@ -959,7 +959,7 @@ static int afc_fileops_internal_del_file(FileOperations *fo, struct stat *descr,
 	char *dest_path = (char *)info;
 	char buf[4096];
 
-	sprintf(buf, "%s/%s", dest_path, filename);
+	snprintf(buf, sizeof(buf), "%s/%s", dest_path, filename);
 
 	if (fo->update_funct)
 		fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, buf, fo->update_info);
@@ -981,7 +981,7 @@ static int afc_fileops_internal_copy_new_dir(FileOperations *fo, struct stat *de
 	char buf[4096];
 	int err;
 
-	sprintf(buf, "%s/%s", dest_path, dirname);
+	snprintf(buf, sizeof(buf), "%s/%s", dest_path, dirname);
 
 	if ((err = afc_fileops_mkdir(fo, buf)) != AFC_ERR_NO_ERROR)
 		return (err);
@@ -995,7 +995,7 @@ static int afc_fileops_internal_copy_new_file(FileOperations *fo, struct stat *d
 	char *dest_path = (char *)info;
 	char buf[4096];
 
-	sprintf(buf, "%s/%s", dest_path, filename);
+	snprintf(buf, sizeof(buf), "%s/%s", dest_path, filename);
 
 	fo->foc->source = fullname;
 	fo->foc->dest = buf;
