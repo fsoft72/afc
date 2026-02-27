@@ -481,6 +481,10 @@ int _afc_smtp_auth_plain(SMTP *smtp)
 	if (user_len > SIZE_MAX - pass_len - 2)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_AUTH, "Credentials too long", NULL);
 
+	// Also check that auth_len * 2 + 10 won't overflow (for base64 buffer)
+	if (user_len + pass_len > (SIZE_MAX - 12) / 2)
+		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_AUTH, "Credentials too long", NULL);
+
 	// AUTH PLAIN format: base64("\0username\0password")
 	auth_len = 1 + user_len + 1 + pass_len;
 	auth_str = afc_string_new(auth_len + 1);
