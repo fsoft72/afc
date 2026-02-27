@@ -19,6 +19,7 @@
  */
 #include <stdarg.h>
 #include <stdint.h>
+#include <ctype.h>
 #include "smtp.h"
 
 /*
@@ -345,11 +346,13 @@ int _afc_smtp_get_response(SMTP *smtp)
 	if (afc_string_len(smtp->buf) < 3)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_INVALID_RESPONSE, "Invalid response", smtp->buf);
 
-	// Extract response code safely
-	char code_str[4];
-	snprintf(code_str, sizeof(code_str), "%.3s", smtp->buf);
+	// Extract and validate response code - must be 3 ASCII digits
+	if (!isdigit((unsigned char)smtp->buf[0]) ||
+		!isdigit((unsigned char)smtp->buf[1]) ||
+		!isdigit((unsigned char)smtp->buf[2]))
+		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_INVALID_RESPONSE, "Non-digit response code", smtp->buf);
 
-	return atoi(code_str);
+	return (smtp->buf[0] - '0') * 100 + (smtp->buf[1] - '0') * 10 + (smtp->buf[2] - '0');
 }
 // }}}
 // {{{ _afc_smtp_send_command ( smtp, cmd )
