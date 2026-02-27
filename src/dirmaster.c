@@ -78,7 +78,7 @@ static char *afc_dirmaster_size_bases[] = {
 
 static const char class_name[] = "DirMaster";
 
-static char *afc_dirmaster_internal_date2string(char *str, unsigned long date, int format);
+static char *afc_dirmaster_internal_date2string(char *str, size_t str_size, unsigned long date, int format);
 static char *afc_dirmaster_internal_mode2string(char *buf, unsigned long mode);
 static void afc_dirmaster_internal_size2string(DirMaster *dm, char *dest, unsigned long size);
 static int afc_dirmaster_internal_readd(DirMaster *dm, const char *path, int date_format);
@@ -902,11 +902,11 @@ FileInfo *afc_dirmaster_add_item(DirMaster *dm, char *fullname, char *fname, str
 	afc_dirmaster_internal_size2string(dm, info->csize, descr->st_size);
 
 	if (dm->conv_date_access)
-		afc_dirmaster_internal_date2string(info->caccess, descr->st_atime, dm->date_format);
+		afc_dirmaster_internal_date2string(info->caccess, sizeof(info->caccess), descr->st_atime, dm->date_format);
 	if (dm->conv_date_modify)
-		afc_dirmaster_internal_date2string(info->cmodify, descr->st_mtime, dm->date_format);
+		afc_dirmaster_internal_date2string(info->cmodify, sizeof(info->cmodify), descr->st_mtime, dm->date_format);
 	if (dm->conv_date_change)
-		afc_dirmaster_internal_date2string(info->cchange, descr->st_ctime, dm->date_format);
+		afc_dirmaster_internal_date2string(info->cchange, sizeof(info->cchange), descr->st_ctime, dm->date_format);
 
 	if (dm->conv_mode)
 		afc_dirmaster_internal_mode2string(info->cmode, descr->st_mode);
@@ -951,37 +951,40 @@ int afc_dirmaster_before_first ( DirMaster * dm )
 	 PRIVATE FUNCTIONS
 */
 // {{{ afc_dirmaster_internal_date2string ( str, date, format )
-static char *afc_dirmaster_internal_date2string(char *str, unsigned long date, int format)
+static char *afc_dirmaster_internal_date2string(char *str, size_t str_size, unsigned long date, int format)
 {
 	struct tm *time;
+
+	if (str_size == 0) return str;
 
 	time = localtime((const time_t *)&date);
 
 	switch (format)
 	{
 	case (DATEFORMAT_DD_MM_YYYY):
-		sprintf(str, "%2.2d-%2.2d-%4d", time->tm_mday, time->tm_mon + 1, 1900 + time->tm_year);
+		snprintf(str, str_size, "%2.2d-%2.2d-%4d", time->tm_mday, time->tm_mon + 1, 1900 + time->tm_year);
 		break;
 	case (DATEFORMAT_MM_DD_YYYY):
-		sprintf(str, "%2.2d-%2.2d-%4d", time->tm_mon + 1, time->tm_mday, 1900 + time->tm_year);
+		snprintf(str, str_size, "%2.2d-%2.2d-%4d", time->tm_mon + 1, time->tm_mday, 1900 + time->tm_year);
 		break;
 	case (DATEFORMAT_HH_MM):
-		sprintf(str, "%2.2d:%2.2d", time->tm_hour, time->tm_min);
+		snprintf(str, str_size, "%2.2d:%2.2d", time->tm_hour, time->tm_min);
 		break;
 	case (DATEFORMAT_HH_MM_SS):
-		sprintf(str, "%2.2d:%2.2d.%2.2d", time->tm_hour, time->tm_min, time->tm_sec);
+		snprintf(str, str_size, "%2.2d:%2.2d.%2.2d", time->tm_hour, time->tm_min, time->tm_sec);
 		break;
 
 	case (DATEFORMAT_DD_MM_YYYY_HH_MM):
-		sprintf(str, "%2.2d-%2.2d-%4d %2.2d:%2.2d", time->tm_mday, time->tm_mon + 1, 1900 + time->tm_year, time->tm_hour, time->tm_min);
+		snprintf(str, str_size, "%2.2d-%2.2d-%4d %2.2d:%2.2d", time->tm_mday, time->tm_mon + 1, 1900 + time->tm_year, time->tm_hour, time->tm_min);
 		break;
 
 	case (DATEFORMAT_MM_DD_YYYY_HH_MM):
-		sprintf(str, "%2.2d-%2.2d-%4d %2.2d:%2.2d", time->tm_mon + 1, time->tm_mday, 1900 + time->tm_year, time->tm_hour, time->tm_min);
+		snprintf(str, str_size, "%2.2d-%2.2d-%4d %2.2d:%2.2d", time->tm_mon + 1, time->tm_mday, 1900 + time->tm_year, time->tm_hour, time->tm_min);
 		break;
 
 	default:
-		strcpy(str, "#undefined");
+		strncpy(str, "#undefined", str_size - 1);
+		str[str_size - 1] = '\0';
 		break;
 	}
 
