@@ -864,11 +864,13 @@ FileInfo *afc_dirmaster_add_item(DirMaster *dm, char *fullname, char *fname, str
 			else
 				info->kind = FINFO_KIND_LINK | FINFO_KIND_FILE;
 
-			lnklen = readlink(fullname, tmpbuf, NAME_MAX);
-			tmpbuf[lnklen] = 0;
-
-			strcat(info->name, " -> ");
-			strcat(info->name, tmpbuf);
+			lnklen = readlink(fullname, tmpbuf, NAME_MAX - 1);
+			if (lnklen >= 0)
+			{
+				tmpbuf[lnklen] = 0;
+				strcat(info->name, " -> ");
+				strcat(info->name, tmpbuf);
+			}
 		}
 		else
 			info->kind = FINFO_KIND_FILE;
