@@ -718,7 +718,7 @@ int afc_list_clear(List *nm)
 	while ((n = w->ln_Succ))
 	{
 		if (nm->func_clear)
-			nm->func_clear(n->ln_Name);
+			nm->func_clear(w->ln_Name);
 		Remove(w);
 		afc_free(w);
 		w = n;
