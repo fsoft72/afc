@@ -394,19 +394,30 @@ int afc_inet_client_get(InetClient *ic)
 */
 int afc_inet_client_send(InetClient *ic, const char *str, int len)
 {
+	int sent;
+	int total = 0;
+
 	if (len <= 0)
 		len = strlen(str);
 
-	// Use SSL_write if SSL is enabled
-	if (ic->use_ssl && ic->ssl)
+	/* Loop to handle partial sends: both send() and SSL_write() can
+	   return fewer bytes than requested on loaded systems or large payloads */
+	while (total < len)
 	{
-		if (SSL_write(ic->ssl, str, len) <= 0)
-			return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_WRITE, "SSL_write() failed", NULL));
-	}
-	else
-	{
-		if (send(ic->sockfd, str, len, 0) == -1)
-			return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SEND, "send() failed", NULL));
+		if (ic->use_ssl && ic->ssl)
+		{
+			sent = SSL_write(ic->ssl, str + total, len - total);
+			if (sent <= 0)
+				return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_WRITE, "SSL_write() failed", NULL));
+		}
+		else
+		{
+			sent = send(ic->sockfd, str + total, len - total, 0);
+			if (sent == -1)
+				return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SEND, "send() failed", NULL));
+		}
+
+		total += sent;
 	}
 
 	return (AFC_ERR_NO_ERROR);
