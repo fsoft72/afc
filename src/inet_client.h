@@ -104,6 +104,8 @@ struct hostent *afc_inet_client_resolve(InetClient *ic, const char *site_name);
 int afc_inet_client_get(InetClient *ic);
 int afc_inet_client_send(InetClient *ic, const char *str, int len);
 FILE *afc_inet_client_get_file(InetClient *ic);
+int afc_inet_client_read_line(InetClient *ic, char *buf, int max_len);
+int afc_inet_client_read_bytes(InetClient *ic, char *buf, int len);
 
 // SSL/TLS support functions
 #define afc_inet_client_set_tags(ic, first, ...) _afc_inet_client_set_tags(ic, first, ##__VA_ARGS__, AFC_TAG_END)

@@ -1132,17 +1132,15 @@ ENDTRY
 
 static int afc_ftp_client_internal_get_answer ( FtpClient * fc, char * answer )
 {
-	FILE * fd;
   	char * buf = afc_string_new ( 1024 );
   	BOOL firstloop = TRUE;
 	char code[4];
 
-  	while ( TRUE ) 
-	{ 
+  	while ( TRUE )
+	{
 
-		fd = afc_inet_client_get_file ( fc->inet );
-		//TODO:controllo errori
-    		afc_string_fget ( buf, fd );
+		afc_inet_client_read_line ( fc->inet, buf, afc_string_max ( buf ) );
+		afc_string_reset_len ( buf );
 
     		if ( firstloop )
 		{ 

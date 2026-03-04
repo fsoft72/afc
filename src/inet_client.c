@@ -413,12 +413,118 @@ int afc_inet_client_send(InetClient *ic, const char *str, int len)
 }
 // }}}
 // {{{ afc_inet_client_get_file ( ic )
+/*
+   NOTE: When SSL is enabled, using the returned FILE* will bypass
+   SSL_read() and read raw encrypted bytes. Use afc_inet_client_read_line()
+   or afc_inet_client_read_bytes() instead for SSL-safe I/O.
+*/
 FILE *afc_inet_client_get_file(InetClient *ic)
 {
+	if (ic->use_ssl && ic->ssl)
+		return NULL;
+
 	if (ic->fd)
 		return (ic->fd);
 
 	return (ic->fd = fdopen(ic->sockfd, "r"));
+}
+// }}}
+// {{{ afc_inet_client_read_line ( ic, buf, max_len )
+/*
+   _afc_inet_client_read_one_byte - reads a single byte, dispatching
+   to SSL_read() or recv() as appropriate.
+   Returns 1 on success, 0 on EOF, -1 on error.
+*/
+static int _afc_inet_client_read_one_byte(InetClient *ic, char *ch)
+{
+	if (ic->use_ssl && ic->ssl)
+	{
+		int ret = SSL_read(ic->ssl, ch, 1);
+		if (ret <= 0)
+			return (ret == 0) ? 0 : -1;
+		return 1;
+	}
+	else
+	{
+		int ret = recv(ic->sockfd, ch, 1, 0);
+		if (ret <= 0)
+			return (ret == 0) ? 0 : -1;
+		return 1;
+	}
+}
+
+/*
+   afc_inet_client_read_line - reads a line from the connection,
+   dispatching to SSL_read() or recv() as needed. Line is terminated
+   by '\n'. The newline is included in the output buffer.
+   Returns the number of bytes read, 0 on EOF, or -1 on error.
+*/
+int afc_inet_client_read_line(InetClient *ic, char *buf, int max_len)
+{
+	int n = 0;
+	char ch;
+	int ret;
+
+	if (!ic || !buf || max_len <= 0)
+		return -1;
+
+	/* When SSL is not active and we have a FILE*, use fgets for efficiency */
+	if (!(ic->use_ssl && ic->ssl))
+	{
+		FILE *fd = afc_inet_client_get_file(ic);
+		if (fd && fgets(buf, max_len, fd))
+			return strlen(buf);
+		return 0;
+	}
+
+	/* SSL mode: read byte by byte to find line boundary */
+	while (n < max_len - 1)
+	{
+		ret = _afc_inet_client_read_one_byte(ic, &ch);
+		if (ret <= 0)
+		{
+			if (n > 0) break; /* Return partial line */
+			return ret;
+		}
+
+		buf[n++] = ch;
+		if (ch == '\n') break;
+	}
+
+	buf[n] = '\0';
+	return n;
+}
+// }}}
+// {{{ afc_inet_client_read_bytes ( ic, buf, len )
+/*
+   afc_inet_client_read_bytes - reads exactly 'len' bytes from the
+   connection, dispatching to SSL_read() or recv() as needed.
+   Returns the number of bytes read, 0 on EOF, or -1 on error.
+*/
+int afc_inet_client_read_bytes(InetClient *ic, char *buf, int len)
+{
+	int total = 0;
+
+	if (!ic || !buf || len <= 0)
+		return -1;
+
+	while (total < len)
+	{
+		int ret;
+		if (ic->use_ssl && ic->ssl)
+			ret = SSL_read(ic->ssl, buf + total, len - total);
+		else
+			ret = recv(ic->sockfd, buf + total, len - total, 0);
+
+		if (ret <= 0)
+		{
+			if (total > 0) return total;
+			return (ret == 0) ? 0 : -1;
+		}
+		total += ret;
+	}
+
+	return total;
 }
 // }}}
 // {{{ afc_inet_client_set_tags ( ic, first_tag, ... )

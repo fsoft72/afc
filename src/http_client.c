@@ -28,8 +28,8 @@ static int _afc_http_client_parse_url(const char * url, char ** protocol, char *
 static int _afc_http_client_send_request(HttpClient * hc, const char * method, const char * path, const char * body, int body_len);
 static int _afc_http_client_read_response(HttpClient * hc);
 static int _afc_http_client_parse_status_line(HttpClient * hc, const char * line);
-static int _afc_http_client_parse_headers(HttpClient * hc, FILE * fd);
-static int _afc_http_client_read_body(HttpClient * hc, FILE * fd);
+static int _afc_http_client_parse_headers(HttpClient * hc, InetClient * inet);
+static int _afc_http_client_read_body(HttpClient * hc, InetClient * inet);
 static int _afc_http_client_handle_redirect(HttpClient * hc, const char * method, const char * body, int body_len, int redirect_count);
 
 // {{{ afc_http_client_new ()
@@ -980,20 +980,16 @@ static int _afc_http_client_read_response(HttpClient * hc)
 {
 	TRY(int)
 
-	FILE * fd;
 	int res;
 
 	if (!hc || hc->magic != AFC_HTTP_CLIENT_MAGIC)
 		RAISE_RC(AFC_LOG_ERROR, AFC_ERR_INVALID_POINTER, "Invalid HttpClient object", "", AFC_ERR_INVALID_POINTER);
 
-	fd = afc_inet_client_get_file(hc->inet);
-	if (!fd)
-		RAISE_RC(AFC_LOG_ERROR, AFC_HTTP_CLIENT_ERR_GETRESP, "Failed to get file descriptor", "", AFC_ERR_NULL_POINTER);
-
-	// Read status line
-	if (!fgets(hc->buf, afc_string_max(hc->buf), fd))
+	// Read status line using SSL-safe reader
+	if (afc_inet_client_read_line(hc->inet, hc->buf, afc_string_max(hc->buf)) <= 0)
 		RAISE_RC(AFC_LOG_ERROR, AFC_HTTP_CLIENT_ERR_GETRESP, "Failed to read status line", "", AFC_INET_CLIENT_ERR_RECEIVE);
 
+	afc_string_reset_len(hc->buf);
 	afc_string_trim(hc->buf);
 
 	res = _afc_http_client_parse_status_line(hc, hc->buf);
@@ -1001,12 +997,12 @@ static int _afc_http_client_read_response(HttpClient * hc)
 		RAISE_RC(AFC_LOG_ERROR, AFC_HTTP_CLIENT_ERR_INVALID_STATUS, "Failed to parse status line", hc->buf, res);
 
 	// Read headers
-	res = _afc_http_client_parse_headers(hc, fd);
+	res = _afc_http_client_parse_headers(hc, hc->inet);
 	if (res != AFC_ERR_NO_ERROR)
 		RAISE_RC(AFC_LOG_ERROR, AFC_HTTP_CLIENT_ERR_GETRESP, "Failed to parse headers", "", res);
 
 	// Read body (if not HEAD request)
-	res = _afc_http_client_read_body(hc, fd);
+	res = _afc_http_client_read_body(hc, hc->inet);
 	if (res != AFC_ERR_NO_ERROR)
 		RAISE_RC(AFC_LOG_ERROR, AFC_HTTP_CLIENT_ERR_GETRESP, "Failed to read body", "", res);
 
@@ -1072,7 +1068,7 @@ static int _afc_http_client_parse_status_line(HttpClient * hc, const char * line
 /*
  * Parse HTTP response headers
  */
-static int _afc_http_client_parse_headers(HttpClient * hc, FILE * fd)
+static int _afc_http_client_parse_headers(HttpClient * hc, InetClient * inet)
 {
 	char * line;
 	char * colon;
@@ -1084,8 +1080,9 @@ static int _afc_http_client_parse_headers(HttpClient * hc, FILE * fd)
 
 	line = afc_string_new(1024);
 
-	while (fgets(line, afc_string_max(line), fd))
+	while (afc_inet_client_read_line(inet, line, afc_string_max(line)) > 0)
 	{
+		afc_string_reset_len(line);
 		afc_string_trim(line);
 
 		// Empty line marks end of headers
@@ -1120,7 +1117,7 @@ static int _afc_http_client_parse_headers(HttpClient * hc, FILE * fd)
  * Read HTTP response body
  * Handles both Content-Length and chunked transfer encoding
  */
-static int _afc_http_client_read_body(HttpClient * hc, FILE * fd)
+static int _afc_http_client_read_body(HttpClient * hc, InetClient * inet)
 {
 	char * content_length_str;
 	char * transfer_encoding;
@@ -1148,7 +1145,7 @@ static int _afc_http_client_read_body(HttpClient * hc, FILE * fd)
 		while (1)
 		{
 			// Read chunk size line
-			if (!fgets(chunk_size_str, sizeof(chunk_size_str), fd))
+			if (afc_inet_client_read_line(inet, chunk_size_str, sizeof(chunk_size_str)) <= 0)
 				break;
 
 			chunk_size = (int)strtol(chunk_size_str, NULL, 16);
@@ -1159,7 +1156,7 @@ static int _afc_http_client_read_body(HttpClient * hc, FILE * fd)
 			while (chunk_size > 0)
 			{
 				int to_read = chunk_size < (int)afc_string_max(hc->buf) ? chunk_size : (int)afc_string_max(hc->buf);
-				bytes_read = fread(hc->buf, 1, to_read, fd);
+				bytes_read = afc_inet_client_read_bytes(inet, hc->buf, to_read);
 				if (bytes_read <= 0)
 					break;
 
@@ -1170,7 +1167,7 @@ static int _afc_http_client_read_body(HttpClient * hc, FILE * fd)
 			}
 
 			// Read trailing CRLF after chunk data
-			if (fgets(chunk_size_str, sizeof(chunk_size_str), fd) == NULL) { /* consume trailing CRLF */ }
+			afc_inet_client_read_line(inet, chunk_size_str, sizeof(chunk_size_str));
 		}
 	}
 	// Handle Content-Length
@@ -1181,7 +1178,7 @@ static int _afc_http_client_read_body(HttpClient * hc, FILE * fd)
 		while (content_length > 0)
 		{
 			int to_read = content_length < (int)afc_string_max(hc->buf) ? content_length : (int)afc_string_max(hc->buf);
-			bytes_read = fread(hc->buf, 1, to_read, fd);
+			bytes_read = afc_inet_client_read_bytes(inet, hc->buf, to_read);
 			if (bytes_read <= 0)
 				break;
 
@@ -1194,7 +1191,7 @@ static int _afc_http_client_read_body(HttpClient * hc, FILE * fd)
 	// No Content-Length and no chunked encoding - read until connection closes
 	else
 	{
-		while ((bytes_read = fread(hc->buf, 1, afc_string_max(hc->buf), fd)) > 0)
+		while ((bytes_read = afc_inet_client_read_bytes(inet, hc->buf, afc_string_max(hc->buf))) > 0)
 		{
 			hc->buf[bytes_read] = '\0';
 			afc_string_add(hc->resp_body, hc->buf, ALL);
