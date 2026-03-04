@@ -276,6 +276,15 @@ int afc_array_init(Array *am, unsigned long int size)
 */
 int afc_array_add(Array *am, void *data, int mode)
 {
+	/* Grow the array BEFORE writing, to prevent out-of-bounds access
+	   when num_items == max_items */
+	if (am->num_items >= am->max_items)
+	{
+		int res = afc_array_internal_double_array(am);
+		if (res != AFC_ERR_NO_ERROR)
+			return res;
+	}
+
 	switch (mode)
 	{
 	case AFC_ARRAY_ADD_TAIL:			 // To add in as the LAST element
@@ -295,9 +304,6 @@ int afc_array_add(Array *am, void *data, int mode)
 	am->num_items++; // Increment num_items
 
 	am->is_sorted = FALSE;
-
-	if (am->num_items == am->max_items)
-		return (afc_array_internal_double_array(am));
 
 	return (AFC_ERR_NO_ERROR);
 }
@@ -603,7 +609,7 @@ void *afc_array_del(Array *am)
 
 	size = (am->num_items - (am->current_pos)) * (sizeof(void *));
 
-	memcpy(dest, src, size); // Flawfinder: ignore
+	memmove(dest, src, size);
 
 	am->num_items--;
 
