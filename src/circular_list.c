@@ -346,36 +346,38 @@ void * afc_circular_list_del ( CircularList * cl )
 
 	//check if cl has elements
 	if ( cl->count == 0 ) return ( NULL );
-	
+
 	//remember current element
 	old = cl->pointer;
 
-	//set auxiliary pointer for  new current pointer
-	n = cl->pointer->next;
-
-	//set auxiliarys previous node
-	n->prev=cl->pointer->prev;
-		
 	//clear node data
 	if ( cl->func_clear ) cl->func_clear ( old->data );
 
-	//frees memory
-	afc_free ( old );
-	
-	cl->pointer = n;
-
-	//current pointer is his successor preceding item
-	cl->pointer->prev->next = cl->pointer;	
-	
-	//decrease counter
-	cl->count --;	
-	
-	//check if cl has elements
-	if ( cl->count == 0 ) {
+	//handle single-element case to avoid use-after-free
+	if ( cl->count == 1 )
+	{
+		afc_free ( old );
 		cl->pointer = NULL;
+		cl->count = 0;
 		return ( NULL );
 	}
-	
+
+	//set auxiliary pointer for new current pointer
+	n = cl->pointer->next;
+
+	//set auxiliary's previous node
+	n->prev = cl->pointer->prev;
+
+	//frees memory
+	afc_free ( old );
+
+	cl->pointer = n;
+
+	//current pointer is his successor's preceding item
+	cl->pointer->prev->next = cl->pointer;
+
+	//decrease counter
+	cl->count --;
 
 	return ( n->data );
 }
@@ -390,7 +392,7 @@ static  CircularListNode * afc_circular_list_int_create_node( void )
 TRY ( CircularListNode * )
 	
 	CircularListNode * p;
-	if ( ( p = afc_malloc ( sizeof ( CircularList ) ) ) == NULL )
+	if ( ( p = afc_malloc ( sizeof ( CircularListNode ) ) ) == NULL )
         	RAISE_FAST_RC ( AFC_ERR_NO_MEMORY, "cl", NULL );
 
 	RETURN ( p );
