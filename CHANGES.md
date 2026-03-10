@@ -2,6 +2,24 @@
 
 ## March 10, 2026
 
+### Performance improvements from IMPROVEMENTS.md (#7-#11)
+
+**string.c - Replace byte-by-byte copies with memcpy (#7)**
+- `afc_string_copy()` and `afc_string_add()` now use `memcpy()` instead of per-byte loops
+
+**mem_tracker.c - Rework MemTracker to O(1) hash-based lookup (#8)**
+- Added a hash table indexed by pointer for O(1) find/free/update instead of linear scan
+- Store file/func pointers directly instead of strdup'ing compile-time string literals
+
+**string_list.c / dirmaster.c - Remove allocation churn from case-insensitive sorts (#9)**
+- Replaced temporary string alloc+uppercase+compare+free with `strcasecmp()`
+
+**base64.c - Make lookup tables static const (#10)**
+- Replaced per-call encode/decode table rebuilding with pre-computed static const arrays
+
+**http_client.c - Batch HTTP request writes (#11)**
+- Build entire HTTP header block in memory, then send in one call instead of per-header sends
+
 ### Bug fixes and security improvements from IMPROVEMENTS.md (#2-#6)
 
 **inet_client.c - Replace gethostbyname() with getaddrinfo() (#2)**
