@@ -1145,8 +1145,6 @@ static int afc_dirmaster_internal_sort_files(const void *a, const void *b)
 
 	char *ca = NULL;
 	char *cb = NULL;
-	char *aa = NULL;
-	char *bb = NULL;
 	unsigned long va = 0, vb = 0;
 	short str = FALSE;
 	signed long res;
@@ -1218,19 +1216,7 @@ static int afc_dirmaster_internal_sort_files(const void *a, const void *b)
 	if (str)
 	{
 		if (isi->case_insensitive)
-		{
-			aa = afc_string_new(strlen(ca));
-			bb = afc_string_new(strlen(cb));
-
-			afc_string_copy(aa, ca, ALL);
-			afc_string_copy(bb, cb, ALL);
-			afc_string_upper(aa);
-			afc_string_upper(bb);
-			res = -afc_string_comp(aa, bb, ALL);
-
-			afc_string_delete(aa);
-			afc_string_delete(bb);
-		}
+			res = -strcasecmp(ca, cb);
 		else
 			res = -afc_string_comp(ca, cb, ALL);
 	}
