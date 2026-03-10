@@ -245,8 +245,6 @@ int my_function(void) {
 
 ## 📚 Documentation
 
-- **[Comprehensive API Documentation](ai/afc.md)** - Complete reference for all AFC classes
-- **[Development Guidelines](ai/guidelines.md)** - Coding standards and best practices
 - **[INSTALL](INSTALL)** - Detailed installation instructions
 - **[CHANGES.md](CHANGES.md)** - Version history and changelog
 
