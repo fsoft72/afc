@@ -1,5 +1,24 @@
 # CHANGES.md
 
+## March 10, 2026
+
+### Bug fixes and security improvements from IMPROVEMENTS.md (#2-#6)
+
+**inet_client.c - Replace gethostbyname() with getaddrinfo() (#2)**
+- Migrated DNS resolution to `getaddrinfo()`, adding IPv6 support, better thread-safety, and address iteration on connect failure
+
+**pop3.c / ftp_client.c - Stop logging cleartext passwords (#3)**
+- Replaced password values with `[REDACTED]` in debug output to prevent credential leaks
+
+**inet_server.c - Fix one-byte buffer overflow (#4)**
+- Reserved one byte for the null terminator before calling `recv()`, preventing a write past the allocation
+
+**smtp.c - Consume full multi-line SMTP responses (#5)**
+- `_afc_smtp_get_response()` now loops until the final response line (NNN followed by space) instead of reading only the first chunk
+
+**list.c - Fix stack-position cleanup logic in afc_list_del() (#6)**
+- Rewrote the compaction loop to use a single consistent index variable, fixing an infinite loop, index underflow, and skipped last entry
+
 ## March 4, 2026
 
 ### Critical Bug Fixes from Optimization Report
