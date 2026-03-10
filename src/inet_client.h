@@ -100,7 +100,7 @@ int _afc_inet_client_delete(InetClient *ic);
 int afc_inet_client_clear(InetClient *ic);
 int afc_inet_client_open(InetClient *ic, const char *site_name, int port);
 int afc_inet_client_close(InetClient *ic);
-struct hostent *afc_inet_client_resolve(InetClient *ic, const char *site_name);
+int afc_inet_client_resolve(InetClient *ic, const char *site_name, int port, struct addrinfo **result);
 int afc_inet_client_get(InetClient *ic);
 int afc_inet_client_send(InetClient *ic, const char *str, int len);
 FILE *afc_inet_client_get_file(InetClient *ic);

@@ -193,36 +193,46 @@ int afc_inet_client_clear(InetClient *ic)
 */
 int afc_inet_client_open(InetClient *ic, const char *url, int port)
 {
-	struct hostent *h;
+	struct addrinfo *res = NULL, *rp;
 	struct timeval tv;
+	int rc;
 
-	if ((ic->sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SOCKET, "Cannot Create the Socket", "socket() failed"));
-
-	// Set timeout if configured
-	if (ic->timeout > 0)
-	{
-		tv.tv_sec = ic->timeout;
-		tv.tv_usec = 0;
-		setsockopt(ic->sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
-		setsockopt(ic->sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof(tv));
-	}
-
-	if ((h = afc_inet_client_resolve(ic, url)) == NULL)
+	if ((rc = afc_inet_client_resolve(ic, url, port, &res)) != AFC_ERR_NO_ERROR)
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_HOST_UNKNOWN, "Unable to resolve the host", NULL));
 
-	// printf ( "IP Addr: %s\n", inet_ntoa ( * ((struct in_addr *) h->h_addr ) ) );
+	/* Iterate returned addresses until one connects */
+	for (rp = res; rp != NULL; rp = rp->ai_next)
+	{
+		ic->sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+		if (ic->sockfd == -1)
+			continue;
 
-	memset(&ic->dest_addr, 0, sizeof(struct sockaddr_in));
+		/* Set timeout if configured */
+		if (ic->timeout > 0)
+		{
+			tv.tv_sec = ic->timeout;
+			tv.tv_usec = 0;
+			setsockopt(ic->sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv));
+			setsockopt(ic->sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&tv, sizeof(tv));
+		}
 
-	ic->dest_addr.sin_family = AF_INET;	  // This is in host byte order
-	ic->dest_addr.sin_port = htons(port); // short, network byte order
-	ic->dest_addr.sin_addr = *((struct in_addr *)h->h_addr);
+		if (connect(ic->sockfd, rp->ai_addr, rp->ai_addrlen) == 0)
+		{
+			/* Store the connected address for later use */
+			if (rp->ai_family == AF_INET)
+			{
+				memcpy(&ic->dest_addr, rp->ai_addr, sizeof(struct sockaddr_in));
+			}
+			break; /* Success */
+		}
 
-	// free the hostent obtained? (at the moment, it just segfaults...)
-	// free ( h );
+		close(ic->sockfd);
+		ic->sockfd = -1;
+	}
 
-	if ((connect(ic->sockfd, (struct sockaddr *)&ic->dest_addr, sizeof(struct sockaddr))) == -1)
+	freeaddrinfo(res);
+
+	if (rp == NULL)
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_CONNECT, "Connect() failed", strerror(errno)));
 
 	return (AFC_ERR_NO_ERROR);
@@ -275,33 +285,45 @@ int afc_inet_client_close(InetClient *ic)
 /*
 @node afc_inet_client_resolve
 
-		   NAME: afc_inet_client_resolve ( ic, url )  - Performs a DNS resolution of the given URL
+		   NAME: afc_inet_client_resolve ( ic, url, port, result )  - Performs a DNS resolution of the given URL
 
-	   SYNOPSIS: struct hostent afc_inet_client_resolve ( InetClient * ic, char * url )
+	   SYNOPSIS: int afc_inet_client_resolve ( InetClient * ic, const char * url, int port, struct addrinfo ** result )
 
-	DESCRIPTION: This function resolves the given /url/ and returns an /hostent/ structure.
+	DESCRIPTION: This function resolves the given /url/ using getaddrinfo() and returns a linked list
+		 of addrinfo structures supporting both IPv4 and IPv6. The caller must free the result
+		 with freeaddrinfo() when done.
 
-		  INPUT: - ic    - Pointer to a valid afc_inet_client instance.
-		 - url   - URL to be resolved
+		  INPUT: - ic     - Pointer to a valid afc_inet_client instance.
+		 - url    - URL to be resolved
+		 - port   - Port number for the service
+		 - result - Pointer to store the resolved addrinfo linked list
 
-		RESULTS: - an hostent structure on success.
-		 - NULL on error.
+		RESULTS: - AFC_ERR_NO_ERROR on success.
+		 - AFC_INET_CLIENT_ERR_RESOLVE on error.
 
 	   SEE ALSO: - afc_inet_client_open()
 
 @endnode
 */
-struct hostent *afc_inet_client_resolve(InetClient *ic, const char *url)
+int afc_inet_client_resolve(InetClient *ic, const char *url, int port, struct addrinfo **result)
 {
-	struct hostent *h;
+	struct addrinfo hints;
+	char port_str[16];
+	int rc;
 
-	if ((h = gethostbyname(url)) == NULL)
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;     /* Allow IPv4 or IPv6 */
+	hints.ai_socktype = SOCK_STREAM; /* TCP */
+
+	snprintf(port_str, sizeof(port_str), "%d", port);
+
+	if ((rc = getaddrinfo(url, port_str, &hints, result)) != 0)
 	{
 		AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_RESOLVE, "Cannot Resolve This Name", url);
-		return (NULL);
+		return (AFC_INET_CLIENT_ERR_RESOLVE);
 	}
 
-	return (h);
+	return (AFC_ERR_NO_ERROR);
 }
 // }}}
 // {{{ afc_inet_client_get ( ic )
