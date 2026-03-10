@@ -313,11 +313,10 @@ char *afc_string_copy(char *dest, const char *source, unsigned long len)
 
 	*((unsigned long *)(dest - sizeof(unsigned long))) = len;
 
-	for (m = 0; m < len; m++)
-		*(dest++) = *(source++);
-	*dest = '\0';
+	memcpy(dest, source, len);
+	dest[len] = '\0';
 
-	return (dest);
+	return (dest + len);
 }
 // }}}
 // {{{ afc_string_clear ( str )
@@ -1033,13 +1032,10 @@ char *afc_string_add(char *dest, const char *source, unsigned long len)
 
 	*((unsigned long *)(dest - sizeof(unsigned long))) = clen + len;
 
-	dest += clen;
+	memcpy(dest + clen, source, len);
+	dest[clen + len] = '\0';
 
-	for (m = 0; m < len; m++)
-		*(dest++) = *(source++);
-	*dest = '\0';
-
-	return (dest);
+	return (dest + clen + len);
 }
 // }}}
 // {{{ afc_string_temp ( path )
