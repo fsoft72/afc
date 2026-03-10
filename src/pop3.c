@@ -291,7 +291,7 @@ int afc_pop3_login(POP3 *p)
 	if ((res = afc_pop3_internal_cmd(p, p->tmp, FALSE)) != AFC_ERR_NO_ERROR)
 		return (res);
 
-	afc_dprintf("Sending password: %s\n", p->passwd);
+	afc_dprintf("Sending password: [REDACTED]\n");
 
 	if (_afc_pop3_check_crlf(p->passwd))
 		return AFC_LOG(AFC_LOG_ERROR, AFC_POP3_ERR_PROTOCOL, "CRLF injection in password", NULL);

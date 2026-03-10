@@ -644,7 +644,7 @@ TRY ( int )
 
 	if ( code == 230 ) RETURN ( AFC_ERR_NO_ERROR );
 
-	afc_dprintf ( "%s: sending password %s\n", __FUNCTION__, password );
+	afc_dprintf ( "%s: sending password [REDACTED]\n", __FUNCTION__ );
 
 	if ( _afc_ftp_client_check_crlf ( password ) ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_LOGIN, "CRLF injection in password", "", AFC_FTP_CLIENT_ERR_LOGIN );
 
