@@ -19,4 +19,6 @@ src/pcre/pcregrep
 tests/*
 !tests/
 !tests/*.c
+!tests/*.h
+!tests/Makefile
 
