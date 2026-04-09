@@ -909,52 +909,48 @@ static int _afc_http_client_send_request(HttpClient * hc, const char * method, c
 	if (!hc || hc->magic != AFC_HTTP_CLIENT_MAGIC)
 		RAISE_RC(AFC_LOG_ERROR, AFC_ERR_INVALID_POINTER, "Invalid HttpClient object", "", AFC_ERR_INVALID_POINTER);
 
-	/* Build the entire HTTP request (headers) into a single buffer */
 	request = afc_string_new(4096);
 	if (!request)
 		RAISE_RC(AFC_LOG_ERROR, AFC_ERR_NO_MEMORY, "Cannot allocate request buffer", "", AFC_ERR_NO_MEMORY);
 
-	/* Request line */
 	afc_string_make(request, "%s /%s HTTP/1.1\r\n", method, path);
 
-	/* Host header (required for HTTP/1.1) */
-	afc_string_clear(hc->buf);
-	afc_string_make(hc->buf, "Host: %s\r\n", hc->host);
-	afc_string_add(request, hc->buf, ALL);
+	/* Host is required for HTTP/1.1 */
+	afc_string_make(hc->tmp, "Host: %s\r\n", hc->host);
+	afc_string_add(request, hc->tmp, ALL);
 
-	/* Content-Length if body is present */
 	if (body && body_len > 0)
 	{
-		afc_string_clear(hc->buf);
-		afc_string_make(hc->buf, "Content-Length: %d\r\n", body_len);
-		afc_string_add(request, hc->buf, ALL);
+		afc_string_make(hc->tmp, "Content-Length: %d\r\n", body_len);
+		afc_string_add(request, hc->tmp, ALL);
 	}
 
-	/* Custom headers */
 	if ((val = (char *)afc_dictionary_first(hc->req_headers)))
 	{
 		do
 		{
 			key = afc_dictionary_get_key(hc->req_headers);
-
-			afc_string_clear(hc->buf);
-			afc_string_make(hc->buf, "%s: %s\r\n", key, val);
-			afc_string_add(request, hc->buf, ALL);
-
+			afc_string_make(hc->tmp, "%s: %s\r\n", key, val);
+			afc_string_add(request, hc->tmp, ALL);
 		} while ((val = (char *)afc_dictionary_succ(hc->req_headers)));
 	}
 
-	/* Blank line to end headers */
 	afc_string_add(request, "\r\n", ALL);
 
-	/* Send entire header block in one write */
+	/* Detect silent truncation: afc_string_add caps to buffer max without error */
+	if (afc_string_len(request) < 2 || request[afc_string_len(request) - 1] != '\n')
+	{
+		afc_string_delete(request);
+		RAISE_RC(AFC_LOG_ERROR, AFC_ERR_NO_MEMORY, "Request headers too large for buffer", "", AFC_ERR_NO_MEMORY);
+	}
+
 	res = afc_inet_client_send(hc->inet, request, afc_string_len(request));
 	afc_string_delete(request);
 
 	if (res != AFC_ERR_NO_ERROR)
 		RAISE_RC(AFC_LOG_ERROR, AFC_HTTP_CLIENT_ERR_REQUEST, "Failed to send request headers", "", res);
 
-	/* Send body if present (separate write since it may be large/binary) */
+	/* Body is sent separately since it may be large or binary */
 	if (body && body_len > 0)
 	{
 		res = afc_inet_client_send(hc->inet, body, body_len);
