@@ -135,6 +135,9 @@ char *_afc_string_new(unsigned long numchars, const char *file, const char *func
 	unsigned long *location;
 	char *str;
 
+	if (numchars == 0)
+		numchars = 1;
+
 	if ((str = _afc_malloc(numchars + 1 + (sizeof(unsigned long) * 2), file, func, line)) == NULL)
 		return NULL;
 
@@ -1222,8 +1225,17 @@ char *afc_string_dirname(const char *path)
 	{
 		// ... else we have to create a new string and
 		// copy the chars we are interested in
-		dest = afc_string_new((x - path));
-		afc_string_copy(dest, path, ALL);
+		size_t len = x - path;
+		if (len == 0)
+		{
+			// Path starts with separator (e.g., "/file.txt")
+			dest = afc_string_new(1);
+		}
+		else
+		{
+			dest = afc_string_new(len);
+			afc_string_copy(dest, path, len);
+		}
 	}
 
 	return (dest);

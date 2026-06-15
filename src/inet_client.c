@@ -193,8 +193,10 @@ int afc_inet_client_clear(InetClient *ic)
 */
 int afc_inet_client_open(InetClient *ic, const char *url, int port)
 {
-	struct hostent *h;
+	struct addrinfo hints, *res, *rp;
 	struct timeval tv;
+	char port_str[16];
+	int ret;
 
 	if ((ic->sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SOCKET, "Cannot Create the Socket", "socket() failed"));
@@ -208,21 +210,28 @@ int afc_inet_client_open(InetClient *ic, const char *url, int port)
 		setsockopt(ic->sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof(tv));
 	}
 
-	if ((h = afc_inet_client_resolve(ic, url)) == NULL)
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+
+	snprintf(port_str, sizeof(port_str), "%d", port);
+
+	if ((ret = getaddrinfo(url, port_str, &hints, &res)) != 0)
+	{
+		AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_HOST_UNKNOWN, "Unable to resolve the host", gai_strerror(ret));
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_HOST_UNKNOWN, "Unable to resolve the host", NULL));
+	}
 
-	// printf ( "IP Addr: %s\n", inet_ntoa ( * ((struct in_addr *) h->h_addr ) ) );
+	/* Try each resolved address until one connects */
+	for (rp = res; rp != NULL; rp = rp->ai_next)
+	{
+		if (connect(ic->sockfd, rp->ai_addr, rp->ai_addrlen) == 0)
+			break;
+	}
 
-	memset(&ic->dest_addr, 0, sizeof(struct sockaddr_in));
+	freeaddrinfo(res);
 
-	ic->dest_addr.sin_family = AF_INET;	  // This is in host byte order
-	ic->dest_addr.sin_port = htons(port); // short, network byte order
-	ic->dest_addr.sin_addr = *((struct in_addr *)h->h_addr);
-
-	// free the hostent obtained? (at the moment, it just segfaults...)
-	// free ( h );
-
-	if ((connect(ic->sockfd, (struct sockaddr *)&ic->dest_addr, sizeof(struct sockaddr))) == -1)
+	if (rp == NULL)
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_CONNECT, "Connect() failed", strerror(errno)));
 
 	return (AFC_ERR_NO_ERROR);

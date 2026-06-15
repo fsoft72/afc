@@ -704,7 +704,7 @@ void _afc_free(void *mem, const char *file, const char *func, const unsigned int
 {
 	if (!mem)
 	{
-		_afc_dprintf("%s::%s NULL pointer from %s::%s (%d)\n", __FILE__, __FUNCTION__, file, func, line);
+		fprintf(stderr, "%s::%s NULL pointer from %s::%s (%d)\n", __FILE__, __FUNCTION__, file, func, line);
 		return;
 	}
 
