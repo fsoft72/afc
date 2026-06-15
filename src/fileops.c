@@ -438,22 +438,26 @@ int afc_fileops_move(FileOperations *fo, const char *source, const char *dest)
 
 	res = rename(source, dest);
 
-	if (errno == EXDEV)
+	if (res != 0)
 	{
-		afc_fileops_internal_physical_move(fo, (char *)source, (char *)dest);
-	}
-	else
-	{
-
-		if (fo->update_funct)
-			fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, (void *)source, fo->update_info);
-
-		if (res != 0)
+		if (errno == EXDEV)
 		{
+			afc_fileops_internal_physical_move(fo, (char *)source, (char *)dest);
+		}
+		else
+		{
+			if (fo->update_funct)
+				fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, (void *)source, fo->update_info);
+
 			fo->last_error = errno;
 
 			return (AFC_LOG(AFC_LOG_ERROR, AFC_FILEOPS_ERR_RENAME, strerror(errno), source));
 		}
+	}
+	else
+	{
+		if (fo->update_funct)
+			fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, (void *)source, fo->update_info);
 	}
 
 	return (AFC_ERR_NO_ERROR);
