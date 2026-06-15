@@ -836,10 +836,14 @@ static int afc_fileops_internal_scan_dir(FileOperations *fo, char *path, int act
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_FILEOPS_ERR_OPEN_DIR, strerror(errno), path));
 	}
 
-	strcpy(dirname, path);
+	snprintf(dirname, sizeof(dirname), "%s", path);
 
 	if (dirname[strlen(dirname) - 1] != '/')
-		strcat(dirname, "/");
+	{
+		size_t len = strlen(dirname);
+		if (len < sizeof(dirname) - 1)
+			strcat(dirname, "/");
+	}
 
 	while ((file = readdir(dir)) != NULL)
 	{
