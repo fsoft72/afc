@@ -104,6 +104,7 @@ extern "C"
 	void *afc_mem_tracker_malloc(MemTracker *, size_t size, const char *file, const char *func, const unsigned int line);
 	void _afc_mem_tracker_free(MemTracker *, void *mem, const char *file, const char *func, const unsigned int line);
 	void _afc_mem_tracker_update_size(MemTracker *mt, void *mem, void *new_mem, size_t size, const char *file, const char *func, const unsigned int line);
+	void _afc_mem_tracker_update_pointer(MemTracker *mt, void *old_mem, void *new_mem);
 	// int afc_mem_tracker_dump_stats ( MemTracker * mt, char detailed );
 
 #ifdef __cplusplus

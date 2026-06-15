@@ -213,7 +213,8 @@ void _afc_mem_tracker_update_size(MemTracker *mt, void *mem, void *new_mem, size
 		mt->alloc_bytes -= hd->size;
 
 		hd->size = size;
-		hd->mem = new_mem;
+		if (new_mem != NULL)
+			hd->mem = new_mem;
 
 		mt->alloc_bytes += hd->size;
 	}
@@ -347,6 +348,31 @@ static void _free_item(MemTracker *mt, MemTrackData *d)
 		free(d->mem);
 	d->mem = NULL;
 	free(d);
+}
+// }}}
+
+// {{{ _afc_mem_tracker_update_pointer ( mt, old_mem, new_mem )
+void _afc_mem_tracker_update_pointer(MemTracker *mt, void *old_mem, void *new_mem)
+{
+	MemTrackData *hd;
+	int pos;
+
+	if (old_mem == NULL)
+		return;
+
+#ifndef MINGW
+	pthread_mutex_lock(&mt->mutex);
+#endif
+
+	if ((pos = _memtrack_find(mt, old_mem)) != -1)
+	{
+		hd = mt->data[pos];
+		hd->mem = new_mem;
+	}
+
+#ifndef MINGW
+	pthread_mutex_unlock(&mt->mutex);
+#endif
 }
 // }}}
 
