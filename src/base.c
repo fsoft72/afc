@@ -699,16 +699,11 @@ void *_afc_malloc(size_t size, const char *file_name, const char *func_name, con
 */
 void _afc_free(void *mem, const char *file, const char *func, const unsigned int line)
 {
-	char *m;
-
 	if (!mem)
 	{
 		_afc_dprintf("%s::%s NULL pointer from %s::%s (%d)\n", __FILE__, __FUNCTION__, file, func, line);
 		return;
 	}
-
-	m = mem;
-	m[0] = '\0';
 
 	if (__internal_afc_base == NULL || __internal_afc_base->tracker == NULL) /*hardening against uninit base pointer*/
 		free(mem);
