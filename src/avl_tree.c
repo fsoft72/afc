@@ -63,6 +63,7 @@ int _afc_avl_tree_delete(AVLTree *t)
 int afc_avl_tree_clear(AVLTree *t)
 {
 	afc_avl_tree_int_clear(t, t->root);
+	t->root = NULL;
 
 	return (AFC_ERR_NO_ERROR);
 }
@@ -119,14 +120,14 @@ AVLNode *_afc_avl_tree_insert(AVLTree *tree, AVLNode *node, void *key, void *val
 	}
 	else
 	{
-		v = tree->comp(val, node->key);
+		v = tree->comp(key, node->key);
 
 		if (v < 0)
 		{
 			node->left = _afc_avl_tree_insert(tree, node->left, key, val);
 			if ((_HEIGHT(node->left) - _HEIGHT(node->right)) == 2)
 			{
-				if (tree->comp(val, node->left->key) < 0)
+				if (tree->comp(key, node->left->key) < 0)
 					node = afc_avl_tree_int_single_rotate_with_left(tree, node);
 				else
 					node = afc_avl_tree_int_double_rotate_with_left(tree, node);
@@ -138,14 +139,14 @@ AVLNode *_afc_avl_tree_insert(AVLTree *tree, AVLNode *node, void *key, void *val
 			node->right = _afc_avl_tree_insert(tree, node->right, key, val);
 			if ((_HEIGHT(node->right) - _HEIGHT(node->left)) == 2)
 			{
-				if (tree->comp(val, node->right->key) > 0)
+				if (tree->comp(key, node->right->key) > 0)
 					node = afc_avl_tree_int_single_rotate_with_right(tree, node);
 				else
 					node = afc_avl_tree_int_double_rotate_with_right(tree, node);
 			}
 		}
 
-		// We do nothing if val is already present in the AVL Tree
+		// We do nothing if key is already present in the AVL Tree
 	}
 
 	node->height = _MAX(_HEIGHT(node->left), _HEIGHT(node->right)) + 1;

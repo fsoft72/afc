@@ -515,14 +515,15 @@ void *afc_list_del(List *nm)
 		if (nm->func_clear)
 			nm->func_clear(nm->pos->ln_Name);
 
-		for (t = 0; t < (nm->sposcount - 1); t++)
+		for (t = 0; t < nm->sposcount; t++)
 		{
 			if (nm->spos[t] == nm->pos)
 			{
-				for (i = (unsigned char)(t + 1); t < nm->sposcount; i++)
-					nm->spos[t - 1] = nm->spos[t];
+				for (i = t; i < nm->sposcount - 1; i++)
+					nm->spos[i] = nm->spos[i + 1];
 
 				nm->spos[--nm->sposcount] = NULL;
+				break;
 			}
 		}
 
@@ -718,7 +719,7 @@ int afc_list_clear(List *nm)
 	while ((n = w->ln_Succ))
 	{
 		if (nm->func_clear)
-			nm->func_clear(n->ln_Name);
+			nm->func_clear(w->ln_Name);
 		Remove(w);
 		afc_free(w);
 		w = n;

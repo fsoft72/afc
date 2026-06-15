@@ -285,7 +285,7 @@ int afc_inet_server_process(InetServer *is)
 				data = afc_hash_find(is->hash, i);
 
 				// Data from clients already connected
-				if ((nbytes = recv(i, data->buf, afc_string_max(data->buf), 0)) <= 0)
+				if ((nbytes = recv(i, data->buf, afc_string_max(data->buf) - 1, 0)) <= 0)
 				{
 					// If 0 == connection closed, if -1 == error
 					if (nbytes == 0)

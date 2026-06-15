@@ -272,8 +272,6 @@ int afc_pop3_connect(POP3 *p)
 	if ((res = afc_inet_client_open(p->ic, p->host, atoi(p->port))) != AFC_ERR_NO_ERROR)
 		return (res);
 
-	p->fd = afc_inet_client_get_file(p->ic);
-
 	afc_pop3_internal_get_response(p);
 
 	return (AFC_ERR_NO_ERROR);
@@ -293,7 +291,7 @@ int afc_pop3_login(POP3 *p)
 	if ((res = afc_pop3_internal_cmd(p, p->tmp, FALSE)) != AFC_ERR_NO_ERROR)
 		return (res);
 
-	afc_dprintf("Sending password: %s\n", p->passwd);
+	afc_dprintf("Sending password: [REDACTED]\n");
 
 	if (_afc_pop3_check_crlf(p->passwd))
 		return AFC_LOG(AFC_LOG_ERROR, AFC_POP3_ERR_PROTOCOL, "CRLF injection in password", NULL);
@@ -468,7 +466,8 @@ static int afc_pop3_internal_put(POP3 *p, const char *msg)
 // {{{ afc_pop3_internal_get_line ( p )
 static int afc_pop3_internal_get_line(POP3 *p)
 {
-	afc_string_fget(p->buf, p->fd);
+	afc_inet_client_read_line(p->ic, p->buf, afc_string_max(p->buf));
+	afc_string_reset_len(p->buf);
 	afc_string_trim(p->buf);
 
 	return (AFC_ERR_NO_ERROR);

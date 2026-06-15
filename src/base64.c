@@ -22,6 +22,36 @@
 static const char eol[] = "\r\n"; /* End of line sequence */
 static const char class_name[] = "Base64";
 
+/* Pre-computed Base64 encode table (6-bit index -> ASCII character) */
+static const char _B64_ENCODE_TABLE[64] = {
+	'A','B','C','D','E','F','G','H','I','J','K','L','M',
+	'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+	'a','b','c','d','e','f','g','h','i','j','k','l','m',
+	'n','o','p','q','r','s','t','u','v','w','x','y','z',
+	'0','1','2','3','4','5','6','7','8','9','+','/'
+};
+
+/* Pre-computed Base64 decode table (ASCII char -> 6-bit value, 0x80 = invalid) */
+static const char _B64_DECODE_TABLE[256] = {
+	/* 0x00-0x0F */ 0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	/* 0x10-0x1F */ 0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	/* 0x20-0x2F */ 0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,  62,0x80,0x80,0x80,  63,
+	/* 0x30-0x3F */   52,  53,  54,  55,  56,  57,  58,  59,  60,  61,0x80,0x80,0x80,   0,0x80,0x80,
+	/* 0x40-0x4F */ 0x80,   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,
+	/* 0x50-0x5F */   15,  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,0x80,0x80,0x80,0x80,0x80,
+	/* 0x60-0x6F */ 0x80,  26,  27,  28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,  39,  40,
+	/* 0x70-0x7F */   41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51,0x80,0x80,0x80,0x80,0x80,
+	/* 0x80-0xFF (all invalid) */
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80
+};
+
 static int afc_base64_internal_inbuf(Base64 *b64);
 static int afc_base64_internal_inchar(Base64 *b64);
 static int afc_base64_internal_encode(Base64 *b64);
@@ -289,20 +319,6 @@ static int afc_base64_internal_encode(Base64 *b64)
 	unsigned char igroup[3], ogroup[4];
 	int c, n;
 
-	/* Fill dtable with character encodings.  */
-
-	for (i = 0; i < 26; i++)
-	{
-		b64->dtable[i] = 'A' + i;
-		b64->dtable[26 + i] = 'a' + i;
-	}
-
-	for (i = 0; i < 10; i++)
-		b64->dtable[52 + i] = '0' + i;
-
-	b64->dtable[62] = '+';
-	b64->dtable[63] = '/';
-
 	while (!quit)
 	{
 		igroup[0] = igroup[1] = igroup[2] = 0;
@@ -321,10 +337,10 @@ static int afc_base64_internal_encode(Base64 *b64)
 
 		if (n > 0)
 		{
-			ogroup[0] = b64->dtable[igroup[0] >> 2];
-			ogroup[1] = b64->dtable[((igroup[0] & 3) << 4) | (igroup[1] >> 4)];
-			ogroup[2] = b64->dtable[((igroup[1] & 0xF) << 2) | (igroup[2] >> 6)];
-			ogroup[3] = b64->dtable[igroup[2] & 0x3F];
+			ogroup[0] = _B64_ENCODE_TABLE[igroup[0] >> 2];
+			ogroup[1] = _B64_ENCODE_TABLE[((igroup[0] & 3) << 4) | (igroup[1] >> 4)];
+			ogroup[2] = _B64_ENCODE_TABLE[((igroup[1] & 0xF) << 2) | (igroup[2] >> 6)];
+			ogroup[3] = _B64_ENCODE_TABLE[igroup[2] & 0x3F];
 
 			/* Replace characters in output stream with "=" pad
 		   characters if fewer than three characters were
@@ -369,19 +385,6 @@ static int afc_base64_internal_decode(Base64 *b64)
 	unsigned char a[4], b[4], o[3];
 	int c;
 
-	for (i = 0; i < 255; i++)
-		b64->dtable[i] = 0x80;
-	for (i = 'A'; i <= 'Z'; i++)
-		b64->dtable[i] = 0 + (i - 'A');
-	for (i = 'a'; i <= 'z'; i++)
-		b64->dtable[i] = 26 + (i - 'a');
-	for (i = '0'; i <= '9'; i++)
-		b64->dtable[i] = 52 + (i - '0');
-
-	b64->dtable['+'] = 62;
-	b64->dtable['/'] = 63;
-	b64->dtable['='] = 0;
-
 	while (TRUE)
 	{
 		for (i = 0; i < 4; i++)
@@ -397,7 +400,7 @@ static int afc_base64_internal_decode(Base64 *b64)
 				return (AFC_BASE64_ERR_EOF);
 			}
 
-			if (b64->dtable[c] & 0x80)
+			if (_B64_DECODE_TABLE[(unsigned char)c] & 0x80)
 			{
 				if (b64->error_check)
 				{
@@ -410,7 +413,7 @@ static int afc_base64_internal_decode(Base64 *b64)
 			}
 
 			a[i] = (unsigned char)c;
-			b[i] = (unsigned char)b64->dtable[c];
+			b[i] = (unsigned char)_B64_DECODE_TABLE[(unsigned char)c];
 		}
 
 		o[0] = (b[0] << 2) | (b[1] >> 4);

@@ -9,6 +9,56 @@ static int _memtrack_find(MemTracker *mt, void *mem);
 static void _memtrack_del(MemTracker *mt, int pos);
 static void _free_item(MemTracker *mt, MemTrackData *d);
 
+/* _memtrack_hash_index - compute hash bucket index from a pointer */
+static unsigned int _memtrack_hash_index(void *ptr)
+{
+	uintptr_t v = (uintptr_t)ptr;
+	v = (v >> 4) ^ (v >> 16);
+	return (unsigned int)(v & (AFC_MEMTRACK_HASH_SIZE - 1));
+}
+
+/* _memtrack_hash_insert - insert entry into the hash table */
+static void _memtrack_hash_insert(MemTracker *mt, MemTrackData *hd)
+{
+	unsigned int idx = _memtrack_hash_index(hd->mem);
+	hd->hash_next = mt->hash_table[idx];
+	mt->hash_table[idx] = hd;
+}
+
+/* _memtrack_hash_remove - remove entry from the hash table */
+static void _memtrack_hash_remove(MemTracker *mt, MemTrackData *hd)
+{
+	unsigned int idx = _memtrack_hash_index(hd->mem);
+	MemTrackData **pp = &mt->hash_table[idx];
+
+	while (*pp)
+	{
+		if (*pp == hd)
+		{
+			*pp = hd->hash_next;
+			hd->hash_next = NULL;
+			return;
+		}
+		pp = &(*pp)->hash_next;
+	}
+}
+
+/* _memtrack_hash_find - O(1) lookup by pointer in the hash table */
+static MemTrackData *_memtrack_hash_find(MemTracker *mt, void *mem)
+{
+	unsigned int idx = _memtrack_hash_index(mem);
+	MemTrackData *hd = mt->hash_table[idx];
+
+	while (hd)
+	{
+		if (hd->mem == mem)
+			return hd;
+		hd = hd->hash_next;
+	}
+
+	return NULL;
+}
+
 MemTracker *afc_mem_tracker_new()
 {
 	MemTracker *mt = malloc(sizeof(MemTracker));
@@ -40,6 +90,8 @@ MemTracker *afc_mem_tracker_new()
 	mt->allocs = 0;
 	mt->frees = 0;
 	mt->alloc_bytes = 0;
+
+	memset(mt->hash_table, 0, sizeof(mt->hash_table));
 
 #ifndef MINGW
 	pthread_mutex_init(&mt->mutex, NULL);
@@ -77,7 +129,6 @@ void *afc_mem_tracker_malloc(MemTracker *mt, size_t size, const char *file, cons
 {
 	MemTrackData *hd;
 	void *mem;
-	char *_file = NULL, *_func = NULL;
 
 	if ((mem = malloc(size)) == NULL)
 		return NULL;
@@ -100,21 +151,18 @@ void *afc_mem_tracker_malloc(MemTracker *mt, size_t size, const char *file, cons
 		return NULL;
 	}
 
-	if (file)
-		_file = strdup(file);
-	if (func)
-		_func = strdup(func);
-
 	hd->mem = mem;
 	hd->size = size;
-	hd->file = _file;
-	hd->func = _func;
+	hd->file = file;  /* Store pointer directly — file/func are compile-time literals */
+	hd->func = func;
 	hd->line = line;
+	hd->hash_next = NULL;
 
 	mt->allocs++;
 	mt->alloc_bytes += size;
 
 	_memtrack_add(mt, hd);
+	_memtrack_hash_insert(mt, hd);
 
 #ifndef MINGW
 	pthread_mutex_unlock(&mt->mutex);
@@ -144,7 +192,6 @@ void *afc_mem_tracker_malloc(MemTracker *mt, size_t size, const char *file, cons
 void _afc_mem_tracker_free(MemTracker *mt, void *mem, const char *file, const char *func, const unsigned int line)
 {
 	MemTrackData *hd;
-	int pos;
 
 	if (mem == NULL)
 		return;
@@ -156,14 +203,17 @@ void _afc_mem_tracker_free(MemTracker *mt, void *mem, const char *file, const ch
 	if ((__internal_afc_base->start_log_level >= AFC_LOG_NOTICE) && (mt->show_frees))
 		_afc_dprintf("NOTICE: MemTracker: free %p\n", mem);
 
-	if ((pos = _memtrack_find(mt, mem)) != -1)
+	hd = _memtrack_hash_find(mt, mem);
+	if (hd)
 	{
-		hd = mt->data[pos];
+		int pos = _memtrack_find(mt, mem);
 		mt->alloc_bytes -= hd->size;
 		mt->frees++;
 
+		_memtrack_hash_remove(mt, hd);
 		_free_item(mt, hd);
-		_memtrack_del(mt, pos);
+		if (pos != -1)
+			_memtrack_del(mt, pos);
 	}
 	else
 	{
@@ -180,14 +230,15 @@ void _afc_mem_tracker_free(MemTracker *mt, void *mem, const char *file, const ch
 /*
 @node afc_mem_tracker_update_size
 
-			 NAME: afc_mem_tracker_update_size ( mem_tracker, mem, new_mem, size )  - Frees a memory block
+			 NAME: afc_mem_tracker_update_size ( mem_tracker, mem, new_mem, size )  - Updates a tracked allocation
 
 		 SYNOPSIS: int afc_mem_tracker_update_size ( MemTracker * mem_tracker, void * mem, size_t size )
 
-	  DESCRIPTION: This function frees a memory block releasing it to the system.
+	  DESCRIPTION: This function updates the tracked pointer and size after a realloc.
 
 			INPUT: - mem_tracker  - Pointer to a valid afc_mem_tracker class.
-			- mem		- Memory block to be freed
+			- mem		- Original memory block pointer
+			- new_mem	- New memory block pointer after realloc
 			- size		- New size of memory
 
 		  RESULTS: should be AFC_ERR_NO_ERROR
@@ -198,7 +249,6 @@ void _afc_mem_tracker_free(MemTracker *mt, void *mem, const char *file, const ch
 void _afc_mem_tracker_update_size(MemTracker *mt, void *mem, void *new_mem, size_t size, const char *file, const char *func, const unsigned int line)
 {
 	MemTrackData *hd;
-	int pos;
 
 	if (mem == NULL)
 		return;
@@ -207,9 +257,10 @@ void _afc_mem_tracker_update_size(MemTracker *mt, void *mem, void *new_mem, size
 	pthread_mutex_lock(&mt->mutex);
 #endif
 
-	if ((pos = _memtrack_find(mt, mem)) != -1)
+	hd = _memtrack_hash_find(mt, mem);
+	if (hd)
 	{
-		hd = mt->data[pos];
+		_memtrack_hash_remove(mt, hd);
 		mt->alloc_bytes -= hd->size;
 
 		hd->size = size;
@@ -217,6 +268,7 @@ void _afc_mem_tracker_update_size(MemTracker *mt, void *mem, void *new_mem, size
 			hd->mem = new_mem;
 
 		mt->alloc_bytes += hd->size;
+		_memtrack_hash_insert(mt, hd);
 	}
 	else
 	{
@@ -340,10 +392,7 @@ static void _free_item(MemTracker *mt, MemTrackData *d)
 	if (!d)
 		return;
 
-	if (d->func)
-		free(d->func);
-	if (d->file)
-		free(d->file);
+	/* file and func point to compile-time string literals — do not free them */
 	if (d->mem)
 		free(d->mem);
 	d->mem = NULL;

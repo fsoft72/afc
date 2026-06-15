@@ -1072,23 +1072,7 @@ static long afc_string_list_internal_sort_nocase_noinv(void *a, void *b, void *i
 // {{{ afc_string_list_internal_sort_case_noinv ( a, b, info )
 static long afc_string_list_internal_sort_case_noinv(void *a, void *b, void *info)
 {
-	char *aa, *bb;
-	signed long ret;
-
-	aa = afc_string_new(strlen((char *)a));
-	bb = afc_string_new(strlen((char *)b));
-
-	afc_string_copy(aa, (char *)a, TRUE);
-	afc_string_copy(bb, (char *)b, TRUE);
-	afc_string_upper(aa);
-	afc_string_upper(bb);
-
-	ret = -afc_string_comp(aa, bb, TRUE);
-
-	afc_string_delete(aa);
-	afc_string_delete(bb);
-
-	return (ret);
+	return (-strcasecmp((const char *)a, (const char *)b));
 }
 // }}}
 // {{{ afc_string_list_internal_sort_nocase_inv ( a, b, info )

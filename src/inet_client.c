@@ -193,40 +193,42 @@ int afc_inet_client_clear(InetClient *ic)
 */
 int afc_inet_client_open(InetClient *ic, const char *url, int port)
 {
-	struct addrinfo hints, *res, *rp;
+	struct addrinfo *res = NULL, *rp;
 	struct timeval tv;
-	char port_str[16];
-	int ret;
+	int rc;
 
-	if ((ic->sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SOCKET, "Cannot Create the Socket", "socket() failed"));
-
-	// Set timeout if configured
-	if (ic->timeout > 0)
-	{
-		tv.tv_sec = ic->timeout;
-		tv.tv_usec = 0;
-		setsockopt(ic->sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
-		setsockopt(ic->sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof(tv));
-	}
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-
-	snprintf(port_str, sizeof(port_str), "%d", port);
-
-	if ((ret = getaddrinfo(url, port_str, &hints, &res)) != 0)
-	{
-		AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_HOST_UNKNOWN, "Unable to resolve the host", gai_strerror(ret));
+	if ((rc = afc_inet_client_resolve(ic, url, port, &res)) != AFC_ERR_NO_ERROR)
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_HOST_UNKNOWN, "Unable to resolve the host", NULL));
 	}
 
-	/* Try each resolved address until one connects */
+	/* Iterate returned addresses until one connects */
 	for (rp = res; rp != NULL; rp = rp->ai_next)
 	{
+		ic->sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+		if (ic->sockfd == -1)
+			continue;
+
+		/* Set timeout if configured */
+		if (ic->timeout > 0)
+		{
+			tv.tv_sec = ic->timeout;
+			tv.tv_usec = 0;
+			setsockopt(ic->sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv));
+			setsockopt(ic->sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&tv, sizeof(tv));
+		}
+
 		if (connect(ic->sockfd, rp->ai_addr, rp->ai_addrlen) == 0)
-			break;
+		{
+			/* Store the connected address for later use */
+			if (rp->ai_family == AF_INET)
+			{
+				memcpy(&ic->dest_addr, rp->ai_addr, sizeof(struct sockaddr_in));
+			}
+			break; /* Success */
+		}
+
+		close(ic->sockfd);
+		ic->sockfd = -1;
 	}
 
 	freeaddrinfo(res);
@@ -284,33 +286,45 @@ int afc_inet_client_close(InetClient *ic)
 /*
 @node afc_inet_client_resolve
 
-		   NAME: afc_inet_client_resolve ( ic, url )  - Performs a DNS resolution of the given URL
+		   NAME: afc_inet_client_resolve ( ic, url, port, result )  - Performs a DNS resolution of the given URL
 
-	   SYNOPSIS: struct hostent afc_inet_client_resolve ( InetClient * ic, char * url )
+	   SYNOPSIS: int afc_inet_client_resolve ( InetClient * ic, const char * url, int port, struct addrinfo ** result )
 
-	DESCRIPTION: This function resolves the given /url/ and returns an /hostent/ structure.
+	DESCRIPTION: This function resolves the given /url/ using getaddrinfo() and returns a linked list
+		 of addrinfo structures supporting both IPv4 and IPv6. The caller must free the result
+		 with freeaddrinfo() when done.
 
-		  INPUT: - ic    - Pointer to a valid afc_inet_client instance.
-		 - url   - URL to be resolved
+		  INPUT: - ic     - Pointer to a valid afc_inet_client instance.
+		 - url    - URL to be resolved
+		 - port   - Port number for the service
+		 - result - Pointer to store the resolved addrinfo linked list
 
-		RESULTS: - an hostent structure on success.
-		 - NULL on error.
+		RESULTS: - AFC_ERR_NO_ERROR on success.
+		 - AFC_INET_CLIENT_ERR_RESOLVE on error.
 
 	   SEE ALSO: - afc_inet_client_open()
 
 @endnode
 */
-struct hostent *afc_inet_client_resolve(InetClient *ic, const char *url)
+int afc_inet_client_resolve(InetClient *ic, const char *url, int port, struct addrinfo **result)
 {
-	struct hostent *h;
+	struct addrinfo hints;
+	char port_str[16];
+	int rc;
 
-	if ((h = gethostbyname(url)) == NULL)
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;     /* Allow IPv4 or IPv6 */
+	hints.ai_socktype = SOCK_STREAM; /* TCP */
+
+	snprintf(port_str, sizeof(port_str), "%d", port);
+
+	if ((rc = getaddrinfo(url, port_str, &hints, result)) != 0)
 	{
 		AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_RESOLVE, "Cannot Resolve This Name", url);
-		return (NULL);
+		return (AFC_INET_CLIENT_ERR_RESOLVE);
 	}
 
-	return (h);
+	return (AFC_ERR_NO_ERROR);
 }
 // }}}
 // {{{ afc_inet_client_get ( ic )
@@ -403,31 +417,148 @@ int afc_inet_client_get(InetClient *ic)
 */
 int afc_inet_client_send(InetClient *ic, const char *str, int len)
 {
+	int sent;
+	int total = 0;
+
 	if (len <= 0)
 		len = strlen(str);
 
-	// Use SSL_write if SSL is enabled
-	if (ic->use_ssl && ic->ssl)
+	/* Loop to handle partial sends: both send() and SSL_write() can
+	   return fewer bytes than requested on loaded systems or large payloads */
+	while (total < len)
 	{
-		if (SSL_write(ic->ssl, str, len) <= 0)
-			return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_WRITE, "SSL_write() failed", NULL));
-	}
-	else
-	{
-		if (send(ic->sockfd, str, len, 0) == -1)
-			return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SEND, "send() failed", NULL));
+		if (ic->use_ssl && ic->ssl)
+		{
+			sent = SSL_write(ic->ssl, str + total, len - total);
+			if (sent <= 0)
+				return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_WRITE, "SSL_write() failed", NULL));
+		}
+		else
+		{
+			sent = send(ic->sockfd, str + total, len - total, 0);
+			if (sent == -1)
+				return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SEND, "send() failed", NULL));
+		}
+
+		total += sent;
 	}
 
 	return (AFC_ERR_NO_ERROR);
 }
 // }}}
 // {{{ afc_inet_client_get_file ( ic )
+/*
+   NOTE: When SSL is enabled, using the returned FILE* will bypass
+   SSL_read() and read raw encrypted bytes. Use afc_inet_client_read_line()
+   or afc_inet_client_read_bytes() instead for SSL-safe I/O.
+*/
 FILE *afc_inet_client_get_file(InetClient *ic)
 {
+	if (ic->use_ssl && ic->ssl)
+		return NULL;
+
 	if (ic->fd)
 		return (ic->fd);
 
 	return (ic->fd = fdopen(ic->sockfd, "r"));
+}
+// }}}
+// {{{ afc_inet_client_read_line ( ic, buf, max_len )
+/*
+   _afc_inet_client_read_one_byte - reads a single byte, dispatching
+   to SSL_read() or recv() as appropriate.
+   Returns 1 on success, 0 on EOF, -1 on error.
+*/
+static int _afc_inet_client_read_one_byte(InetClient *ic, char *ch)
+{
+	if (ic->use_ssl && ic->ssl)
+	{
+		int ret = SSL_read(ic->ssl, ch, 1);
+		if (ret <= 0)
+			return (ret == 0) ? 0 : -1;
+		return 1;
+	}
+	else
+	{
+		int ret = recv(ic->sockfd, ch, 1, 0);
+		if (ret <= 0)
+			return (ret == 0) ? 0 : -1;
+		return 1;
+	}
+}
+
+/*
+   afc_inet_client_read_line - reads a line from the connection,
+   dispatching to SSL_read() or recv() as needed. Line is terminated
+   by '\n'. The newline is included in the output buffer.
+   Returns the number of bytes read, 0 on EOF, or -1 on error.
+*/
+int afc_inet_client_read_line(InetClient *ic, char *buf, int max_len)
+{
+	int n = 0;
+	char ch;
+	int ret;
+
+	if (!ic || !buf || max_len <= 0)
+		return -1;
+
+	/* When SSL is not active and we have a FILE*, use fgets for efficiency */
+	if (!(ic->use_ssl && ic->ssl))
+	{
+		FILE *fd = afc_inet_client_get_file(ic);
+		if (fd && fgets(buf, max_len, fd))
+			return strlen(buf);
+		return 0;
+	}
+
+	/* SSL mode: read byte by byte to find line boundary */
+	while (n < max_len - 1)
+	{
+		ret = _afc_inet_client_read_one_byte(ic, &ch);
+		if (ret <= 0)
+		{
+			if (n > 0) break; /* Return partial line */
+			return ret;
+		}
+
+		buf[n++] = ch;
+		if (ch == '\n') break;
+	}
+
+	buf[n] = '\0';
+	return n;
+}
+// }}}
+// {{{ afc_inet_client_read_bytes ( ic, buf, len )
+/*
+   afc_inet_client_read_bytes - reads exactly 'len' bytes from the
+   connection, dispatching to SSL_read() or recv() as needed.
+   Returns the number of bytes read, 0 on EOF, or -1 on error.
+*/
+int afc_inet_client_read_bytes(InetClient *ic, char *buf, int len)
+{
+	int total = 0;
+
+	if (!ic || !buf || len <= 0)
+		return -1;
+
+	while (total < len)
+	{
+		int ret;
+		if (ic->use_ssl && ic->ssl)
+			ret = SSL_read(ic->ssl, buf + total, len - total);
+		else
+			ret = recv(ic->sockfd, buf + total, len - total, 0);
+
+		if (ret <= 0)
+		{
+			if (total > 0) return total;
+			return (ret == 0) ? 0 : -1;
+		}
+		total += ret;
+	}
+
+	return total;
 }
 // }}}
 // {{{ afc_inet_client_set_tags ( ic, first_tag, ... )

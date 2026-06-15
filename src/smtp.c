@@ -330,29 +330,54 @@ int afc_smtp_set_tag(SMTP *smtp, int tag, void *val)
 int _afc_smtp_get_response(SMTP *smtp)
 {
 	int res;
+	const char *line;
+	int code = -1;
 
 	if (!smtp || smtp->magic != AFC_SMTP_MAGIC)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_ERR_INVALID_POINTER, "Invalid SMTP object", NULL);
 
 	afc_string_clear(smtp->buf);
 
-	if ((res = afc_inet_client_get(smtp->ic)) != AFC_ERR_NO_ERROR)
-		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_PROTOCOL, "Failed to get response", NULL);
+	/* Keep reading until we get the final line of the response.
+	 * Multi-line SMTP responses use "NNN-" as continuation and "NNN " as final. */
+	for (;;)
+	{
+		if ((res = afc_inet_client_get(smtp->ic)) != AFC_ERR_NO_ERROR)
+			return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_PROTOCOL, "Failed to get response", NULL);
 
-	// Copy response from InetClient buffer to SMTP buffer
-	afc_string_copy(smtp->buf, smtp->ic->buf, ALL);
+		/* Append each chunk to the SMTP buffer */
+		if (afc_string_len(smtp->buf) == 0)
+			afc_string_copy(smtp->buf, smtp->ic->buf, ALL);
+		else
+			afc_string_add(smtp->buf, smtp->ic->buf, ALL);
 
-	// SMTP responses start with a 3-digit code
-	if (afc_string_len(smtp->buf) < 3)
+		/* Find the last line in the current buffer to check for continuation */
+		line = smtp->ic->buf;
+
+		if (afc_string_len(smtp->ic->buf) < 4)
+			continue;
+
+		/* Validate that response starts with 3 ASCII digits */
+		if (!isdigit((unsigned char)line[0]) ||
+			!isdigit((unsigned char)line[1]) ||
+			!isdigit((unsigned char)line[2]))
+			return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_INVALID_RESPONSE, "Non-digit response code", smtp->buf);
+
+		code = (line[0] - '0') * 100 + (line[1] - '0') * 10 + (line[2] - '0');
+
+		/* "NNN " (space) means this is the final line */
+		if (line[3] == ' ')
+			break;
+
+		/* "NNN-" means continuation, keep reading */
+		if (line[3] != '-')
+			break;
+	}
+
+	if (code < 0)
 		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_INVALID_RESPONSE, "Invalid response", smtp->buf);
 
-	// Extract and validate response code - must be 3 ASCII digits
-	if (!isdigit((unsigned char)smtp->buf[0]) ||
-		!isdigit((unsigned char)smtp->buf[1]) ||
-		!isdigit((unsigned char)smtp->buf[2]))
-		return AFC_LOG(AFC_LOG_ERROR, AFC_SMTP_ERR_INVALID_RESPONSE, "Non-digit response code", smtp->buf);
-
-	return (smtp->buf[0] - '0') * 100 + (smtp->buf[1] - '0') * 10 + (smtp->buf[2] - '0');
+	return code;
 }
 // }}}
 // {{{ _afc_smtp_send_command ( smtp, cmd )

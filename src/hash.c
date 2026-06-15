@@ -58,8 +58,6 @@ To add a new value in the hash table, use the afc_hash_add() method. To get back
 
 static const char class_name[] = "Hash";
 
-static int afc_hash_internal_sort(const void *hd1, const void *hd2);
-
 // {{{ struct afc_hash * afc_hash_new ()
 /*
 @node afc_hash_new
@@ -219,12 +217,60 @@ int afc_hash_add(Hash *hm, unsigned long int hash_value, void *data)
 	hd->hash_value = hash_value;
 	hd->data = data;
 
-	afc_array_add(hm->am, hd, AFC_ARRAY_ADD_TAIL);
+	/* Use binary search to find the correct sorted position,
+	   then insert directly there. This avoids the O(n log n) full sort
+	   that was previously called on every insertion, reducing bulk
+	   insert cost from O(n^2 log n) to O(n^2) in the worst case. */
+	if (hm->am->num_items == 0)
+	{
+		afc_array_add(hm->am, hd, AFC_ARRAY_ADD_TAIL);
+	}
+	else
+	{
+		int min = 0;
+		int max = (int)hm->am->num_items - 1;
+		int pos = 0;
+		HashData *cur;
 
-	/* Sort immediately after insertion to keep the array always sorted.
-	   This eliminates the race condition where two concurrent afc_hash_find()
-	   calls could both see is_sorted==FALSE and sort simultaneously. */
-	afc_array_sort(hm->am, afc_hash_internal_sort);
+		/* Binary search for insertion point */
+		while (min <= max)
+		{
+			pos = (min + max) / 2;
+			cur = (HashData *)hm->am->mem[pos];
+
+			if (cur->hash_value < hash_value)
+				min = pos + 1;
+			else if (cur->hash_value > hash_value)
+				max = pos - 1;
+			else
+				break; /* Equal: insert at this position */
+		}
+
+		/* Determine final insertion position */
+		if (min > max)
+			pos = min;
+
+		/* Position the array cursor and insert */
+		if (pos >= (int)hm->am->num_items)
+		{
+			afc_array_add(hm->am, hd, AFC_ARRAY_ADD_TAIL);
+		}
+		else
+		{
+			afc_array_item(hm->am, pos);
+			afc_array_add(hm->am, hd, AFC_ARRAY_ADD_HERE);
+
+			/* Swap the new item into position: ADD_HERE inserts AFTER
+			   current_pos, but we need it AT current_pos. The newly
+			   inserted item is at pos+1, swap with item at pos. */
+			void *tmp = hm->am->mem[pos];
+			hm->am->mem[pos] = hm->am->mem[pos + 1];
+			hm->am->mem[pos + 1] = tmp;
+		}
+	}
+
+	/* Mark array as sorted since we maintain sort order */
+	hm->am->is_sorted = TRUE;
 
 	return (AFC_ERR_NO_ERROR);
 }
@@ -615,17 +661,6 @@ int afc_hash_before_first ( Hash * hm )
 /* =====================================================================================
 	 INTERNAL FUNCTIONS
 ===================================================================================== */
-// {{{ afc_hash_internal_sort ( hd1, hd2 )
-static int afc_hash_internal_sort(const void *hd1, const void *hd2)
-{
-	unsigned long int v1 = ((HashData *)(*(HashData **)hd1))->hash_value;
-	unsigned long int v2 = ((HashData *)(*(HashData **)hd2))->hash_value;
-
-	if (v1 > v2)
-		return (1);
-	return (v1 < v2 ? -1 : 0);
-}
-// }}}
 
 #ifdef TEST_HASH
 int main()

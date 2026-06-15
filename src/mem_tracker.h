@@ -62,12 +62,15 @@ extern "C"
 	{
 		void *mem;
 		size_t size;
-		char *file;
-		char *func;
+		const char *file;  /* Points to compile-time string literal, no strdup needed */
+		const char *func;  /* Points to compile-time string literal, no strdup needed */
 		unsigned int line;
+		struct _mt_data *hash_next; /* Next entry in hash bucket chain */
 	};
 
 	typedef struct _mt_data MemTrackData;
+
+#define AFC_MEMTRACK_HASH_SIZE 1024
 
 	struct _memtrack
 	{
@@ -78,6 +81,8 @@ extern "C"
 		unsigned int *free;
 		int free_cur;
 		int free_max;
+
+		MemTrackData *hash_table[AFC_MEMTRACK_HASH_SIZE]; /* Hash table for O(1) pointer lookup */
 
 		char show_mallocs;
 		char show_frees;

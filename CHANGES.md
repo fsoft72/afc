@@ -1,5 +1,91 @@
 # CHANGES.md
 
+## March 10, 2026
+
+### Performance improvements from IMPROVEMENTS.md (#7-#11)
+
+**string.c - Replace byte-by-byte copies with memcpy (#7)**
+- `afc_string_copy()` and `afc_string_add()` now use `memcpy()` instead of per-byte loops
+
+**mem_tracker.c - Rework MemTracker to O(1) hash-based lookup (#8)**
+- Added a hash table indexed by pointer for O(1) find/free/update instead of linear scan
+- Store file/func pointers directly instead of strdup'ing compile-time string literals
+
+**string_list.c / dirmaster.c - Remove allocation churn from case-insensitive sorts (#9)**
+- Replaced temporary string alloc+uppercase+compare+free with `strcasecmp()`
+
+**base64.c - Make lookup tables static const (#10)**
+- Replaced per-call encode/decode table rebuilding with pre-computed static const arrays
+
+**http_client.c - Batch HTTP request writes (#11)**
+- Build entire HTTP header block in memory, then send in one call instead of per-header sends
+
+### Bug fixes and security improvements from IMPROVEMENTS.md (#2-#6)
+
+**inet_client.c - Replace gethostbyname() with getaddrinfo() (#2)**
+- Migrated DNS resolution to `getaddrinfo()`, adding IPv6 support, better thread-safety, and address iteration on connect failure
+
+**pop3.c / ftp_client.c - Stop logging cleartext passwords (#3)**
+- Replaced password values with `[REDACTED]` in debug output to prevent credential leaks
+
+**inet_server.c - Fix one-byte buffer overflow (#4)**
+- Reserved one byte for the null terminator before calling `recv()`, preventing a write past the allocation
+
+**smtp.c - Consume full multi-line SMTP responses (#5)**
+- `_afc_smtp_get_response()` now loops until the final response line (NNN followed by space) instead of reading only the first chunk
+
+**list.c - Fix stack-position cleanup logic in afc_list_del() (#6)**
+- Rewrote the compaction loop to use a single consistent index variable, fixing an infinite loop, index underflow, and skipped last entry
+
+## March 4, 2026
+
+### Critical Bug Fixes from Optimization Report
+
+Fixed 10 critical/high bugs identified in OPTIMIZE.md sections 1.2-1.11.
+
+**hash.c - Full sort on every insertion (1.2) [CRITICAL/perf]**
+- `afc_hash_add()` called `afc_array_sort()` after every insertion, making bulk inserts O(n^2 log n)
+- Replaced with binary search + sorted insertion, maintaining order incrementally
+
+**inet_client.c - FILE* bypasses SSL (1.3) [CRITICAL/bug+sec]**
+- `afc_inet_client_get_file()` returned `fdopen()` which bypasses `SSL_read()`, breaking all HTTPS/TLS protocols
+- Added `afc_inet_client_read_line()` and `afc_inet_client_read_bytes()` for SSL-safe I/O
+- Updated http_client.c, pop3.c, ftp_client.c to use new functions
+
+**circular_list.c - Wrong allocation size (1.4) [CRITICAL/bug]**
+- `afc_circular_list_int_create_node()` allocated `sizeof(CircularList)` instead of `sizeof(CircularListNode)`
+
+**circular_list.c - Use-after-free on single-element deletion (1.5) [CRITICAL/bug]**
+- `afc_circular_list_del()` for single-element list dereferenced freed pointer before nulling
+- Added explicit single-element case handling
+
+**array.c - Out-of-bounds write before resize (1.6) [CRITICAL/bug]**
+- `afc_array_add()` wrote to `mem[num_items]` before checking capacity
+- Moved resize check before the write
+
+**array.c - memcpy on overlapping memory (1.7) [CRITICAL/bug]**
+- `afc_array_del()` used `memcpy()` on overlapping regions in the same array (undefined behavior)
+- Changed to `memmove()`
+
+**avl_tree.c - Insert compares value instead of key (1.8) [CRITICAL/bug]**
+- `_afc_avl_tree_insert()` compared `val` against `node->key` instead of `key` against `node->key`
+- Tree was ordered by values, not keys
+
+**avl_tree.c - Dangling root pointer after clear (1.9) [HIGH/bug]**
+- `afc_avl_tree_clear()` freed all nodes but never set `t->root = NULL`
+- Subsequent operations dereferenced freed memory
+
+**list.c - Clear function invoked on wrong node (1.10) [HIGH/bug]**
+- `afc_list_clear()` called `func_clear(n->ln_Name)` on the successor node instead of the node being removed
+- First node's data was never cleared; sentinel's data was incorrectly cleared
+
+**inet_client.c - Partial sends not handled (1.11) [HIGH/bug]**
+- Both `send()` and `SSL_write()` can return fewer bytes than requested
+- Code only checked for -1, silently truncating data on large payloads
+- Added send loop to ensure all bytes are transmitted
+
+---
+
 ## February 27, 2026
 
 ### Test Suite: Segfault Fixes
