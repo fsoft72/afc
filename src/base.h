@@ -34,7 +34,7 @@ extern "C"
 
 /* Constants */
 #ifndef true
-#define true (~0)
+#define true 1
 #endif
 
 #ifndef false
@@ -49,11 +49,7 @@ extern "C"
 #define FALSE false
 #endif
 
-#ifndef MINGW
-#define BOOL char
-#else
 #define BOOL int
-#endif
 
 #define AFC_TAG_END 0xDEADBEEF
 

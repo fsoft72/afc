@@ -596,10 +596,11 @@ void *afc_array_del(Array *am)
 	if (am->current_pos == (am->num_items - 1)) // If I enter here, then I am pointing on the last element of the array
 	{
 		am->num_items--;					 // The array is resized -1
-		am->current_pos = am->num_items - 1; // and we'll point (again!) on the last element
 
 		if (am->num_items == 0)
 			return (NULL); // If the array is now empty, we should return NULL
+
+		am->current_pos = am->num_items - 1; // and we'll point (again!) on the last element
 
 		return (am->mem[am->current_pos]); // Else the current element (last) will be returned
 	}

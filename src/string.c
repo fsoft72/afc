@@ -727,20 +727,29 @@ unsigned long afc_string_reset_len(const char *str)
 int afc_string_radix(char *dest, long n, int radix)
 {
 	char hexn[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_@";
-	char buf[1024]; // Flawfinder: ignore
 	long q = labs(n);
 	int r = 0;
-
-	afc_string_copy(dest, "", ALL);
+	int buf_size = 128;
+	char *buf;
 
 	if (radix > 64)
 		return (-1);
+
+	buf = afc_malloc(buf_size);
+	if (buf == NULL)
+		return (-1);
+
+	afc_string_copy(dest, "", ALL);
 
 	while (1)
 	{
 		r = q % radix;
 
-		snprintf(buf, 1024, "%c%s", hexn[r], dest); // Flawfinder: ignore
+		if (snprintf(buf, buf_size, "%c%s", hexn[r], dest) >= buf_size)
+		{
+			afc_free(buf);
+			return (-1);
+		}
 		afc_string_copy(dest, buf, ALL);
 
 		q = (q - r) / radix;
@@ -751,9 +760,15 @@ int afc_string_radix(char *dest, long n, int radix)
 
 	if (n < 0)
 	{
-		snprintf(buf, 1024, "-%s", dest);
+		if (snprintf(buf, buf_size, "-%s", dest) >= buf_size)
+		{
+			afc_free(buf);
+			return (-1);
+		}
 		afc_string_copy(dest, buf, ALL);
 	}
+
+	afc_free(buf);
 
 	return (0);
 }
@@ -1313,7 +1328,7 @@ char *afc_string_utf8_to_latin1(const char *utf8)
 	unsigned char *s = afc_malloc(buf_size);
 	unsigned int pos = 0;
 	unsigned int len = strlen(utf8);
-	unsigned char c1, c2, iso;
+	unsigned char c1, c2, c3, c4, iso;
 	unsigned int xpos = 0;
 	char *res;
 
@@ -1326,28 +1341,74 @@ char *afc_string_utf8_to_latin1(const char *utf8)
 			if (xpos >= buf_size - 1) break;
 			s[xpos++] = c1;
 		}
-		else if (c1 >= 0xC0 && c1 <= 0xC7)
+		else if (c1 >= 0xC0 && c1 <= 0xDF)
 		{
-			if (pos == len)
+			if (pos >= len)
 			{
-				_afc_dprintf("%s::%s - ERROR: wrong string length", __FILE__, __FUNCTION__);
+				_afc_dprintf("%s::%s - ERROR: truncated UTF-8 sequence", __FILE__, __FUNCTION__);
 				afc_free(s);
 				return NULL;
 			}
 
 			c2 = utf8[pos++];
+			iso = ((c1 & 0x1F) << 6) | (c2 & 0x3F);
 
-			iso = ((c1 & 0x07) << 6) | (c2 & 0x3F);
-
-			if (iso <= 0x7F)
+			if (xpos >= buf_size - 1) break;
+			s[xpos++] = iso;
+		}
+		else if (c1 >= 0xE0 && c1 <= 0xEF)
+		{
+			if (pos + 1 >= len)
 			{
-				_afc_dprintf("%s::%s - ERROR: Sequence longer than needed", __FILE__, __FUNCTION__);
+				_afc_dprintf("%s::%s - ERROR: truncated UTF-8 sequence", __FILE__, __FUNCTION__);
 				afc_free(s);
 				return NULL;
 			}
 
+			c2 = utf8[pos++];
+			c3 = utf8[pos++];
+			unsigned int codepoint = ((c1 & 0x0F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F);
+
+			if (codepoint > 0xFF)
+			{
+				if (xpos >= buf_size - 1) break;
+				s[xpos++] = '?';
+			}
+			else
+			{
+				if (xpos >= buf_size - 1) break;
+				s[xpos++] = (unsigned char)codepoint;
+			}
+		}
+		else if (c1 >= 0xF0 && c1 <= 0xF7)
+		{
+			if (pos + 2 >= len)
+			{
+				_afc_dprintf("%s::%s - ERROR: truncated UTF-8 sequence", __FILE__, __FUNCTION__);
+				afc_free(s);
+				return NULL;
+			}
+
+			c2 = utf8[pos++];
+			c3 = utf8[pos++];
+			c4 = utf8[pos++];
+			unsigned int codepoint = ((c1 & 0x07) << 18) | ((c2 & 0x3F) << 12) | ((c3 & 0x3F) << 6) | (c4 & 0x3F);
+
+			if (codepoint > 0xFF)
+			{
+				if (xpos >= buf_size - 1) break;
+				s[xpos++] = '?';
+			}
+			else
+			{
+				if (xpos >= buf_size - 1) break;
+				s[xpos++] = (unsigned char)codepoint;
+			}
+		}
+		else
+		{
 			if (xpos >= buf_size - 1) break;
-			s[xpos++] = iso;
+			s[xpos++] = '?';
 		}
 	}
 

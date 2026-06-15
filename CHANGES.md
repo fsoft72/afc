@@ -2,6 +2,25 @@
 
 ## June 15, 2026
 
+### Fix MEDIUM priority optimizations
+
+**base.h - Standardize BOOL and boolean constants**
+- `BOOL` now uses `int` on all platforms (was `char` on Linux, `int` on MINGW)
+- `true`/`false` now use `1`/`0` instead of `~0`/`0`
+
+**string.c - Fix afc_string_radix() stack buffer overflow**
+- Replaced fixed 1024-byte stack buffer with dynamic allocation
+
+**string.c - Fix afc_string_utf8_to_latin1() incomplete UTF-8 handling**
+- Now handles all valid UTF-8 sequences (1-4 bytes) with proper error handling
+- Characters outside Latin-1 range are replaced with '?'
+
+**array.c - Fix afc_array_del() off-by-one underflow**
+- Check for empty array before decrementing `current_pos`
+
+**fileops.c - Fix stack-based buffer overflow in directory scanning**
+- `afc_fileops_internal_scan_dir()` now uses dynamic allocation sized to actual path length
+
 ### Fix LOW priority optimizations
 
 **string.c - Fix afc_string_copy() and afc_string_add() return values**

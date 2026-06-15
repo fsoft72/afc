@@ -43,32 +43,38 @@
 
 ## Medium
 
-- [ ] **`BOOL` type is `char` on Linux, `int` on MINGW** - `src/base.h:53-56` defines `BOOL` differently per platform. This causes ABI incompatibility and subtle bugs when mixing code compiled on different platforms. Use `int` consistently or use `<stdbool.h>`.
+- [x] **`BOOL` type is `char` on Linux, `int` on MINGW** - `src/base.h:53-56` defines `BOOL` differently per platform. This causes ABI incompatibility and subtle bugs when mixing code compiled on different platforms. Use `int` consistently or use `<stdbool.h>`.
   - File(s): `src/base.h:52-56`
+  - Status: **Fixed** - Now uses `int` consistently on all platforms.
 
-- [ ] **`true`/`false` defined as `~0` and `0`** - `src/base.h:37-42` defines `true` as `~0` (all bits set) instead of `1`. While functionally correct in boolean contexts, it can cause surprises in integer operations and conflicts with C99 `<stdbool.h>`.
+- [x] **`true`/`false` defined as `~0` and `0`** - `src/base.h:37-42` defines `true` as `~0` (all bits set) instead of `1`. While functionally correct in boolean contexts, it can cause surprises in integer operations and conflicts with C99 `<stdbool.h>`.
   - File(s): `src/base.h:36-50`
+  - Status: **Fixed** - Now uses `1` and `0`.
 
 - [x] **`register` keyword used in multiple functions** - The `register` storage class specifier (`src/string.c:464,499,787`, `src/hash.c:258`, `src/cgi_manager.c:1109`) is deprecated in C++17 and ignored by modern compilers. It adds visual noise without benefit.
   - File(s): `src/string.c`, `src/hash.c`, `src/cgi_manager.c`
 
-- [ ] **`afc_string_radix` uses fixed 1024-byte stack buffer** - `src/string.c:728` uses `char buf[1024]` for number conversion. Very large numbers in unusual bases could exceed this. Should use dynamic allocation or calculate required size.
+- [x] **`afc_string_radix` uses fixed 1024-byte stack buffer** - `src/string.c:728` uses `char buf[1024]` for number conversion. Very large numbers in unusual bases could exceed this. Should use dynamic allocation or calculate required size.
   - File(s): `src/string.c:725-757`
+  - Status: **Fixed** - Now uses dynamic allocation.
 
 - [x] **`afc_fileops_move` checks `errno` after `rename()` without checking return value first** - `src/fileops.c:441` checks `errno == EXDEV` but `rename()` may have succeeded (returned 0), in which case `errno` is undefined. Should check `res != 0` before examining `errno`.
   - File(s): `src/fileops.c:435-460`
 
-- [ ] **`afc_array_del` off-by-one when array becomes empty** - `src/array.c:610-611` sets `current_pos = num_items - 1` which underflows to `ULONG_MAX` when `num_items` is 0 (unsigned). The subsequent check `num_items <= 0` catches it, but the intermediate state is problematic.
+- [x] **`afc_array_del` off-by-one when array becomes empty** - `src/array.c:610-611` sets `current_pos = num_items - 1` which underflows to `ULONG_MAX` when `num_items` is 0 (unsigned). The subsequent check `num_items <= 0` catches it, but the intermediate state is problematic.
   - File(s): `src/array.c:578-619`
+  - Status: **Fixed** - Now checks for empty array before decrementing `current_pos`.
 
 - [x] **No input validation on `afc_string_new(0)`** - Calling `afc_string_new(0)` allocates a string with 0 capacity. Subsequent operations like `afc_string_copy()` will silently truncate everything. Should either reject 0 or allocate a minimum size.
   - File(s): `src/string.c:133-151`
 
-- [ ] **`afc_string_utf8_to_latin1` only handles 2-byte UTF-8 sequences** - `src/string.c:1321-1343` only handles characters in the range U+0080 to U+00C7 (2-byte sequences starting with 0xC0-0xC7). Characters from 0xC8-0xFF and 3/4-byte sequences are silently dropped.
+- [x] **`afc_string_utf8_to_latin1` only handles 2-byte UTF-8 sequences** - `src/string.c:1321-1343` only handles characters in the range U+0080 to U+00C7 (2-byte sequences starting with 0xC0-0xC7). Characters from 0xC8-0xFF and 3/4-byte sequences are silently dropped.
   - File(s): `src/string.c:1294-1352`
+  - Status: **Fixed** - Now handles all valid UTF-8 sequences (1-4 bytes) with proper error handling.
 
-- [ ] **`cgi_manager` stack-based `dirname`/`fullname` buffers** - `afc_fileops_internal_scan_dir()` (`src/fileops.c:828-829`) uses fixed `char dirname[AFC_FILEOPS_MAX_DIR_LEN]` and `char fullname[AFC_FILEOPS_MAX_DIR_LEN]` on the stack. Deep directory trees could overflow these.
+- [x] **`cgi_manager` stack-based `dirname`/`fullname` buffers** - `afc_fileops_internal_scan_dir()` (`src/fileops.c:828-829`) uses fixed `char dirname[AFC_FILEOPS_MAX_DIR_LEN]` and `char fullname[AFC_FILEOPS_MAX_DIR_LEN]` on the stack. Deep directory trees could overflow these.
   - File(s): `src/fileops.c:822-883`
+  - Status: **Fixed** - Now uses dynamic allocation sized to actual path length.
 
 ## Low / Nice to have
 
