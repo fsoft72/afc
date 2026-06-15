@@ -375,22 +375,3 @@ void _afc_mem_tracker_update_pointer(MemTracker *mt, void *old_mem, void *new_me
 #endif
 }
 // }}}
-
-#ifdef TEST_CLASS
-int main()
-{
-	int t;
-	MemTracker *mt = memtrack_new();
-
-	for (t = 0; t < 10; t++)
-		memtrack_add(mt, t);
-
-	for (t = 5; t > 0; t--)
-		memtrack_del(mt, t);
-
-	for (t = 5; t > 0; t--)
-		memtrack_add(mt, 100 + t);
-
-	return 0;
-}
-#endif

@@ -990,7 +990,7 @@ void custom_sort(void *base, size_t nmemb, size_t size, int (*compar)(const void
 {
 	unsigned int j, i;
 	char *pos2, *pos1;
-	char temp[5];
+	char temp[8];
 
 	for (i = 0; i < nmemb - 1; i++)
 	{
@@ -1001,9 +1001,9 @@ void custom_sort(void *base, size_t nmemb, size_t size, int (*compar)(const void
 
 			if (compar(pos1, pos2) > 0)
 			{
-				memcpy(&temp, pos1, 4);
-				memcpy(pos1, pos2, 4);
-				memcpy(pos2, &temp, 4);
+				memcpy(&temp, pos1, size);
+				memcpy(pos1, pos2, size);
+				memcpy(pos2, &temp, size);
 			}
 		}
 	}
@@ -1026,7 +1026,7 @@ int main(void)
 	for (t = ITEMS; t > 0; t--)
 	{
 		buf = (char *)afc_malloc(15);
-		sprintf(buf, "%4.4d", t); // Flawfinder: ignore
+		snprintf(buf, 15, "%4.4d", t);
 		afc_array_add(am, buf, AFC_ARRAY_ADD_TAIL);
 	}
 	printf("     DONE!\n");
