@@ -26,6 +26,7 @@
 #include "base.h"
 #include "string.h"
 #include "mem_tracker.h"
+#include <errno.h>
 
 // {{{ docs
 /*
@@ -399,7 +400,7 @@ int afc_log_fast(AFC *afc, unsigned int error, const char *class_name, const cha
 		break;
 
 	default:
-		level = 1000;
+		level = AFC_LOG_LEVEL_SKIP;
 		break;
 	}
 
@@ -459,6 +460,7 @@ int afc_debug(AFC *afc, int level, const char *class_name, const char *str)
 		return (AFC_ERR_NO_ERROR);
 
 	fprintf(afc->fout, "DEBUG (%s): %s\n", class_name, str);
+	fflush(afc->fout);
 
 	return (AFC_ERR_NO_ERROR);
 }
@@ -507,6 +509,7 @@ int afc_debug_adv(AFC *afc, int level, const char *class_name, const char *fmt, 
 	// Flawfinder: ignore
 	vfprintf(afc->fout, fmt, args);
 	fprintf(afc->fout, "\n");
+	fflush(afc->fout);
 
 	va_end(args);
 
