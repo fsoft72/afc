@@ -1,5 +1,19 @@
 # CHANGES.md
 
+## June 15, 2026
+
+### Fix LOW priority optimizations
+
+**string.c - Fix afc_string_copy() and afc_string_add() return values**
+- Both functions now return the beginning of the destination string instead of the end
+- No callers relied on the previous behavior
+
+**fileops.c - Implement afc_fileops_clear()**
+- Reset all fields to defaults (block flags, uid/gid/mode, callbacks)
+
+**inet_client.c - Fix merge conflict residue**
+- Removed stray closing brace from earlier conflict resolution
+
 ## March 10, 2026
 
 ### Performance improvements from IMPROVEMENTS.md (#7-#11)

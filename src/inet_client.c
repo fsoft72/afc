@@ -199,7 +199,6 @@ int afc_inet_client_open(InetClient *ic, const char *url, int port)
 
 	if ((rc = afc_inet_client_resolve(ic, url, port, &res)) != AFC_ERR_NO_ERROR)
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_HOST_UNKNOWN, "Unable to resolve the host", NULL));
-	}
 
 	/* Iterate returned addresses until one connects */
 	for (rp = res; rp != NULL; rp = rp->ai_next)

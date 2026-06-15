@@ -319,7 +319,7 @@ char *afc_string_copy(char *dest, const char *source, unsigned long len)
 	memcpy(dest, source, len);
 	dest[len] = '\0';
 
-	return (dest + len);
+	return (dest);
 }
 // }}}
 // {{{ afc_string_clear ( str )
@@ -1038,7 +1038,7 @@ char *afc_string_add(char *dest, const char *source, unsigned long len)
 	memcpy(dest + clen, source, len);
 	dest[clen + len] = '\0';
 
-	return (dest + clen + len);
+	return (dest);
 }
 // }}}
 // {{{ afc_string_temp ( path )

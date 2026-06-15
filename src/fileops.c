@@ -165,6 +165,21 @@ int _afc_fileops_delete(FileOperations *fo)
 // {{{ afc_fileops_clear ( fo )
 int afc_fileops_clear(FileOperations *fo)
 {
+	if (fo == NULL)
+		return AFC_ERR_NULL_POINTER;
+
+	fo->last_error = 0;
+	fo->block_chown = FALSE;
+	fo->block_chmod = TRUE;
+	fo->block_utime = TRUE;
+	fo->block_mkdir_exists = FALSE;
+	fo->uid = -1;
+	fo->gid = -1;
+	fo->mode = -1;
+	fo->update_funct = NULL;
+	fo->update_info = NULL;
+	fo->info = NULL;
+
 	return AFC_ERR_NO_ERROR;
 }
 // }}}
