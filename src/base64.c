@@ -365,7 +365,7 @@ static int afc_base64_internal_insig(Base64 *b64)
 
 static int afc_base64_internal_decode(Base64 *b64)
 {
-	register int i;
+	int i;
 	unsigned char a[4], b[4], o[3];
 	int c;
 

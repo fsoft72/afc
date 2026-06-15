@@ -1106,7 +1106,7 @@ static char afc_cgi_manager_internal_decode(CGIManager *cgi, char *str)
 
 static int afc_cgi_manager_internal_unescape(CGIManager *cgi, char *str)
 {
-	register int x, y;
+	int x, y;
 
 	AFC_DEBUG_FUNC();
 

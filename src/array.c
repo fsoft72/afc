@@ -820,7 +820,7 @@ static int afc_array_internal_double_array(Array *am)
 // {{{ int afc_array_internal_insert ( Array * am, void * data )
 static int afc_array_internal_insert(Array *am, void *data)
 {
-	register unsigned long t;
+	unsigned long t;
 
 	for (t = am->num_items; t > am->current_pos; t--)
 		am->mem[t] = am->mem[t - 1];

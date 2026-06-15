@@ -461,7 +461,7 @@ signed long afc_string_comp(const char *s1, const char *s2, long chars)
 
 @endnode
 */
-char *afc_string_upper(register char *s)
+char *afc_string_upper(char *s)
 {
 	char *x;
 
@@ -496,7 +496,7 @@ char *afc_string_upper(register char *s)
 
 @endnode
 */
-char *afc_string_lower(register char *s)
+char *afc_string_lower(char *s)
 {
 	char *x;
 
@@ -784,9 +784,9 @@ int afc_string_radix(char *dest, long n, int radix)
 
 @endnode
 */
-unsigned long int afc_string_hash(register const unsigned char *k, register unsigned long int turbolence)
+unsigned long int afc_string_hash(const unsigned char *k, unsigned long int turbolence)
 {
-	register unsigned long int a, b, c, len, length;
+	unsigned long int a, b, c, len, length;
 
 	if (k == NULL)
 		return (0);

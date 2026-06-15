@@ -255,7 +255,7 @@ int afc_hash_add(Hash *hm, unsigned long int hash_value, void *data)
 void *afc_hash_find(Hash *hm, unsigned long int hash_value)
 {
 	HashData *hd;
-	register int max, pos, min = 0;
+	int max, pos, min = 0;
 	int iterations = 0;
 	int max_iterations;
 
