@@ -814,12 +814,24 @@ int afc_array_before_first(Array *am)
 // {{{ int afc_array_internal_double_array ( Array * am )
 static int afc_array_internal_double_array(Array *am)
 {
-	unsigned long int m = ((sizeof(void *)) * (am->max_items * 2));
+	unsigned long int new_max;
+	unsigned long int m;
+
+	/* Overflow protection: cap at AFC_MAX_BUFFER_SIZE items */
+	new_max = am->max_items * 2;
+	if (new_max < am->max_items || new_max > AFC_MAX_BUFFER_SIZE)
+		new_max = AFC_MAX_BUFFER_SIZE;
+	if (new_max <= am->max_items)
+		return (AFC_LOG_FAST(AFC_ERR_NO_MEMORY));
+
+	m = sizeof(void *) * new_max;
+	if (m / sizeof(void *) != new_max)
+		return (AFC_LOG_FAST(AFC_ERR_NO_MEMORY));
 
 	if ((am->mem = afc_realloc(am->mem, m)) == NULL)
 		return (AFC_LOG_FAST(AFC_ERR_NO_MEMORY));
 
-	am->max_items = am->max_items * 2;
+	am->max_items = new_max;
 
 	return (AFC_ERR_NO_ERROR);
 }

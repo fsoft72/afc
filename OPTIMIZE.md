@@ -65,8 +65,8 @@
 - [ ] **Standardize function naming convention** — Some internal functions use `_afc_` prefix, others use `afc_` with `_internal_` in the name. Pick one convention and apply consistently.
   - File(s): All source files
 
-- [ ] **Add overflow protection to integer arithmetic** — `afc_string_resize_copy()` multiplies `max * 2` which can overflow. Add overflow checks before arithmetic operations on sizes.
-  - File(s): `src/string.c:1080`
+- [x] **Add overflow protection to integer arithmetic** — `afc_string_resize_copy()` multiplies `max * 2` which can overflow. Add overflow checks before arithmetic operations on sizes.
+  - File(s): `src/string.c:1080`, `src/array.c:817`
 
 - [ ] **Replace busy-wait patterns in network code** — Some network functions loop waiting for data without yielding or checking timeouts properly. Use `select()` or `poll()` with appropriate timeout values.
   - File(s): `src/inet_client.c`, `src/smtp.c`, `src/ftp_client.c`
