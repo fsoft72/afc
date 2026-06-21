@@ -316,7 +316,7 @@ char *afc_string_copy(char *dest, const char *source, unsigned long len)
 
 	*((unsigned long *)(dest - sizeof(unsigned long))) = len;
 
-	memcpy(dest, source, len);
+	memmove(dest, source, len);
 	dest[len] = '\0';
 
 	return (dest);
@@ -427,18 +427,31 @@ char *afc_string_mid(char *dest, const char *src, unsigned long fromchar, unsign
 */
 signed long afc_string_comp(const char *s1, const char *s2, long chars)
 {
-	char *str1, *str2;
-	long c = 0;
+	const unsigned char *p1;
+	const unsigned char *p2;
+	unsigned long n;
 
-	if (chars != ALL)
-		chars--;
+	if (s1 == NULL || s2 == NULL)
+		return (s1 == s2) ? 0 : (s1 ? 1 : -1);
+
+	p1 = (const unsigned char *)s1;
+	p2 = (const unsigned char *)s2;
+
+	if (chars == ALL)
+	{
+		/* Compare until null terminator */
+		while (*p1 == *p2 && *p1 != '\0')
+			p1++, p2++;
+	}
 	else
-		chars = 0;
+	{
+		/* Compare up to chars characters */
+		n = (unsigned long)chars;
+		while (n > 0 && *p1 == *p2 && *p1 != '\0')
+			p1++, p2++, n--;
+	}
 
-	for (str1 = (char *)s1, str2 = (char *)s2; (*str1 == *str2) && (*str1 && *str2) && ((chars == 0 || (long)c++ < chars)); str1++, str2++)
-		;
-
-	return (-(*str1 - *str2));
+	return -(signed long)(*p1 - *p2);
 }
 // }}}
 // {{{ afc_string_upper ( str )
@@ -653,6 +666,9 @@ char *afc_string_right(char *dest, const char *src, long len)
 {
 	unsigned long l;
 
+	if (dest == NULL || src == NULL)
+		return (NULL);
+
 	l = strlen(src);
 
 	if ((long)l < len)
@@ -732,7 +748,10 @@ int afc_string_radix(char *dest, long n, int radix)
 	int buf_size = 128;
 	char *buf;
 
-	if (radix > 64)
+	if (dest == NULL)
+		return (-1);
+
+	if (radix < 2 || radix > 64)
 		return (-1);
 
 	buf = afc_malloc(buf_size);
@@ -1050,7 +1069,7 @@ char *afc_string_add(char *dest, const char *source, unsigned long len)
 
 	*((unsigned long *)(dest - sizeof(unsigned long))) = clen + len;
 
-	memcpy(dest + clen, source, len);
+	memmove(dest + clen, source, len);
 	dest[clen + len] = '\0';
 
 	return (dest);
@@ -1129,6 +1148,7 @@ char *afc_string_temp(const char *path)
 
 	afc_string_delete(p);
 	free(name);
+	name = NULL;
 
 	if ((fd = open(tmp, O_CREAT | O_EXCL)) == -1)
 #else
@@ -1173,13 +1193,17 @@ char *afc_string_resize_copy(char **dest, const char *str)
 {
 	char *str_new;
 	unsigned int max;
+	unsigned int new_max;
 
 	max = afc_string_max(*dest);
 
 	if ((strlen(str) + afc_string_len(*dest)) > (max - 3))
 	{
-		if (max > UINT_MAX / 2) return NULL;
-		str_new = afc_string_new(max * 2);
+		new_max = max * 2;
+		if (new_max > AFC_MAX_BUFFER_SIZE)
+			new_max = AFC_MAX_BUFFER_SIZE;
+		if (new_max <= max) return NULL;
+		str_new = afc_string_new(new_max);
 		afc_string_copy(str_new, *dest, ALL);
 
 		afc_string_delete(*dest);
@@ -1196,12 +1220,17 @@ char *afc_string_resize_add(char **dest, const char *str)
 {
 	char *str_new;
 	unsigned int max;
+	unsigned int needed;
+	unsigned int new_max;
 
 	max = afc_string_max(*dest);
 
 	if ((strlen(str) + afc_string_len(*dest)) > (max - 3))
 	{
-		if ((str_new = afc_string_new((strlen(str) + afc_string_len(*dest)) * 2)) == NULL)
+		needed = (strlen(str) + afc_string_len(*dest)) * 2;
+		new_max = (needed > AFC_MAX_BUFFER_SIZE) ? AFC_MAX_BUFFER_SIZE : needed;
+		if (new_max <= max) return (NULL);
+		if ((str_new = afc_string_new(new_max)) == NULL)
 			return (NULL);
 
 		afc_string_copy(str_new, *dest, ALL);
@@ -1281,37 +1310,43 @@ char *afc_string_basename(const char *path)
 
 int _seems_utf8(const char *str)
 {
-	int len = strlen(str);
-	int i, n, j;
-	unsigned char c;
+	const unsigned char *p = (const unsigned char *)str;
+	int remaining = 0; /* expected continuation bytes */
 
-	for (i = 0; i < len; i++)
+	while (*p)
 	{
-		c = str[i];
-
-		if (c < 0x80)
-			n = 0;
-		else if ((c & 0xE0) == 0xC0)
-			n = 1;
-		else if ((c & 0xF0) == 0xE0)
-			n = 2;
-		else if ((c & 0xF8) == 0xF0)
-			n = 3;
-		else if ((c & 0xFC) == 0xF8)
-			n = 4;
-		else if ((c & 0xFE) == 0xFC)
-			n = 5;
-		else
-			return FALSE;
-
-		for (j = 0; j < n; j++)
+		if (remaining > 0)
 		{
-			if ((++i == len) || ((str[i] & 0xC0) != 0x80))
+			/* Expecting a continuation byte 10xxxxxx */
+			if ((*p & 0xC0) != 0x80)
 				return FALSE;
+			remaining--;
 		}
+		else if (*p < 0x80)
+		{
+			/* ASCII */
+			remaining = 0;
+		}
+		else if ((*p & 0xE0) == 0xC0)
+		{
+			remaining = 1;
+		}
+		else if ((*p & 0xF0) == 0xE0)
+		{
+			remaining = 2;
+		}
+		else if ((*p & 0xF8) == 0xF0)
+		{
+			remaining = 3;
+		}
+		else
+		{
+			return FALSE;
+		}
+		p++;
 	}
 
-	return TRUE;
+	return (remaining == 0) ? TRUE : FALSE;
 }
 
 char *afc_string_utf8_to_latin1(const char *utf8)
@@ -1900,7 +1935,7 @@ char *afc_string_slice(char *dest, const char *str, long beginIndex, long endInd
 	if (str == NULL)
 		return dest;
 
-	len = afc_string_len(str);
+	len = strlen(str);
 	start = beginIndex;
 	end = endIndex;
 

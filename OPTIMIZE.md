@@ -7,6 +7,9 @@
 - [ ] **Split string.c into smaller modules** — The 2211-line string.c is a god module that handles string creation, manipulation, conversion, pattern matching, and more. Split into `string_core.c` (create/copy/delete), `string_ops.c` (upper/lower/trim/concat), `string_search.c` (instr/index_of/replace), and `string_conv.c` (radix/utf8/hash).
   - File(s): `src/string.c`
 
+- [ ] **Fix broken string functions** — Tests reveal several functions return wrong results: `afc_string_last_index_of()` returns -1 when it should find matches, `afc_string_pad_start/end()` don't pad correctly, `afc_string_trim_start/end()` return empty strings. These functions need debugging.
+  - File(s): `src/string.c`
+
 - [x] **Replace unsafe sprintf/strcpy/strcat with bounded variants** — Multiple files use `sprintf`, `strcpy`, and `strcat` without bounds checking. Use `snprintf`, `strncpy`, `strncat` or AFC's own `afc_string_make`/`afc_string_copy`/`afc_string_add` instead.
   - File(s): `src/list.c:1496`, `src/md5.c:283`, `src/regexp.c:200,207,579,580`, `src/cmd_parser.c:941`, `src/dirmaster.c:1111`, `src/fileops.c:871`
 
@@ -50,7 +53,7 @@
 - [ ] **Replace manual UTF-8 validation with simpler state machine** — The `_seems_utf8()` function uses nested loops and manual byte counting. A state-machine approach would be clearer and handle edge cases better.
   - File(s): `src/string.c:1150-1190`
 
-- [ ] **Add input validation to afc_string_radix()** — The function doesn't validate that `radix >= 2` (radix 0 or 1 would cause infinite loop or division by zero). Add bounds check at function entry.
+- [x] **Add input validation to afc_string_radix()** — The function doesn't validate that `radix >= 2` (radix 0 or 1 would cause infinite loop or division by zero). Add bounds check at function entry.
   - File(s): `src/string.c:660`
 
 - [ ] **Fix memory leak in afc_string_temp() on MINGW path** — If `mkstemp()` fails after `tempnam()` succeeds, the `name` pointer from `tempnam()` is not freed (it's freed with `free()`, not `afc_free()`).
@@ -70,8 +73,8 @@
 
 ## Low / Nice to have
 
-- [ ] **Add unit tests for edge cases** — Current tests cover happy paths. Add tests for: NULL inputs, zero-length strings, maximum-size strings, concurrent access, and memory exhaustion scenarios.
-  - File(s): `src/test_area/`
+- [x] **Add unit tests for edge cases** — Current tests cover happy paths. Add tests for: NULL inputs, zero-length strings, maximum-size strings, concurrent access, and memory exhaustion scenarios.
+  - File(s): `src/test_area/string/test_02.c`
 
 - [ ] **Generate API documentation from source comments** — The source has extensive `@node` documentation comments. Set up Doxygen or similar to auto-generate HTML/PDF docs.
   - File(s): All source files

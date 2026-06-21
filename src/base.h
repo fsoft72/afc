@@ -51,6 +51,9 @@ extern "C"
 
 #define BOOL int
 
+/* Maximum size for dynamic buffers (16KB) */
+#define AFC_MAX_BUFFER_SIZE 16384
+
 #define AFC_TAG_END 0xDEADBEEF
 
 /* AFC Magic Number */
