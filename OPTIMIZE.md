@@ -62,8 +62,8 @@
 - [ ] **Document magic number constants** — Each class defines magic numbers (e.g., `AFC_MAGIC`, `AFC_STRING_MAGIC`) but doesn't document what the hex values represent or why they were chosen. Add comments explaining the encoding.
   - File(s): `src/base.h`, `src/string.h`, `src/array.h`, `src/list.h`
 
-- [ ] **Standardize function naming convention** — Some internal functions use `_afc_` prefix, others use `afc_` with `_internal_` in the name. Pick one convention and apply consistently.
-  - File(s): All source files
+- [x] **Standardize function naming convention** — Some internal functions use `_afc_` prefix, others use `afc_` with `_internal_` in the name. Pick one convention and apply consistently.
+  - File(s): `src/string.c`, `src/cgi_manager.c`
 
 - [x] **Add overflow protection to integer arithmetic** — `afc_string_resize_copy()` multiplies `max * 2` which can overflow. Add overflow checks before arithmetic operations on sizes.
   - File(s): `src/string.c:1080`, `src/array.c:817`

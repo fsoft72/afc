@@ -67,7 +67,7 @@ static int afc_cgi_manager_internal_get_cookies(CGIManager *cgi);
 static char afc_cgi_manager_internal_decode(CGIManager *cgi, char *str);
 static int afc_cgi_manager_internal_unescape(CGIManager *cgi, char *str);
 static int afc_cgi_manager_internal_clear_dict(CGIManager *cgi, Dictionary *dict);
-static int _get_charset(CGIManager *cgi);
+static int _afc_cgi_manager_get_charset(CGIManager *cgi);
 // }}}
 
 // {{{ afc_cgi_manager_new ()
@@ -882,7 +882,7 @@ static int afc_cgi_manager_internal_get_headers(CGIManager *cgi)
 		return (AFC_ERR_NO_ERROR);
 	}
 
-	_get_charset(cgi);
+	_afc_cgi_manager_get_charset(cgi);
 
 	afc_debug_adv(__internal_afc_base, AFC_DEBUG_VERBOSE, class_name, "REQUEST_METHOD: %s", s);
 
@@ -894,7 +894,7 @@ static int afc_cgi_manager_internal_get_headers(CGIManager *cgi)
 	return (AFC_ERR_NO_ERROR);
 }
 
-static int _get_charset(CGIManager *cgi)
+static int _afc_cgi_manager_get_charset(CGIManager *cgi)
 {
 	char *content = afc_dictionary_get(cgi->headers, "CONTENT_TYPE");
 	char *x, *s, *c;

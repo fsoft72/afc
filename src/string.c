@@ -37,10 +37,10 @@
 
 #define STRING_MAX(str) (str ? ((unsigned long)(*((unsigned long *)(str - sizeof(unsigned long) * 2)) - 1)) : 0L)
 
-/* _find_last_sep: find the last directory separator in a path.
+/* _afc_string_find_last_sep: find the last directory separator in a path.
    Checks both '/' and '\\' so paths work correctly regardless of
    compile-time vs runtime platform. */
-static char *_find_last_sep(const char *path)
+static char *_afc_string_find_last_sep(const char *path)
 {
 	char *fwd = strrchr(path, '/');
 	char *bck = strrchr(path, '\\');
@@ -1256,7 +1256,7 @@ char *afc_string_dirname(const char *path)
 		return (NULL);
 
 	// Search for the last directory separator in the file_name
-	x = _find_last_sep(path);
+	x = _afc_string_find_last_sep(path);
 
 	// if we don't find it, simply copy all the path
 	if (x == NULL)
@@ -1292,7 +1292,7 @@ char *afc_string_basename(const char *path)
 		return (NULL);
 
 	// Search for the last directory separator in the file_name
-	x = _find_last_sep(path);
+	x = _afc_string_find_last_sep(path);
 
 	// if we don't find it, simply copy all the path
 	if (x == NULL)
@@ -1308,7 +1308,7 @@ char *afc_string_basename(const char *path)
 }
 // }}}
 
-int _seems_utf8(const char *str)
+int _afc_string_seems_utf8(const char *str)
 {
 	const unsigned char *p = (const unsigned char *)str;
 	int remaining = 0; /* expected continuation bytes */
@@ -1354,7 +1354,7 @@ char *afc_string_utf8_to_latin1(const char *utf8)
 	if (!utf8 || !strlen(utf8))
 		return afc_string_new(1);
 
-	if (!_seems_utf8(utf8))
+	if (!_afc_string_seems_utf8(utf8))
 	{
 		return afc_string_dup(utf8);
 	}
