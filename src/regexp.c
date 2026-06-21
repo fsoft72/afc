@@ -197,14 +197,14 @@ int afc_regexp_compile(RegExp *regexp, const char *str)
 
 	if (regexp->pattern == NULL)
 	{
-		sprintf(buf, "Error in expression. Offset: %d: %s", errpos, error);
+		snprintf(buf, sizeof(buf), "Error in expression. Offset: %d: %s", errpos, error);
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_REGEXP_ERR_COMPILING, buf, str));
 	}
 
 	regexp->hints = pcre_study(regexp->pattern, 0, &error);
 	if (error != NULL)
 	{
-		sprintf(buf, "Error while studying regexp: %s", error);
+		snprintf(buf, sizeof(buf), "Error while studying regexp: %s", error);
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_REGEXP_ERR_COMPILING, error, str));
 	}
 
@@ -576,8 +576,8 @@ static int afc_regexp_internal_replace(RegExp *regexp, char *replace)
 		num[coords.end - (coords.start + 1)] = 0;
 		afc_regexp_get_sub_string(regexp, buf, atoi(num));
 
-		strcat(tmp_regex->buffer, buf);
-		strcat(tmp_regex->buffer, replace + coords.end);
+		afc_string_add(tmp_regex->buffer, buf, ALL);
+		afc_string_add(tmp_regex->buffer, replace + coords.end, ALL);
 
 		afc_string_copy(replace, tmp_regex->buffer, ALL);
 	}

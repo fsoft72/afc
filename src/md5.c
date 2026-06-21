@@ -280,7 +280,7 @@ const char *afc_md5_digest(MD5 *m)
 
 	for (t = 0; t < 16; t++)
 	{
-		sprintf(buf, "%2.2x", (unsigned char)m->digest[t]);
+		snprintf(buf, sizeof(buf), "%2.2x", (unsigned char)m->digest[t]);
 		afc_string_add(m->result, buf, ALL);
 	}
 

@@ -1491,9 +1491,9 @@ int comp_ultra(const void *s1, const void *s2)
 
 void additem(List *nm, int t)
 {
-	char *s = (char *)afc_malloc(10);
+	char *s = (char *)afc_malloc(11);
 
-	sprintf(s, "%10.10d", t);
+	snprintf(s, 11, "%10.10d", t);
 	afc_list_add(nm, s, AFC_LIST_ADD_TAIL);
 }
 

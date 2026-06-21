@@ -868,7 +868,7 @@ static int afc_fileops_internal_scan_dir(FileOperations *fo, char *path, int act
 	snprintf(dirname, path_len + 2, "%s", path);
 
 	if (dirname[strlen(dirname) - 1] != '/')
-		strcat(dirname, "/");
+		snprintf(dirname + strlen(dirname), 2, "/");
 
 	while ((file = readdir(dir)) != NULL)
 	{

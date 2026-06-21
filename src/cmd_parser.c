@@ -938,7 +938,7 @@ static int afc_cmd_parser_internal_get_next_token(CommandParser *cmdparser, char
 		{
 			if ((last_token = afc_string_list_last(cmdparser->stack)) != NULL)
 			{
-				strcpy(cmdparser->token->name, last_token);
+				afc_string_copy(cmdparser->token->name, last_token, ALL);
 				afc_string_list_del(cmdparser->stack);
 				cmdparser->token->type = AFC_CMD_PARSER_TOKEN_CLOSE;
 

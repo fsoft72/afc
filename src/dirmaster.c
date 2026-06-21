@@ -1104,11 +1104,17 @@ static int afc_dirmaster_internal_readd(DirMaster *dm, const char *path, int dat
 	if ((dir = opendir(path)) == NULL)
 		return (errno);
 
-	strncpy(dirname, path, sizeof(dirname) - 1);
-	dirname[sizeof(dirname) - 1] = '\0';
-
-	if (dirname[strlen(dirname) - 1] != '/')
-		strcat(dirname, "/");
+	size_t dlen = strlen(path);
+	if (dlen >= sizeof(dirname) - 1)
+		dlen = sizeof(dirname) - 2;
+	memcpy(dirname, path, dlen);
+	if (dlen > 0 && dirname[dlen - 1] == '/')
+		dirname[dlen] = '\0';
+	else
+	{
+		dirname[dlen] = '/';
+		dirname[dlen + 1] = '\0';
+	}
 
 	afc_string_copy(dm->current_dir, dirname, ALL);
 
