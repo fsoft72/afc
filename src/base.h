@@ -34,7 +34,7 @@ extern "C"
 
 /* Constants */
 #ifndef true
-#define true (~0)
+#define true 1
 #endif
 
 #ifndef false
@@ -49,11 +49,10 @@ extern "C"
 #define FALSE false
 #endif
 
-#ifndef MINGW
-#define BOOL char
-#else
 #define BOOL int
-#endif
+
+/* Maximum size for dynamic buffers (16KB) */
+#define AFC_MAX_BUFFER_SIZE 16384
 
 #define AFC_TAG_END 0xDEADBEEF
 
@@ -84,7 +83,9 @@ extern "C"
 		AFC_LOG_NOTICE,
 		AFC_LOG_WARNING,
 		AFC_LOG_ERROR,
-		AFC_LOG_CRITICAL
+		AFC_LOG_CRITICAL,
+		AFC_LOG_LEVEL_MAX = AFC_LOG_CRITICAL,
+		AFC_LOG_LEVEL_SKIP = AFC_LOG_LEVEL_MAX + 1
 	};
 
 	enum

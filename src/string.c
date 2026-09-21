@@ -37,10 +37,10 @@
 
 #define STRING_MAX(str) (str ? ((unsigned long)(*((unsigned long *)(str - sizeof(unsigned long) * 2)) - 1)) : 0L)
 
-/* _find_last_sep: find the last directory separator in a path.
+/* _afc_string_find_last_sep: find the last directory separator in a path.
    Checks both '/' and '\\' so paths work correctly regardless of
    compile-time vs runtime platform. */
-static char *_find_last_sep(const char *path)
+static char *_afc_string_find_last_sep(const char *path)
 {
 	char *fwd = strrchr(path, '/');
 	char *bck = strrchr(path, '\\');
@@ -134,6 +134,9 @@ char *_afc_string_new(unsigned long numchars, const char *file, const char *func
 {
 	unsigned long *location;
 	char *str;
+
+	if (numchars == 0)
+		numchars = 1;
 
 	if ((str = _afc_malloc(numchars + 1 + (sizeof(unsigned long) * 2), file, func, line)) == NULL)
 		return NULL;
@@ -313,10 +316,10 @@ char *afc_string_copy(char *dest, const char *source, unsigned long len)
 
 	*((unsigned long *)(dest - sizeof(unsigned long))) = len;
 
-	memcpy(dest, source, len);
+	memmove(dest, source, len);
 	dest[len] = '\0';
 
-	return (dest + len);
+	return (dest);
 }
 // }}}
 // {{{ afc_string_clear ( str )
@@ -424,18 +427,31 @@ char *afc_string_mid(char *dest, const char *src, unsigned long fromchar, unsign
 */
 signed long afc_string_comp(const char *s1, const char *s2, long chars)
 {
-	char *str1, *str2;
-	long c = 0;
+	const unsigned char *p1;
+	const unsigned char *p2;
+	unsigned long n;
 
-	if (chars != ALL)
-		chars--;
+	if (s1 == NULL || s2 == NULL)
+		return (s1 == s2) ? 0 : (s1 ? 1 : -1);
+
+	p1 = (const unsigned char *)s1;
+	p2 = (const unsigned char *)s2;
+
+	if (chars == ALL)
+	{
+		/* Compare until null terminator */
+		while (*p1 == *p2 && *p1 != '\0')
+			p1++, p2++;
+	}
 	else
-		chars = 0;
+	{
+		/* Compare up to chars characters */
+		n = (unsigned long)chars;
+		while (n > 0 && *p1 == *p2 && *p1 != '\0')
+			p1++, p2++, n--;
+	}
 
-	for (str1 = (char *)s1, str2 = (char *)s2; (*str1 == *str2) && (*str1 && *str2) && ((chars == 0 || (long)c++ < chars)); str1++, str2++)
-		;
-
-	return (-(*str1 - *str2));
+	return -(signed long)(*p1 - *p2);
 }
 // }}}
 // {{{ afc_string_upper ( str )
@@ -460,7 +476,7 @@ signed long afc_string_comp(const char *s1, const char *s2, long chars)
 
 @endnode
 */
-char *afc_string_upper(register char *s)
+char *afc_string_upper(char *s)
 {
 	char *x;
 
@@ -495,7 +511,7 @@ char *afc_string_upper(register char *s)
 
 @endnode
 */
-char *afc_string_lower(register char *s)
+char *afc_string_lower(char *s)
 {
 	char *x;
 
@@ -650,6 +666,9 @@ char *afc_string_right(char *dest, const char *src, long len)
 {
 	unsigned long l;
 
+	if (dest == NULL || src == NULL)
+		return (NULL);
+
 	l = strlen(src);
 
 	if ((long)l < len)
@@ -724,20 +743,32 @@ unsigned long afc_string_reset_len(const char *str)
 int afc_string_radix(char *dest, long n, int radix)
 {
 	char hexn[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_@";
-	char buf[1024]; // Flawfinder: ignore
 	long q = labs(n);
 	int r = 0;
+	int buf_size = 128;
+	char *buf;
+
+	if (dest == NULL)
+		return (-1);
+
+	if (radix < 2 || radix > 64)
+		return (-1);
+
+	buf = afc_malloc(buf_size);
+	if (buf == NULL)
+		return (-1);
 
 	afc_string_copy(dest, "", ALL);
-
-	if (radix > 64)
-		return (-1);
 
 	while (1)
 	{
 		r = q % radix;
 
-		snprintf(buf, 1024, "%c%s", hexn[r], dest); // Flawfinder: ignore
+		if (snprintf(buf, buf_size, "%c%s", hexn[r], dest) >= buf_size)
+		{
+			afc_free(buf);
+			return (-1);
+		}
 		afc_string_copy(dest, buf, ALL);
 
 		q = (q - r) / radix;
@@ -748,9 +779,15 @@ int afc_string_radix(char *dest, long n, int radix)
 
 	if (n < 0)
 	{
-		snprintf(buf, 1024, "-%s", dest);
+		if (snprintf(buf, buf_size, "-%s", dest) >= buf_size)
+		{
+			afc_free(buf);
+			return (-1);
+		}
 		afc_string_copy(dest, buf, ALL);
 	}
+
+	afc_free(buf);
 
 	return (0);
 }
@@ -783,9 +820,9 @@ int afc_string_radix(char *dest, long n, int radix)
 
 @endnode
 */
-unsigned long int afc_string_hash(register const unsigned char *k, register unsigned long int turbolence)
+unsigned long int afc_string_hash(const unsigned char *k, unsigned long int turbolence)
 {
-	register unsigned long int a, b, c, len, length;
+	unsigned long int a, b, c, len, length;
 
 	if (k == NULL)
 		return (0);
@@ -1032,10 +1069,10 @@ char *afc_string_add(char *dest, const char *source, unsigned long len)
 
 	*((unsigned long *)(dest - sizeof(unsigned long))) = clen + len;
 
-	memcpy(dest + clen, source, len);
+	memmove(dest + clen, source, len);
 	dest[clen + len] = '\0';
 
-	return (dest + clen + len);
+	return (dest);
 }
 // }}}
 // {{{ afc_string_temp ( path )
@@ -1111,6 +1148,7 @@ char *afc_string_temp(const char *path)
 
 	afc_string_delete(p);
 	free(name);
+	name = NULL;
 
 	if ((fd = open(tmp, O_CREAT | O_EXCL)) == -1)
 #else
@@ -1155,13 +1193,17 @@ char *afc_string_resize_copy(char **dest, const char *str)
 {
 	char *str_new;
 	unsigned int max;
+	unsigned int new_max;
 
 	max = afc_string_max(*dest);
 
 	if ((strlen(str) + afc_string_len(*dest)) > (max - 3))
 	{
-		if (max > UINT_MAX / 2) return NULL;
-		str_new = afc_string_new(max * 2);
+		new_max = max * 2;
+		if (new_max > AFC_MAX_BUFFER_SIZE)
+			new_max = AFC_MAX_BUFFER_SIZE;
+		if (new_max <= max) return NULL;
+		str_new = afc_string_new(new_max);
 		afc_string_copy(str_new, *dest, ALL);
 
 		afc_string_delete(*dest);
@@ -1178,12 +1220,17 @@ char *afc_string_resize_add(char **dest, const char *str)
 {
 	char *str_new;
 	unsigned int max;
+	unsigned int needed;
+	unsigned int new_max;
 
 	max = afc_string_max(*dest);
 
 	if ((strlen(str) + afc_string_len(*dest)) > (max - 3))
 	{
-		if ((str_new = afc_string_new((strlen(str) + afc_string_len(*dest)) * 2)) == NULL)
+		needed = (strlen(str) + afc_string_len(*dest)) * 2;
+		new_max = (needed > AFC_MAX_BUFFER_SIZE) ? AFC_MAX_BUFFER_SIZE : needed;
+		if (new_max <= max) return (NULL);
+		if ((str_new = afc_string_new(new_max)) == NULL)
 			return (NULL);
 
 		afc_string_copy(str_new, *dest, ALL);
@@ -1209,7 +1256,7 @@ char *afc_string_dirname(const char *path)
 		return (NULL);
 
 	// Search for the last directory separator in the file_name
-	x = _find_last_sep(path);
+	x = _afc_string_find_last_sep(path);
 
 	// if we don't find it, simply copy all the path
 	if (x == NULL)
@@ -1218,8 +1265,17 @@ char *afc_string_dirname(const char *path)
 	{
 		// ... else we have to create a new string and
 		// copy the chars we are interested in
-		dest = afc_string_new((x - path));
-		afc_string_copy(dest, path, ALL);
+		size_t len = x - path;
+		if (len == 0)
+		{
+			// Path starts with separator (e.g., "/file.txt")
+			dest = afc_string_new(1);
+		}
+		else
+		{
+			dest = afc_string_new(len);
+			afc_string_copy(dest, path, len);
+		}
 	}
 
 	return (dest);
@@ -1236,7 +1292,7 @@ char *afc_string_basename(const char *path)
 		return (NULL);
 
 	// Search for the last directory separator in the file_name
-	x = _find_last_sep(path);
+	x = _afc_string_find_last_sep(path);
 
 	// if we don't find it, simply copy all the path
 	if (x == NULL)
@@ -1252,39 +1308,45 @@ char *afc_string_basename(const char *path)
 }
 // }}}
 
-int _seems_utf8(const char *str)
+int _afc_string_seems_utf8(const char *str)
 {
-	int len = strlen(str);
-	int i, n, j;
-	unsigned char c;
+	const unsigned char *p = (const unsigned char *)str;
+	int remaining = 0; /* expected continuation bytes */
 
-	for (i = 0; i < len; i++)
+	while (*p)
 	{
-		c = str[i];
-
-		if (c < 0x80)
-			n = 0;
-		else if ((c & 0xE0) == 0xC0)
-			n = 1;
-		else if ((c & 0xF0) == 0xE0)
-			n = 2;
-		else if ((c & 0xF8) == 0xF0)
-			n = 3;
-		else if ((c & 0xFC) == 0xF8)
-			n = 4;
-		else if ((c & 0xFE) == 0xFC)
-			n = 5;
-		else
-			return FALSE;
-
-		for (j = 0; j < n; j++)
+		if (remaining > 0)
 		{
-			if ((++i == len) || ((str[i] & 0xC0) != 0x80))
+			/* Expecting a continuation byte 10xxxxxx */
+			if ((*p & 0xC0) != 0x80)
 				return FALSE;
+			remaining--;
 		}
+		else if (*p < 0x80)
+		{
+			/* ASCII */
+			remaining = 0;
+		}
+		else if ((*p & 0xE0) == 0xC0)
+		{
+			remaining = 1;
+		}
+		else if ((*p & 0xF0) == 0xE0)
+		{
+			remaining = 2;
+		}
+		else if ((*p & 0xF8) == 0xF0)
+		{
+			remaining = 3;
+		}
+		else
+		{
+			return FALSE;
+		}
+		p++;
 	}
 
-	return TRUE;
+	return (remaining == 0) ? TRUE : FALSE;
 }
 
 char *afc_string_utf8_to_latin1(const char *utf8)
@@ -1292,7 +1354,7 @@ char *afc_string_utf8_to_latin1(const char *utf8)
 	if (!utf8 || !strlen(utf8))
 		return afc_string_new(1);
 
-	if (!_seems_utf8(utf8))
+	if (!_afc_string_seems_utf8(utf8))
 	{
 		return afc_string_dup(utf8);
 	}
@@ -1301,7 +1363,7 @@ char *afc_string_utf8_to_latin1(const char *utf8)
 	unsigned char *s = afc_malloc(buf_size);
 	unsigned int pos = 0;
 	unsigned int len = strlen(utf8);
-	unsigned char c1, c2, iso;
+	unsigned char c1, c2, c3, c4, iso;
 	unsigned int xpos = 0;
 	char *res;
 
@@ -1314,28 +1376,74 @@ char *afc_string_utf8_to_latin1(const char *utf8)
 			if (xpos >= buf_size - 1) break;
 			s[xpos++] = c1;
 		}
-		else if (c1 >= 0xC0 && c1 <= 0xC7)
+		else if (c1 >= 0xC0 && c1 <= 0xDF)
 		{
-			if (pos == len)
+			if (pos >= len)
 			{
-				_afc_dprintf("%s::%s - ERROR: wrong string length", __FILE__, __FUNCTION__);
+				_afc_dprintf("%s::%s - ERROR: truncated UTF-8 sequence", __FILE__, __FUNCTION__);
 				afc_free(s);
 				return NULL;
 			}
 
 			c2 = utf8[pos++];
+			iso = ((c1 & 0x1F) << 6) | (c2 & 0x3F);
 
-			iso = ((c1 & 0x07) << 6) | (c2 & 0x3F);
-
-			if (iso <= 0x7F)
+			if (xpos >= buf_size - 1) break;
+			s[xpos++] = iso;
+		}
+		else if (c1 >= 0xE0 && c1 <= 0xEF)
+		{
+			if (pos + 1 >= len)
 			{
-				_afc_dprintf("%s::%s - ERROR: Sequence longer than needed", __FILE__, __FUNCTION__);
+				_afc_dprintf("%s::%s - ERROR: truncated UTF-8 sequence", __FILE__, __FUNCTION__);
 				afc_free(s);
 				return NULL;
 			}
 
+			c2 = utf8[pos++];
+			c3 = utf8[pos++];
+			unsigned int codepoint = ((c1 & 0x0F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F);
+
+			if (codepoint > 0xFF)
+			{
+				if (xpos >= buf_size - 1) break;
+				s[xpos++] = '?';
+			}
+			else
+			{
+				if (xpos >= buf_size - 1) break;
+				s[xpos++] = (unsigned char)codepoint;
+			}
+		}
+		else if (c1 >= 0xF0 && c1 <= 0xF7)
+		{
+			if (pos + 2 >= len)
+			{
+				_afc_dprintf("%s::%s - ERROR: truncated UTF-8 sequence", __FILE__, __FUNCTION__);
+				afc_free(s);
+				return NULL;
+			}
+
+			c2 = utf8[pos++];
+			c3 = utf8[pos++];
+			c4 = utf8[pos++];
+			unsigned int codepoint = ((c1 & 0x07) << 18) | ((c2 & 0x3F) << 12) | ((c3 & 0x3F) << 6) | (c4 & 0x3F);
+
+			if (codepoint > 0xFF)
+			{
+				if (xpos >= buf_size - 1) break;
+				s[xpos++] = '?';
+			}
+			else
+			{
+				if (xpos >= buf_size - 1) break;
+				s[xpos++] = (unsigned char)codepoint;
+			}
+		}
+		else
+		{
 			if (xpos >= buf_size - 1) break;
-			s[xpos++] = iso;
+			s[xpos++] = '?';
 		}
 	}
 
@@ -1827,7 +1935,7 @@ char *afc_string_slice(char *dest, const char *str, long beginIndex, long endInd
 	if (str == NULL)
 		return dest;
 
-	len = afc_string_len(str);
+	len = strlen(str);
 	start = beginIndex;
 	end = endIndex;
 

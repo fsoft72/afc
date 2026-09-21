@@ -165,6 +165,21 @@ int _afc_fileops_delete(FileOperations *fo)
 // {{{ afc_fileops_clear ( fo )
 int afc_fileops_clear(FileOperations *fo)
 {
+	if (fo == NULL)
+		return AFC_ERR_NULL_POINTER;
+
+	fo->last_error = 0;
+	fo->block_chown = FALSE;
+	fo->block_chmod = TRUE;
+	fo->block_utime = TRUE;
+	fo->block_mkdir_exists = FALSE;
+	fo->uid = -1;
+	fo->gid = -1;
+	fo->mode = -1;
+	fo->update_funct = NULL;
+	fo->update_info = NULL;
+	fo->info = NULL;
+
 	return AFC_ERR_NO_ERROR;
 }
 // }}}
@@ -438,22 +453,26 @@ int afc_fileops_move(FileOperations *fo, const char *source, const char *dest)
 
 	res = rename(source, dest);
 
-	if (errno == EXDEV)
+	if (res != 0)
 	{
-		afc_fileops_internal_physical_move(fo, (char *)source, (char *)dest);
-	}
-	else
-	{
-
-		if (fo->update_funct)
-			fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, (void *)source, fo->update_info);
-
-		if (res != 0)
+		if (errno == EXDEV)
 		{
+			afc_fileops_internal_physical_move(fo, (char *)source, (char *)dest);
+		}
+		else
+		{
+			if (fo->update_funct)
+				fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, (void *)source, fo->update_info);
+
 			fo->last_error = errno;
 
 			return (AFC_LOG(AFC_LOG_ERROR, AFC_FILEOPS_ERR_RENAME, strerror(errno), source));
 		}
+	}
+	else
+	{
+		if (fo->update_funct)
+			fo->update_funct(AFC_FILEOPS_UPDATE_MODE_FILENAME, (void *)source, fo->update_info);
 	}
 
 	return (AFC_ERR_NO_ERROR);
@@ -825,28 +844,38 @@ static int afc_fileops_internal_scan_dir(FileOperations *fo, char *path, int act
 	DIR *dir;
 	struct dirent *file;
 	struct stat descr;
-	char dirname[AFC_FILEOPS_MAX_DIR_LEN];
-	char fullname[AFC_FILEOPS_MAX_DIR_LEN];
 	int err;
+	size_t path_len = strlen(path);
+	char *dirname = afc_malloc(path_len + 2);
+	char *fullname = afc_malloc(path_len + AFC_FILEOPS_MAX_FILE_LEN + 2);
+
+	if (dirname == NULL || fullname == NULL)
+	{
+		afc_free(dirname);
+		afc_free(fullname);
+		return AFC_LOG_FAST(AFC_ERR_NO_MEMORY);
+	}
 
 	if ((dir = opendir(path)) == NULL)
 	{
 		fo->last_error = errno;
+		afc_free(dirname);
+		afc_free(fullname);
 
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_FILEOPS_ERR_OPEN_DIR, strerror(errno), path));
 	}
 
-	strcpy(dirname, path);
+	snprintf(dirname, path_len + 2, "%s", path);
 
 	if (dirname[strlen(dirname) - 1] != '/')
-		strcat(dirname, "/");
+		snprintf(dirname + strlen(dirname), 2, "/");
 
 	while ((file = readdir(dir)) != NULL)
 	{
 		if ((strcmp(file->d_name, "..") == 0) || (strcmp(file->d_name, ".") == 0))
 			continue;
 
-		snprintf(fullname, sizeof(fullname), "%s%s", dirname, file->d_name);
+		snprintf(fullname, path_len + AFC_FILEOPS_MAX_FILE_LEN + 2, "%s%s", dirname, file->d_name);
 
 #ifdef MINGW
 		if (stat(fullname, &descr) == -1)
@@ -855,6 +884,8 @@ static int afc_fileops_internal_scan_dir(FileOperations *fo, char *path, int act
 #endif
 		{
 			fo->last_error = errno;
+			afc_free(dirname);
+			afc_free(fullname);
 
 			return (AFC_LOG(AFC_LOG_ERROR, AFC_FILEOPS_ERR_STAT, strerror(errno), fullname));
 		}
@@ -863,13 +894,21 @@ static int afc_fileops_internal_scan_dir(FileOperations *fo, char *path, int act
 		{
 			if (action_dir)
 				if ((err = action_dir(fo, &descr, fullname, dirname, file->d_name, info)) != 0)
+				{
+					afc_free(dirname);
+					afc_free(fullname);
 					return (err);
+				}
 		}
 		else
 		{
 			if (action_file)
 				if ((err = action_file(fo, &descr, fullname, dirname, file->d_name, info)) != 0)
+				{
+					afc_free(dirname);
+					afc_free(fullname);
 					return (err);
+				}
 		}
 	}
 
@@ -877,7 +916,14 @@ static int afc_fileops_internal_scan_dir(FileOperations *fo, char *path, int act
 
 	if (action_end_dir)
 		if ((err = action_end_dir(fo, path, info)) != 0)
+		{
+			afc_free(dirname);
+			afc_free(fullname);
 			return (err);
+		}
+
+	afc_free(dirname);
+	afc_free(fullname);
 
 	return (0);
 }

@@ -264,7 +264,8 @@ void _afc_mem_tracker_update_size(MemTracker *mt, void *mem, void *new_mem, size
 		mt->alloc_bytes -= hd->size;
 
 		hd->size = size;
-		hd->mem = new_mem;
+		if (new_mem != NULL)
+			hd->mem = new_mem;
 
 		mt->alloc_bytes += hd->size;
 		_memtrack_hash_insert(mt, hd);
@@ -399,21 +400,27 @@ static void _free_item(MemTracker *mt, MemTrackData *d)
 }
 // }}}
 
-#ifdef TEST_CLASS
-int main()
+// {{{ _afc_mem_tracker_update_pointer ( mt, old_mem, new_mem )
+void _afc_mem_tracker_update_pointer(MemTracker *mt, void *old_mem, void *new_mem)
 {
-	int t;
-	MemTracker *mt = memtrack_new();
+	MemTrackData *hd;
+	int pos;
 
-	for (t = 0; t < 10; t++)
-		memtrack_add(mt, t);
+	if (old_mem == NULL)
+		return;
 
-	for (t = 5; t > 0; t--)
-		memtrack_del(mt, t);
-
-	for (t = 5; t > 0; t--)
-		memtrack_add(mt, 100 + t);
-
-	return 0;
-}
+#ifndef MINGW
+	pthread_mutex_lock(&mt->mutex);
 #endif
+
+	if ((pos = _memtrack_find(mt, old_mem)) != -1)
+	{
+		hd = mt->data[pos];
+		hd->mem = new_mem;
+	}
+
+#ifndef MINGW
+	pthread_mutex_unlock(&mt->mutex);
+#endif
+}
+// }}}

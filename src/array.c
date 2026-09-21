@@ -596,10 +596,11 @@ void *afc_array_del(Array *am)
 	if (am->current_pos == (am->num_items - 1)) // If I enter here, then I am pointing on the last element of the array
 	{
 		am->num_items--;					 // The array is resized -1
-		am->current_pos = am->num_items - 1; // and we'll point (again!) on the last element
 
 		if (am->num_items == 0)
 			return (NULL); // If the array is now empty, we should return NULL
+
+		am->current_pos = am->num_items - 1; // and we'll point (again!) on the last element
 
 		return (am->mem[am->current_pos]); // Else the current element (last) will be returned
 	}
@@ -813,12 +814,24 @@ int afc_array_before_first(Array *am)
 // {{{ int afc_array_internal_double_array ( Array * am )
 static int afc_array_internal_double_array(Array *am)
 {
-	unsigned long int m = ((sizeof(void *)) * (am->max_items * 2));
+	unsigned long int new_max;
+	unsigned long int m;
+
+	/* Overflow protection: cap at AFC_MAX_BUFFER_SIZE items */
+	new_max = am->max_items * 2;
+	if (new_max < am->max_items || new_max > AFC_MAX_BUFFER_SIZE)
+		new_max = AFC_MAX_BUFFER_SIZE;
+	if (new_max <= am->max_items)
+		return (AFC_LOG_FAST(AFC_ERR_NO_MEMORY));
+
+	m = sizeof(void *) * new_max;
+	if (m / sizeof(void *) != new_max)
+		return (AFC_LOG_FAST(AFC_ERR_NO_MEMORY));
 
 	if ((am->mem = afc_realloc(am->mem, m)) == NULL)
 		return (AFC_LOG_FAST(AFC_ERR_NO_MEMORY));
 
-	am->max_items = am->max_items * 2;
+	am->max_items = new_max;
 
 	return (AFC_ERR_NO_ERROR);
 }
@@ -826,7 +839,7 @@ static int afc_array_internal_double_array(Array *am)
 // {{{ int afc_array_internal_insert ( Array * am, void * data )
 static int afc_array_internal_insert(Array *am, void *data)
 {
-	register unsigned long t;
+	unsigned long t;
 
 	for (t = am->num_items; t > am->current_pos; t--)
 		am->mem[t] = am->mem[t - 1];
@@ -996,7 +1009,7 @@ void custom_sort(void *base, size_t nmemb, size_t size, int (*compar)(const void
 {
 	unsigned int j, i;
 	char *pos2, *pos1;
-	char temp[5];
+	char temp[8];
 
 	for (i = 0; i < nmemb - 1; i++)
 	{
@@ -1007,9 +1020,9 @@ void custom_sort(void *base, size_t nmemb, size_t size, int (*compar)(const void
 
 			if (compar(pos1, pos2) > 0)
 			{
-				memcpy(&temp, pos1, 4);
-				memcpy(pos1, pos2, 4);
-				memcpy(pos2, &temp, 4);
+				memcpy(&temp, pos1, size);
+				memcpy(pos1, pos2, size);
+				memcpy(pos2, &temp, size);
 			}
 		}
 	}
@@ -1032,7 +1045,7 @@ int main(void)
 	for (t = ITEMS; t > 0; t--)
 	{
 		buf = (char *)afc_malloc(15);
-		sprintf(buf, "%4.4d", t); // Flawfinder: ignore
+		snprintf(buf, 15, "%4.4d", t);
 		afc_array_add(am, buf, AFC_ARRAY_ADD_TAIL);
 	}
 	printf("     DONE!\n");

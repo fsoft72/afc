@@ -26,6 +26,7 @@
 #include "base.h"
 #include "string.h"
 #include "mem_tracker.h"
+#include <errno.h>
 
 // {{{ docs
 /*
@@ -399,7 +400,7 @@ int afc_log_fast(AFC *afc, unsigned int error, const char *class_name, const cha
 		break;
 
 	default:
-		level = 1000;
+		level = AFC_LOG_LEVEL_SKIP;
 		break;
 	}
 
@@ -459,6 +460,7 @@ int afc_debug(AFC *afc, int level, const char *class_name, const char *str)
 		return (AFC_ERR_NO_ERROR);
 
 	fprintf(afc->fout, "DEBUG (%s): %s\n", class_name, str);
+	fflush(afc->fout);
 
 	return (AFC_ERR_NO_ERROR);
 }
@@ -507,6 +509,7 @@ int afc_debug_adv(AFC *afc, int level, const char *class_name, const char *fmt, 
 	// Flawfinder: ignore
 	vfprintf(afc->fout, fmt, args);
 	fprintf(afc->fout, "\n");
+	fflush(afc->fout);
 
 	va_end(args);
 
@@ -699,16 +702,11 @@ void *_afc_malloc(size_t size, const char *file_name, const char *func_name, con
 */
 void _afc_free(void *mem, const char *file, const char *func, const unsigned int line)
 {
-	char *m;
-
 	if (!mem)
 	{
-		_afc_dprintf("%s::%s NULL pointer from %s::%s (%d)\n", __FILE__, __FUNCTION__, file, func, line);
+		fprintf(stderr, "%s::%s NULL pointer from %s::%s (%d)\n", __FILE__, __FUNCTION__, file, func, line);
 		return;
 	}
-
-	m = mem;
-	m[0] = '\0';
 
 	if (__internal_afc_base == NULL || __internal_afc_base->tracker == NULL) /*hardening against uninit base pointer*/
 		free(mem);
@@ -747,6 +745,21 @@ void *_afc_realloc(void *mem, size_t size, const char *file, const char *func, c
 		return NULL;
 	}
 
+	if (__internal_afc_base == NULL || __internal_afc_base->tracker == NULL) /*hardening against uninit base pointer*/
+	{
+		new_addr = realloc(mem, size);
+		if (new_addr == NULL)
+		{
+			AFC_LOG_FAST(AFC_ERR_NO_MEMORY);
+			return NULL;
+		}
+		return new_addr;
+	}
+
+	/* Update tracker entry with old pointer BEFORE realloc may free it,
+	   then realloc. This avoids using a dangling pointer. */
+	_afc_mem_tracker_update_size(__internal_afc_base->tracker, mem, NULL, size, file, func, line);
+
 	new_addr = realloc(mem, size);
 
 	if (new_addr == NULL)
@@ -755,13 +768,8 @@ void *_afc_realloc(void *mem, size_t size, const char *file, const char *func, c
 		return NULL;
 	}
 
-	if (__internal_afc_base == NULL || __internal_afc_base->tracker == NULL) /*hardening against uninit base pointer*/
-		return new_addr;
-	else
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wuse-after-free"
-		_afc_mem_tracker_update_size(__internal_afc_base->tracker, mem, new_addr, size, file, func, line);
-#pragma GCC diagnostic pop
+	/* Now update the pointer field to the new address */
+	_afc_mem_tracker_update_pointer(__internal_afc_base->tracker, mem, new_addr);
 
 	return new_addr;
 }
