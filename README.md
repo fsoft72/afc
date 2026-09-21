@@ -330,7 +330,7 @@ See [LICENSE](LICENSE) for the complete license text.
 
 Contributions are welcome! Please:
 
-1. Read the [Development Guidelines](ai/guidelines.md)
+1. Read the development conventions in [CLAUDE.md](CLAUDE.md)
 2. Follow existing code conventions
 3. Write tests for new features
 4. Keep changes minimal and focused

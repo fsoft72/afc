@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-Important: read [Guidelines](./ai/guidelines.md) before working on this repository.
-
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
