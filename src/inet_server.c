@@ -324,7 +324,8 @@ int afc_inet_server_send(InetServer *is, InetConnData *data, const char *str)
 		if (data->fd == is->listener)
 			return (AFC_ERR_NO_ERROR);
 
-		if (send(data->fd, str, strlen(str), 0) == -1)
+		/* MSG_NOSIGNAL: return EPIPE instead of killing the process with SIGPIPE */
+		if (send(data->fd, str, strlen(str), MSG_NOSIGNAL) == -1)
 			return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_SERVER_ERR_SEND, "send() failed", str));
 	}
 

@@ -448,7 +448,9 @@ int afc_inet_client_send(InetClient *ic, const char *str, int len)
 		}
 		else
 		{
-			sent = send(ic->sockfd, str + total, len - total, 0);
+			/* MSG_NOSIGNAL: return EPIPE instead of killing the process with SIGPIPE
+			   when the peer has closed the connection */
+			sent = send(ic->sockfd, str + total, len - total, MSG_NOSIGNAL);
 			if (sent == -1)
 				return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SEND, "send() failed", NULL));
 		}
