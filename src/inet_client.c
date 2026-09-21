@@ -576,6 +576,58 @@ int afc_inet_client_read_bytes(InetClient *ic, char *buf, int len)
 	return total;
 }
 // }}}
+// {{{ afc_inet_client_get_binary ( ic, buf, len )
+/*
+@node afc_inet_client_get_binary
+
+		   NAME: afc_inet_client_get_binary ( ic, buf, len )  - Read a chunk of binary data
+
+	   SYNOPSIS: int afc_inet_client_get_binary ( InetClient * ic, unsigned char * buf, int * len )
+
+	DESCRIPTION: Reads up to *len bytes of binary data from the connection into /buf/.
+		 On success *len is updated with the number of bytes actually read.
+
+		  INPUT: - ic   - Pointer to a valid afc_inet_client instance.
+		 - buf  - Destination buffer.
+		 - len  - In: max bytes to read. Out: bytes actually read.
+
+		RESULTS: - AFC_ERR_NO_ERROR when data has been read.
+		 - AFC_INET_CLIENT_ERR_END_OF_STREAM when the connection is closed.
+		 - AFC_INET_CLIENT_ERR_RECEIVE / AFC_INET_CLIENT_ERR_SSL_READ on errors.
+
+	   SEE ALSO: - afc_inet_client_read_bytes()
+		 - afc_inet_client_get()
+
+@endnode
+*/
+int afc_inet_client_get_binary(InetClient *ic, unsigned char *buf, int *len)
+{
+	int bytes;
+
+	if (!ic || !buf || !len || *len <= 0)
+		return (AFC_LOG(AFC_LOG_ERROR, AFC_ERR_NULL_POINTER, "Invalid arguments", NULL));
+
+	if (ic->use_ssl && ic->ssl)
+	{
+		bytes = SSL_read(ic->ssl, buf, *len);
+		if (bytes < 0)
+			return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_READ, "SSL_read() failed", NULL));
+	}
+	else
+	{
+		bytes = recv(ic->sockfd, buf, *len, 0);
+		if (bytes == -1)
+			return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_RECEIVE, "recv() failed", NULL));
+	}
+
+	if (bytes == 0)
+		return (AFC_INET_CLIENT_ERR_END_OF_STREAM);
+
+	*len = bytes;
+
+	return (AFC_ERR_NO_ERROR);
+}
+// }}}
 // {{{ afc_inet_client_set_tags ( ic, first_tag, ... )
 /*
 @node afc_inet_client_set_tags

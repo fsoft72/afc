@@ -859,7 +859,7 @@ TRY ( int )
 	dlen = block_size;
 	while ( callback ( pbuffer, &dlen, param) == AFC_ERR_NO_ERROR )
 	{
-		res = afc_inet_client_send ( ic, pbuffer, dlen );
+		res = afc_inet_client_send ( ic, (const char *) pbuffer, dlen );
 		if ( res != AFC_ERR_NO_ERROR ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_STORE, "Error sending data", "", res );
 	
 		dlen = block_size;
@@ -980,7 +980,7 @@ TRY ( int )
 		{
 			if ( callback )
 			{
-				res = callback ( ic->buf, afc_string_len ( ic->buf ), param );
+				res = callback ( (u_char *) ic->buf, afc_string_len ( ic->buf ), param );
 				if ( res != AFC_ERR_NO_ERROR ) RAISE_RC ( AFC_LOG_ERROR, AFC_FTP_CLIENT_ERR_RETR, "Cannot recieve file", command, res );
 			} else
 				printf ( "%s", ic->buf );
