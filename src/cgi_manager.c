@@ -1035,7 +1035,8 @@ static int afc_cgi_manager_internal_add_key(CGIManager *cgi, char *keyval, int m
 
 	afc_debug_adv(__internal_afc_base, AFC_DEBUG_VERBOSE, class_name, "Add key: %s", keyval);
 
-	// FIXME: if str is null, the key is not valid (MS Internet Explorer Only)
+	/* Keys without a value (no '=') are ignored: some browsers (e.g. old MSIE)
+	   send flag-style parameters that carry no useful data. */
 	if (str == NULL)
 		return (AFC_ERR_NO_ERROR);
 
@@ -1049,9 +1050,9 @@ static int afc_cgi_manager_internal_add_key(CGIManager *cgi, char *keyval, int m
 	else if (mode == AFC_CGI_MANAGER_MODE_COOKIE)
 		dict = cgi->cookies;
 
-	// FIXME: maybe I should return an error if no dictionary has been selected
+	/* A NULL dictionary means an invalid mode was passed: this is a caller bug */
 	if (dict == NULL)
-		return (AFC_ERR_NO_ERROR);
+		return (AFC_LOG(AFC_LOG_ERROR, AFC_ERR_INVALID_POINTER, "Invalid CGI manager mode", NULL));
 
 	if (str != NULL)
 		str[0] = '\0';

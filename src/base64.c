@@ -204,11 +204,10 @@ int afc_base64_fwrite(Base64 *b64, const char *fname, int what)
 	char *mem;
 	unsigned int size;
 
-	// TODO: error messages
 	if ((what == AFC_BASE64_IN) && (b64->mem_in == NULL))
-		return (AFC_ERR_NO_ERROR);
+		return (AFC_LOG(AFC_LOG_ERROR, AFC_BASE64_ERR_WRITE_ERROR, "Nothing to write: input buffer is empty", fname));
 	if ((what == AFC_BASE64_OUT) && (b64->mem_out == NULL))
-		return (AFC_ERR_NO_ERROR);
+		return (AFC_LOG(AFC_LOG_ERROR, AFC_BASE64_ERR_WRITE_ERROR, "Nothing to write: output buffer is empty", fname));
 
 	if ((fh = fopen(fname, "wb")) == NULL)
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_BASE64_ERR_FILE_OUTPUT, "Canno write file", fname));
