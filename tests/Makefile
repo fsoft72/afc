@@ -9,7 +9,7 @@ AFC_LIB=../src/libafc.a
 PCRE_LIB=../src/pcre/libpcre.a
 LIBS=$(AFC_LIB) $(PCRE_LIB) -lssl -lcrypto -lpthread -ldl -lm
 
-TESTS = test_base test_string test_mem_tracker \
+TESTS = test_base test_string test_str_error test_mem_tracker \
         test_array test_list test_hash test_dictionary test_string_list \
         test_bin_tree test_btree test_avl_tree test_circular_list test_tree \
         test_base64 test_md5 test_date_handler test_readargs test_regexp \

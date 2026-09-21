@@ -122,7 +122,7 @@ extern "C"
 
 #define AFC_CLASS_NAME(buf, class) AFC_CLASS_TYPE(buf, AFC_CLASS_MAGIC(class))
 
-#define AFC_STR_ERROR() __internal_afc_base->last_error
+#define AFC_STR_ERROR() afc_str_error()
 
 	struct afc_base
 	{
@@ -150,6 +150,7 @@ extern "C"
 
 	int afc_log(AFC *afc, int level, unsigned int error, const char *class_name, const char *funct_name, const char *descr, const char *info);
 	int afc_log_fast(AFC *afc, unsigned int error, const char *class_name, const char *funct_name, const char *info);
+	char *afc_str_error(void);
 #define afc_set_tags(afc, first_tag, ...) _afc_set_tags(afc, first_tag, ##__VA_ARGS__, AFC_TAG_END)
 	int _afc_set_tags(AFC *afc, int first_tag, ...);
 	int afc_set_tag(AFC *afc, int tag, void *val);

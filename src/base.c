@@ -127,6 +127,40 @@ want to discuss here are two handy macros:
 
 static const char class_name[] = "AFC Base";
 
+/* Thread-local copy of the last error description: the AFC base object is a
+   process-wide global, but error state should not be clobbered by other
+   threads running AFC code concurrently. */
+static _Thread_local char _afc_tls_last_error[256];
+static _Thread_local BOOL _afc_tls_last_error_valid = FALSE;
+
+// {{{ afc_str_error ()
+/*
+@node afc_str_error
+
+		   NAME: afc_str_error ()  - Returns the last error description for the current thread
+
+	   SYNOPSIS: char * afc_str_error ( void )
+
+	DESCRIPTION: Returns the description of the last error logged by the calling
+		 thread through afc_log(). Falls back to the global AFC last_error
+		 string if the current thread has not logged any error yet.
+
+		RESULTS: A pointer to the error description, or NULL if unavailable.
+
+@endnode
+*/
+char *afc_str_error(void)
+{
+	if (_afc_tls_last_error_valid)
+		return (_afc_tls_last_error);
+
+	if (__internal_afc_base)
+		return (__internal_afc_base->last_error);
+
+	return (NULL);
+}
+// }}}
+
 struct afc_base *__internal_afc_base = NULL;
 
 static int afc_internal_parse_tags(AFC *afc, int first_tag, va_list tags);
@@ -310,8 +344,16 @@ int afc_log(AFC *afc, int level, unsigned int error, const char *class_name, con
 {
 	static char *str_level[] = {"MESSAGE", "NOTICE", "WARNING", "ERROR", "CRITICAL", NULL};
 
-	if ((descr != NULL) && (afc->last_error != NULL))
-		afc_string_copy(afc->last_error, descr, ALL);
+	if (descr != NULL)
+	{
+		if (afc->last_error != NULL)
+			afc_string_copy(afc->last_error, descr, ALL);
+
+		/* Keep a per-thread copy so concurrent threads do not clobber
+		   each other's error state through the shared AFC base */
+		snprintf(_afc_tls_last_error, sizeof(_afc_tls_last_error), "%s", descr);
+		_afc_tls_last_error_valid = TRUE;
+	}
 
 	if (afc->fout == NULL)
 		return (error);
