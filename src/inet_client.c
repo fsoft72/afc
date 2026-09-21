@@ -85,6 +85,7 @@ InetClient *afc_inet_client_new()
 	ic->use_ssl = FALSE;
 	ic->ssl_ctx = NULL;
 	ic->ssl = NULL;
+	ic->host = NULL;
 	ic->timeout = 0; // No timeout by default
 
 	RETURN(ic);
@@ -131,6 +132,9 @@ int _afc_inet_client_delete(InetClient *ic)
 		return (afc_res);
 
 	afc_inet_client_close(ic);
+
+	if (ic->host)
+		afc_free(ic->host);
 
 	afc_string_delete(ic->buf);
 	afc_free(ic);
@@ -199,6 +203,16 @@ int afc_inet_client_open(InetClient *ic, const char *url, int port)
 
 	if ((rc = afc_inet_client_resolve(ic, url, port, &res)) != AFC_ERR_NO_ERROR)
 		return (AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_HOST_UNKNOWN, "Unable to resolve the host", NULL));
+
+	/* Store the host name for SNI and TLS certificate verification */
+	if (ic->host)
+		afc_free(ic->host);
+	if ((ic->host = afc_malloc(strlen(url) + 1)) == NULL)
+	{
+		freeaddrinfo(res);
+		return (AFC_LOG(AFC_LOG_ERROR, AFC_ERR_NO_MEMORY, "Unable to store host name", NULL));
+	}
+	strcpy(ic->host, url);
 
 	/* Iterate returned addresses until one connects */
 	for (rp = res; rp != NULL; rp = rp->ai_next)
@@ -695,6 +709,15 @@ int afc_inet_client_enable_ssl(InetClient *ic)
 	SSL_CTX_set_min_proto_version(ic->ssl_ctx, TLS1_2_VERSION);
 	SSL_CTX_set_cipher_list(ic->ssl_ctx, "HIGH:!aNULL:!MD5:!RC4:!3DES");
 
+	// Enable certificate verification against the system CA store
+	SSL_CTX_set_verify(ic->ssl_ctx, SSL_VERIFY_PEER, NULL);
+	if (SSL_CTX_set_default_verify_paths(ic->ssl_ctx) != 1)
+	{
+		SSL_CTX_free(ic->ssl_ctx);
+		ic->ssl_ctx = NULL;
+		return AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_INIT, "SSL_CTX_set_default_verify_paths() failed", NULL);
+	}
+
 	// Create SSL connection
 	ic->ssl = SSL_new(ic->ssl_ctx);
 	if (!ic->ssl)
@@ -702,6 +725,20 @@ int afc_inet_client_enable_ssl(InetClient *ic)
 		SSL_CTX_free(ic->ssl_ctx);
 		ic->ssl_ctx = NULL;
 		return AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_INIT, "SSL_new() failed", NULL);
+	}
+
+	// Set SNI (Server Name Indication) and the expected certificate hostname
+	if (ic->host && *ic->host)
+	{
+		if (SSL_set_tlsext_host_name(ic->ssl, ic->host) != 1)
+		{
+			SSL_free(ic->ssl);
+			SSL_CTX_free(ic->ssl_ctx);
+			ic->ssl = NULL;
+			ic->ssl_ctx = NULL;
+			return AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_INIT, "SSL_set_tlsext_host_name() failed", NULL);
+		}
+		SSL_set1_host(ic->ssl, ic->host);
 	}
 
 	// Attach the socket to SSL
@@ -733,6 +770,16 @@ int afc_inet_client_enable_ssl(InetClient *ic)
 		ic->ssl = NULL;
 		ic->ssl_ctx = NULL;
 		return AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_CONNECT, "SSL_connect() failed", NULL);
+	}
+
+	// Verify the peer certificate chain and hostname
+	if (SSL_get_verify_result(ic->ssl) != X509_V_OK)
+	{
+		SSL_free(ic->ssl);
+		SSL_CTX_free(ic->ssl_ctx);
+		ic->ssl = NULL;
+		ic->ssl_ctx = NULL;
+		return AFC_LOG(AFC_LOG_ERROR, AFC_INET_CLIENT_ERR_SSL_VERIFY, "TLS certificate verification failed", ic->host);
 	}
 
 	ic->use_ssl = TRUE;

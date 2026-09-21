@@ -57,7 +57,8 @@ enum
 	AFC_INET_CLIENT_ERR_SSL_INIT,
 	AFC_INET_CLIENT_ERR_SSL_CONNECT,
 	AFC_INET_CLIENT_ERR_SSL_READ,
-	AFC_INET_CLIENT_ERR_SSL_WRITE
+	AFC_INET_CLIENT_ERR_SSL_WRITE,
+	AFC_INET_CLIENT_ERR_SSL_VERIFY
 };
 
 enum
@@ -81,6 +82,7 @@ struct afc_inet_client
 	BOOL use_ssl;	  /* Flag to enable SSL/TLS */
 	SSL_CTX *ssl_ctx; /* SSL Context */
 	SSL *ssl;		  /* SSL Connection */
+	char *host;		  /* Host name (used for SNI and certificate verification) */
 
 	int timeout; /* Timeout in seconds (0 = no timeout) */
 };
