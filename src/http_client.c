@@ -1069,6 +1069,9 @@ static int _afc_http_client_parse_headers(HttpClient * hc, InetClient * inet)
 	char * colon;
 	char * name;
 	char * value;
+	int count = 0;
+	int total = 0;
+	int res = AFC_ERR_NO_ERROR;
 
 	if (!hc || hc->magic != AFC_HTTP_CLIENT_MAGIC)
 		return AFC_ERR_INVALID_POINTER;
@@ -1083,6 +1086,15 @@ static int _afc_http_client_parse_headers(HttpClient * hc, InetClient * inet)
 		// Empty line marks end of headers
 		if (afc_string_len(line) == 0)
 			break;
+
+		/* Enforce header count and total size limits */
+		count++;
+		total += afc_string_len(line);
+		if (count > AFC_HTTP_CLIENT_MAX_HEADERS || total > AFC_HTTP_CLIENT_MAX_HEADER_SIZE)
+		{
+			res = AFC_HTTP_CLIENT_ERR_HEADERS_TOO_LARGE;
+			break;
+		}
 
 		// Parse "Name: Value"
 		colon = strchr(line, ':');
@@ -1104,7 +1116,7 @@ static int _afc_http_client_parse_headers(HttpClient * hc, InetClient * inet)
 
 	afc_string_delete(line);
 
-	return AFC_ERR_NO_ERROR;
+	return res;
 }
 // }}}
 // {{{ _afc_http_client_read_body ( hc, fd )

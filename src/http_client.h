@@ -15,6 +15,11 @@
 /* Maximum redirects to follow */
 #define AFC_HTTP_CLIENT_MAX_REDIRECTS 10
 
+/* Safety limits for response headers, to avoid unbounded memory growth
+   against malicious or broken servers */
+#define AFC_HTTP_CLIENT_MAX_HEADERS 100
+#define AFC_HTTP_CLIENT_MAX_HEADER_SIZE (64 * 1024)
+
 // HTTP Client tags for configuration
 enum {
 	AFC_HTTP_CLIENT_TAG_HOST = AFC_HTTP_CLIENT_BASE + 100,
@@ -33,7 +38,8 @@ enum {
 	AFC_HTTP_CLIENT_ERR_INVALID_STATUS,
 	AFC_HTTP_CLIENT_ERR_TOO_MANY_REDIRECTS,
 	AFC_HTTP_CLIENT_ERR_NO_MEMORY,
-	AFC_HTTP_CLIENT_ERR_INVALID_METHOD
+	AFC_HTTP_CLIENT_ERR_INVALID_METHOD,
+	AFC_HTTP_CLIENT_ERR_HEADERS_TOO_LARGE
 };
 
 struct afc_http_client

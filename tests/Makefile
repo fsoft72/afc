@@ -16,7 +16,7 @@ TESTS = test_base test_string test_mem_tracker \
         test_fileops test_cgi_manager test_dirmaster \
         test_dynamic_class test_cmd_parser test_threader \
         test_inet_client test_inet_server test_inet_ssl test_sigpipe \
-        test_smtp test_http_client test_pop3 test_ftp_client
+        test_smtp test_http_client test_http_headers test_pop3 test_ftp_client
 
 all: test_utils.o $(TESTS)
 
