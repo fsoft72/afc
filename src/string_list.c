@@ -665,7 +665,6 @@ char * afc_string_list_item (StringList * sn, unsigned long n)
 int afc_string_list_change(StringList *sn, char *s)
 {
 	char *g;
-	unsigned int len;
 
 	if (afc_list_is_empty(sn->nm))
 		return (AFC_ERR_NO_ERROR);
@@ -673,8 +672,6 @@ int afc_string_list_change(StringList *sn, char *s)
 	if ((g = afc_list_obj(sn->nm)))
 	{
 		afc_string_delete(g);
-
-		len = strlen(s);
 
 		if ((g = afc_string_dup(s)) == NULL)
 			return (AFC_LOG_FAST(AFC_ERR_NO_MEMORY));
@@ -1068,24 +1065,32 @@ static int afc_string_list_internal_set_tag(StringList *sn, int tag, void *val)
    while afc_string_comp() has an inverted sign convention (<0 = s1 > s2). */
 static long afc_string_list_internal_sort_nocase_noinv(void *a, void *b, void *info)
 {
+	(void)info;
+
 	return (strcasecmp((const char *)a, (const char *)b));
 }
 // }}}
 // {{{ afc_string_list_internal_sort_case_noinv ( a, b, info )
 static long afc_string_list_internal_sort_case_noinv(void *a, void *b, void *info)
 {
+	(void)info;
+
 	return (-afc_string_comp((char *)a, (char *)b, ALL));
 }
 // }}}
 // {{{ afc_string_list_internal_sort_nocase_inv ( a, b, info )
 static long afc_string_list_internal_sort_nocase_inv(void *a, void *b, void *info)
 {
+	(void)info;
+
 	return (-strcasecmp((const char *)a, (const char *)b));
 }
 // }}}
 // {{{ afc_string_list_internal_sort_case_inv ( a, b, info )
 static long afc_string_list_internal_sort_case_inv(void *a, void *b, void *info)
 {
+	(void)info;
+
 	return (afc_string_comp((char *)a, (char *)b, ALL));
 }
 // }}}

@@ -531,6 +531,8 @@ static int afc_pop3_internal_del_msg(Hash *hm, void *m)
 {
 	POP3MsgData *msg = m;
 
+	(void)hm;
+
 	if (msg->subject)
 		afc_string_delete(msg->subject);
 	if (msg->from)

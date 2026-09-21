@@ -895,6 +895,14 @@ ENDTRY
 
 static int afc_ftp_client_internal_store_active ( FtpClient * fc, char * command, afc_ftp_client_store_callback callback, void * param, int block_size, BOOL lines )
 {
+	/* Not implemented yet: active mode is unsupported */
+	(void)fc;
+	(void)command;
+	(void)callback;
+	(void)param;
+	(void)block_size;
+	(void)lines;
+
 	return ( AFC_ERR_NO_ERROR );
 }
 
@@ -1037,6 +1045,13 @@ TRY ( int )
 	u_short port;
 	u_char ip1, ip2, ip3, ip4, p1, p2;
 	char * cmd, * answer;
+
+	/* Not fully implemented: the data received in active mode is discarded */
+	(void)callback;
+	(void)param;
+	(void)block_size;
+	(void)rest;
+	(void)lines;
 
 	is = afc_inet_server_new ( );
 	cmd = afc_string_new ( 1024 );

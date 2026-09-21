@@ -891,6 +891,8 @@ NAME: afc_cmd_parser_internal_del_callback
 */
 static int afc_cmd_parser_internal_del_callback(CommandParser *cmdparser, CommandParserCallback *cb)
 {
+	(void)cmdparser;
+
 	if (cb == NULL)
 		return (AFC_ERR_NULL_POINTER);
 
@@ -1112,6 +1114,8 @@ static int afc_cmd_parser_internal_string_purge(CommandParser *cmdparser, char *
 {
 	char *cr = NULL;
 
+	(void)cmdparser;
+
 	if (s == NULL)
 		return (AFC_ERR_NULL_POINTER);
 
@@ -1165,6 +1169,8 @@ static int afc_cmd_parser_internal_keyword_if(CommandParser *cmdparser, char *sc
 	CommandParserFunction func = NULL;
 	int res = 0;
 
+	(void)script;
+
 	if ((cmdparser == NULL) || (args == NULL))
 		return (AFC_LOG_FAST(AFC_ERR_NULL_POINTER));
 
@@ -1192,6 +1198,8 @@ NAME: afc_cmd_parser_internal_function_expr
 */
 static int afc_cmd_parser_internal_function_expr(CommandParser *cmdparser, List *args)
 {
+	(void)cmdparser;
+
 	if (atoi((char *)afc_list_first(args)) > 0)
 		return (true);
 	else

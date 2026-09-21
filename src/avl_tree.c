@@ -87,6 +87,8 @@ AVLNode *_afc_avl_tree_find_node(AVLTree *avl, AVLNode *node, void *x)
 
 AVLNode *_afc_avl_tree_find_node_min(AVLTree *avl, AVLNode *node)
 {
+	(void)avl;
+
 	if (node != NULL)
 		while (node->left != NULL)
 			node = node->left;
@@ -96,6 +98,8 @@ AVLNode *_afc_avl_tree_find_node_min(AVLTree *avl, AVLNode *node)
 
 AVLNode *_afc_avl_tree_find_node_max(AVLTree *avl, AVLNode *node)
 {
+	(void)avl;
+
 	if (node != NULL)
 		while (node->right != NULL)
 			node = node->right;
@@ -201,6 +205,8 @@ static AVLNode *afc_avl_tree_int_single_rotate_with_left(AVLTree *tree, AVLNode 
 {
 	AVLNode *node1;
 
+	(void)tree;
+
 	node1 = node2->left;
 	node2->left = node1->right;
 	node1->right = node2;
@@ -214,6 +220,8 @@ static AVLNode *afc_avl_tree_int_single_rotate_with_left(AVLTree *tree, AVLNode 
 static AVLNode *afc_avl_tree_int_single_rotate_with_right(AVLTree *tree, AVLNode *node1)
 {
 	AVLNode *node2;
+
+	(void)tree;
 
 	node2 = node1->right;
 	node1->right = node2->left;

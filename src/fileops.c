@@ -935,6 +935,9 @@ static int afc_fileops_internal_move_dir(FileOperations *fo, struct stat *descr,
 	char *dest_path = (char *)info;
 	char buf[4096];
 
+	(void)descr;
+	(void)path;
+
 	snprintf(buf, sizeof(buf), "%s/%s", dest_path, dirname);
 
 	if ((err = afc_fileops_mkdir(fo, buf)) != AFC_ERR_NO_ERROR)
@@ -958,6 +961,9 @@ static int afc_fileops_internal_move_file(FileOperations *fo, struct stat *descr
 {
 	char *dest_path = (char *)info;
 	char buf[4096];
+
+	(void)descr;
+	(void)path;
 
 	snprintf(buf, sizeof(buf), "%s/%s", dest_path, filename);
 
@@ -984,6 +990,10 @@ static int afc_fileops_internal_del_dir(FileOperations *fo, struct stat *descr, 
 	char *dest_path = (char *)info;
 	char buf[4096];
 
+	(void)descr;
+	(void)fulldir;
+	(void)path;
+
 	snprintf(buf, sizeof(buf), "%s/%s", dest_path, dirname);
 
 	if ((err = afc_fileops_internal_scan_dir(fo, buf, afc_fileops_internal_del_file, afc_fileops_internal_del_dir, NULL, buf)) != AFC_ERR_NO_ERROR)
@@ -1004,6 +1014,10 @@ static int afc_fileops_internal_del_file(FileOperations *fo, struct stat *descr,
 {
 	char *dest_path = (char *)info;
 	char buf[4096];
+
+	(void)descr;
+	(void)fullname;
+	(void)path;
 
 	snprintf(buf, sizeof(buf), "%s/%s", dest_path, filename);
 
@@ -1027,6 +1041,9 @@ static int afc_fileops_internal_copy_new_dir(FileOperations *fo, struct stat *de
 	char buf[4096];
 	int err;
 
+	(void)descr;
+	(void)path;
+
 	snprintf(buf, sizeof(buf), "%s/%s", dest_path, dirname);
 
 	if ((err = afc_fileops_mkdir(fo, buf)) != AFC_ERR_NO_ERROR)
@@ -1040,6 +1057,9 @@ static int afc_fileops_internal_copy_new_file(FileOperations *fo, struct stat *d
 {
 	char *dest_path = (char *)info;
 	char buf[4096];
+
+	(void)descr;
+	(void)path;
 
 	snprintf(buf, sizeof(buf), "%s/%s", dest_path, filename);
 

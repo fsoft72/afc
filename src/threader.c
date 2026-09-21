@@ -589,6 +589,8 @@ static int afc_threader_internal_remove_threads(Threader *t)
 // {{{ afc_threader_internal_cancel_thread ( t, td )
 static int afc_threader_internal_cancel_thread(Threader *t, ThreaderData *td)
 {
+	(void)t;
+
 	afc_dprintf("%s: 1\n", __FUNCTION__);
 	if (td->cancel_enabled == FALSE)
 		return (AFC_ERR_NO_ERROR);

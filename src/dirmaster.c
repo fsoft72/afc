@@ -1097,6 +1097,8 @@ static int afc_dirmaster_internal_readd(DirMaster *dm, const char *path, int dat
 	DIR *dir;
 	struct dirent *file;
 	struct stat descr;
+
+	(void)date_format;
 	char dirname[255];
 	char fullname[1024];
 	FileInfo *info;

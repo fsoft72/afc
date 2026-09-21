@@ -389,6 +389,8 @@ static int _memtrack_realloc_free(MemTracker *mt)
 // {{{ _free_item ( mt, d )
 static void _free_item(MemTracker *mt, MemTrackData *d)
 {
+	(void)mt;
+
 	if (!d)
 		return;
 
@@ -397,32 +399,5 @@ static void _free_item(MemTracker *mt, MemTrackData *d)
 		free(d->mem);
 	d->mem = NULL;
 	free(d);
-}
-// }}}
-
-// {{{ _afc_mem_tracker_update_pointer ( mt, old_mem, new_mem )
-void _afc_mem_tracker_update_pointer(MemTracker *mt, void *old_mem, void *new_mem)
-{
-	MemTrackData *hd;
-
-	if (old_mem == NULL)
-		return;
-
-#ifndef MINGW
-	pthread_mutex_lock(&mt->mutex);
-#endif
-
-	/* The entry is hashed by pointer: re-hash it under the new address,
-	   otherwise afc_free(new_mem) would not find it. */
-	if ((hd = _memtrack_hash_find(mt, old_mem)) != NULL)
-	{
-		_memtrack_hash_remove(mt, hd);
-		hd->mem = new_mem;
-		_memtrack_hash_insert(mt, hd);
-	}
-
-#ifndef MINGW
-	pthread_mutex_unlock(&mt->mutex);
-#endif
 }
 // }}}

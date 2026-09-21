@@ -452,6 +452,8 @@ static int afc_dynamic_class_internal_clear_vars(DynamicClass *dc, Dictionary *v
 {
 	DynamicClassVar *var;
 
+	(void)dc;
+
 	var = afc_dictionary_first(vars);
 
 	while (var)
@@ -471,6 +473,8 @@ static int afc_dynamic_class_internal_clear_vars(DynamicClass *dc, Dictionary *v
 static DynamicClassVar *afc_dynamic_class_internal_alloc(DynamicClass *dc, int kind, char *name, void *val)
 {
 	DynamicClassVar *var;
+
+	(void)kind;
 
 	// Try to see if the var is already present inside the dictionary
 	var = afc_dictionary_get(dc->vars, name);

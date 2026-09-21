@@ -325,6 +325,8 @@ int afc_inet_client_resolve(InetClient *ic, const char *url, int port, struct ad
 	char port_str[16];
 	int rc;
 
+	(void)ic;
+
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;     /* Allow IPv4 or IPv6 */
 	hints.ai_socktype = SOCK_STREAM; /* TCP */

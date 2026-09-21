@@ -27,6 +27,7 @@
 #include "string.h"
 #include "mem_tracker.h"
 #include <errno.h>
+#include <stdint.h>
 
 // {{{ docs
 /*
@@ -756,9 +757,10 @@ void *_afc_realloc(void *mem, size_t size, const char *file, const char *func, c
 		return new_addr;
 	}
 
-	/* Update tracker entry with old pointer BEFORE realloc may free it,
-	   then realloc. This avoids using a dangling pointer. */
-	_afc_mem_tracker_update_size(__internal_afc_base->tracker, mem, NULL, size, file, func, line);
+	/* Save the old address as an integer: after realloc() the original
+	   pointer must not be reused (use-after-free), but its value is still
+	   needed to locate the tracker entry. */
+	uintptr_t old_addr = (uintptr_t)mem;
 
 	new_addr = realloc(mem, size);
 
@@ -768,8 +770,13 @@ void *_afc_realloc(void *mem, size_t size, const char *file, const char *func, c
 		return NULL;
 	}
 
-	/* Now update the pointer field to the new address */
-	_afc_mem_tracker_update_pointer(__internal_afc_base->tracker, mem, new_addr);
+	/* Update the tracker entry (size and possibly moved address) in one shot.
+	   The old address is used only as a lookup key, never dereferenced, so
+	   the -Wuse-after-free warning is a false positive here. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuse-after-free"
+	_afc_mem_tracker_update_size(__internal_afc_base->tracker, (void *)old_addr, new_addr, size, file, func, line);
+#pragma GCC diagnostic pop
 
 	return new_addr;
 }

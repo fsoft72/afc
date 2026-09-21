@@ -21,7 +21,7 @@ LN=ln -sf
 RM=rm -f
 CHMOD=chmod
 
-CFLAGS=-fPIC -g -Wall -Wextra -O2 -Wstrict-prototypes -Wno-unused-label -Wno-unused-parameter -Wno-unused-but-set-variable
+CFLAGS=-fPIC -g -Wall -Wextra -O2 -Wstrict-prototypes
 
 ifeq ($(DEFINE),MINGW)
 # MINGW version has only a subset of AFC full capabilities

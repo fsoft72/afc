@@ -1047,8 +1047,6 @@ static int afc_btree_int_combine(BTree *btr, BTreeNode *current, unsigned long p
 	left = current->branch[pos - 1];
 	left->counter++;
 
-	void *paux;
-
 	// move current entry as last left branch entry
 	left->entry[left->counter] = current->entry[pos];
 
@@ -1062,7 +1060,6 @@ static int afc_btree_int_combine(BTree *btr, BTreeNode *current, unsigned long p
 		left->branch[left->counter] = right->branch[c];
 		right->entry[c] = NULL;
 		right->branch[c] = NULL;
-		paux = left->branch[left->counter];
 	}
 	for (c = pos; c <= current->counter; c++)
 	{

@@ -563,6 +563,8 @@ static int afc_dynamic_class_master_internal_clear_instance(Hash *hm, void *d)
 {
 	DCMIData *idata = d;
 
+	(void)hm;
+
 	if (idata == NULL)
 		return (AFC_ERR_NO_ERROR);
 

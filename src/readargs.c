@@ -640,6 +640,8 @@ static void afc_readargs_internal_find_quotes(ReadArgs *rdargs, char *str)
 	int t = 0;
 	short inside = FALSE;
 
+	(void)rdargs;
+
 	while (str[t])
 	{
 		if (inside)
@@ -909,6 +911,8 @@ static void *afc_readargs_internal_get_keyword(ReadArgs *rdarg, char *key, short
 static void afc_readargs_internal_replace_chars(ReadArgs *rdarg, char *str, char c1, char c2)
 {
 	int t = 0;
+
+	(void)rdarg;
 
 	if (str == NULL)
 		return;

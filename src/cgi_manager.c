@@ -853,6 +853,8 @@ static int afc_cgi_manager_internal_dump(CGIManager *cgi, Dictionary *dict, char
 {
 	char *key;
 
+	(void)cgi;
+
 	printf("<table border=\"0\">\n");
 	printf("<tr><td colspan=\"2\" align=\"center\">");
 	_afc_cgi_print_html_encoded(message);
@@ -1102,6 +1104,8 @@ static int afc_cgi_manager_internal_get_cookies(CGIManager *cgi)
 /* Common section */
 static char afc_cgi_manager_internal_decode(CGIManager *cgi, char *str)
 {
+	(void)cgi;
+
 	return ((((str[0] >= 'A' ? ((str[0] & 0xdf) - 'A') + 10 : (str[0] - '0'))) * 16) + (str[1] >= 'A' ? ((str[1] & 0xdf) - 'A') + 10 : (str[1] - '0')));
 }
 
@@ -1127,6 +1131,8 @@ static int afc_cgi_manager_internal_unescape(CGIManager *cgi, char *str)
 static int afc_cgi_manager_internal_clear_dict(CGIManager *cgi, Dictionary *dict)
 {
 	char *val;
+
+	(void)cgi;
 
 	afc_dictionary_before_first(dict);
 

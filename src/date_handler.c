@@ -297,6 +297,8 @@ int afc_date_handler_is_valid(DateHandler *dh, int year, int month, int day)
 {
 	int is_leap, month_days;
 
+	(void)dh;
+
 	if (month > 12 || day > 31)
 		return (AFC_LOG(AFC_LOG_WARNING, AFC_DATE_HANDLER_ERR_INVALID_DATE, "Invalid month or day", NULL));
 

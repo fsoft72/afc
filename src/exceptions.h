@@ -24,7 +24,7 @@
 	type __rc;                   \
 	BOOL __in_exception = FALSE; \
 	BOOL __in_finally = FALSE;   \
-	int __exception_type = 0;
+	int __exception_type __attribute__((unused)) = 0;
 
 #define EXCEPT                   \
 	__afc_except:                \

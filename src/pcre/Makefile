@@ -7,7 +7,8 @@ CFLAGS=-Wall -O2 -DSTATIC
 
 else
 
-CFLAGS=-Wall -O2 -fPIC -Wno-unused-but-set-variable
+# Third-party legacy code: suppress warnings we do not intend to fix here
+CFLAGS=-Wall -O2 -fPIC -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-implicit-fallthrough
 
 endif
 
