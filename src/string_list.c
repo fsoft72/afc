@@ -1064,27 +1064,29 @@ static int afc_string_list_internal_set_tag(StringList *sn, int tag, void *val)
 }
 // }}}
 // {{{ afc_string_list_internal_sort_nocase_noinv ( a, b, info )
+/* NOTE: afc_list_sort() expects a strcmp-style comparator (>0 = a after b),
+   while afc_string_comp() has an inverted sign convention (<0 = s1 > s2). */
 static long afc_string_list_internal_sort_nocase_noinv(void *a, void *b, void *info)
 {
-	return (-afc_string_comp((char *)a, (char *)b, ALL));
+	return (strcasecmp((const char *)a, (const char *)b));
 }
 // }}}
 // {{{ afc_string_list_internal_sort_case_noinv ( a, b, info )
 static long afc_string_list_internal_sort_case_noinv(void *a, void *b, void *info)
 {
-	return (-strcasecmp((const char *)a, (const char *)b));
+	return (-afc_string_comp((char *)a, (char *)b, ALL));
 }
 // }}}
 // {{{ afc_string_list_internal_sort_nocase_inv ( a, b, info )
 static long afc_string_list_internal_sort_nocase_inv(void *a, void *b, void *info)
 {
-	return (afc_string_comp((char *)a, (char *)b, ALL));
+	return (-strcasecmp((const char *)a, (const char *)b));
 }
 // }}}
 // {{{ afc_string_list_internal_sort_case_inv ( a, b, info )
 static long afc_string_list_internal_sort_case_inv(void *a, void *b, void *info)
 {
-	return (-afc_string_list_internal_sort_case_noinv(a, b, info));
+	return (afc_string_comp((char *)a, (char *)b, ALL));
 }
 // }}}
 

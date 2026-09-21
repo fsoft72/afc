@@ -449,6 +449,10 @@ signed long afc_string_comp(const char *s1, const char *s2, long chars)
 		n = (unsigned long)chars;
 		while (n > 0 && *p1 == *p2 && *p1 != '\0')
 			p1++, p2++, n--;
+
+		/* All requested chars matched: the strings are equal */
+		if (n == 0)
+			return (0);
 	}
 
 	return -(signed long)(*p1 - *p2);

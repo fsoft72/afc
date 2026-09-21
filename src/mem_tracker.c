@@ -404,7 +404,6 @@ static void _free_item(MemTracker *mt, MemTrackData *d)
 void _afc_mem_tracker_update_pointer(MemTracker *mt, void *old_mem, void *new_mem)
 {
 	MemTrackData *hd;
-	int pos;
 
 	if (old_mem == NULL)
 		return;
@@ -413,10 +412,13 @@ void _afc_mem_tracker_update_pointer(MemTracker *mt, void *old_mem, void *new_me
 	pthread_mutex_lock(&mt->mutex);
 #endif
 
-	if ((pos = _memtrack_find(mt, old_mem)) != -1)
+	/* The entry is hashed by pointer: re-hash it under the new address,
+	   otherwise afc_free(new_mem) would not find it. */
+	if ((hd = _memtrack_hash_find(mt, old_mem)) != NULL)
 	{
-		hd = mt->data[pos];
+		_memtrack_hash_remove(mt, hd);
 		hd->mem = new_mem;
+		_memtrack_hash_insert(mt, hd);
 	}
 
 #ifndef MINGW
