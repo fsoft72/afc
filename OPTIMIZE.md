@@ -2,71 +2,73 @@
 
 > Generated on 2026-03-10. Items sorted by importance.
 > Consolidates the still-open items from IMPROVEMENTS.md plus additional findings.
+> All items resolved as of 2026-03-10; notes mark items that were verified as
+> already fixed in the codebase during this pass.
 
 ## Critical
 
-- [ ] **Harden TLS: no certificate verification or SNI** — `afc_inet_client_enable_ssl()` creates the SSL context and connects but never enables certificate verification and never sets SNI, so HTTPS/SMTPS clients accept untrusted certificates and fail against virtual-hosted endpoints.
-  - File(s): `src/inet_client.c` (around lines 656-718)
+- [x] **Harden TLS: no certificate verification or SNI** — fixed: `SSL_CTX_set_verify(SSL_VERIFY_PEER)` with default CA paths, SNI via `SSL_set_tlsext_host_name()`, hostname check via `SSL_set1_host()`, post-handshake `SSL_get_verify_result()` check, new `AFC_INET_CLIENT_ERR_SSL_VERIFY`. New test: `tests/test_inet_ssl.c`.
+  - File(s): `src/inet_client.c`
 
-- [ ] **SIGPIPE can kill any process using the library** — `afc_inet_client_send()` calls `send()` without `MSG_NOSIGNAL` and nothing in the library ignores `SIGPIPE`, so writing to a closed socket terminates the host application.
-  - File(s): `src/inet_client.c:437`
+- [x] **SIGPIPE can kill any process using the library** — fixed: `MSG_NOSIGNAL` on all `send()` calls. New test: `tests/test_sigpipe.c`.
+  - File(s): `src/inet_client.c`, `src/inet_server.c:327`
 
-- [ ] **One-byte buffer overflow in inet_server receive path** — `recv()` fills the full AFC string capacity and then `data->buf[nbytes] = '\0'` writes one byte past the allocation when the buffer is completely full.
-  - File(s): `src/inet_server.c:288,305`
+- [x] **One-byte buffer overflow in inet_server receive path** — verified already fixed: `recv()` reads at most `afc_string_max(buf) - 1`, reserving space for the terminator.
+  - File(s): `src/inet_server.c:288`
 
-- [ ] **Password printed in debug log** — a debug log statement includes the SMTP password value, leaking credentials into logs.
+- [x] **Password printed in debug log** — verified already fixed: no password value appears in any log or printf in smtp.c.
   - File(s): `src/smtp.c`
 
-- [ ] **Broken index arithmetic in list stack-position cleanup** — the compaction loop mixes `t` and `i` (condition uses `t`, increment uses `i++`, assignment still indexes `t`), corrupting the stack-position cache when entries are removed.
+- [x] **Broken index arithmetic in list stack-position cleanup** — verified already fixed: the compaction loop uses a single index and guards `sposcount`.
   - File(s): `src/list.c:518-523`
 
-- [ ] **Truncated multi-line SMTP responses** — `_afc_smtp_get_response()` reads a single chunk and parses only the first 3 digits, so multi-line EHLO replies are truncated and advertised capabilities (STARTTLS, AUTH methods) can be missed. Read until "3 digits + space" terminator.
+- [x] **Truncated multi-line SMTP responses** — verified already fixed: `_afc_smtp_get_response()` loops until the "NNN " final line.
   - File(s): `src/smtp.c:330-355`
 
 ## High
 
-- [ ] **Replace `gethostbyname()` with `getaddrinfo()`** — the resolver path has no IPv6 support, poor thread-safety, and outdated behavior; iterate the `getaddrinfo()` results when connecting.
-  - File(s): `src/inet_client.c:294-305`
+- [x] **Replace `gethostbyname()` with `getaddrinfo()`** — verified already fixed: `afc_inet_client_resolve()` uses `getaddrinfo()` with AF_UNSPEC and the connect path iterates results.
+  - File(s): `src/inet_client.c`
 
-- [ ] **Byte-by-byte copies on hot string paths** — `afc_string_copy()` and `afc_string_add()` copy one byte at a time; use `memcpy()` after length clamping.
-  - File(s): `src/string.c:316-318, 1038-1040`
+- [x] **Byte-by-byte copies on hot string paths** — verified already fixed: `afc_string_copy()`/`afc_string_add()` use `memmove()`/`memcpy()`.
+  - File(s): `src/string.c`
 
-- [ ] **Repair the standalone test build** — `make` in `tests/` fails immediately because `tests/test_utils.h` does not exist; add the header or fix the Makefile.
-  - File(s): `tests/Makefile:25`
+- [x] **Repair the standalone test build** — fixed: added missing `tests/run_all.sh` used by `make run`; repairing it surfaced (and we fixed) three real bugs: `afc_string_comp()` partial compare, inverted `afc_string_list_sort()` comparators, and a mem_tracker rehash bug after realloc.
+  - File(s): `tests/run_all.sh`, `src/string.c`, `src/string_list.c`, `src/mem_tracker.c`
 
-- [ ] **Global base object prevents multi-context/thread use** — `__internal_afc_base` is a single global, so error state and logging are shared across all users and threads.
-  - File(s): `src/base.c:128`
+- [x] **Global base object prevents multi-context/thread use** — fixed within API compatibility: the base stays a global by design, but error state is now per-thread via `afc_str_error()` (thread-local) backing `AFC_STR_ERROR()`. New test: `tests/test_str_error.c`.
+  - File(s): `src/base.c`, `src/base.h`
 
-- [ ] **Allocation churn in case-insensitive comparators** — string_list and dirmaster sort comparators allocate, uppercase, compare, and free temporary strings per comparison; use `strcasecmp()` instead.
-  - File(s): `src/string_list.c:1073-1089`, `src/dirmaster.c:1218-1233`
+- [x] **Allocation churn in case-insensitive comparators** — verified already fixed: comparators use `strcasecmp()` directly.
+  - File(s): `src/string_list.c`, `src/dirmaster.c`
 
-- [ ] **Unbounded response-header growth in HTTP client** — no maximum header size is enforced, allowing memory exhaustion from malicious or broken servers.
-  - File(s): `src/http_client.c`
+- [x] **Unbounded response-header growth in HTTP client** — fixed: `AFC_HTTP_CLIENT_MAX_HEADERS` (100) and `AFC_HTTP_CLIENT_MAX_HEADER_SIZE` (64KB) limits, new `AFC_HTTP_CLIENT_ERR_HEADERS_TOO_LARGE`. New test: `tests/test_http_headers.c`.
+  - File(s): `src/http_client.c`, `src/http_client.h`
 
 ## Medium
 
-- [ ] **MemTracker linear scan and strdup overhead** — `_memtrack_find()` linearly scans all tracked allocations and metadata duplicates compile-time strings with `strdup()`; use a pointer hash for O(1) lookup and store the literal pointers.
-  - File(s): `src/mem_tracker.c:103-106, 255-271`
+- [x] **MemTracker linear scan and strdup overhead** — verified already fixed: hash-based lookup (`_memtrack_hash_find`) is in place.
+  - File(s): `src/mem_tracker.c`
 
-- [ ] **Base64 lookup tables rebuilt on every call** — both encode and decode rebuild their lookup tables per call; make them `static const` initialized once.
-  - File(s): `src/base64.c:294-304, 372-383`
+- [x] **Base64 lookup tables rebuilt on every call** — verified already fixed: tables are `static const`.
+  - File(s): `src/base64.c:26-35`
 
-- [ ] **Fragmented HTTP request writes** — `_afc_http_client_send_request()` issues a separate `send()` per header; build the full request in memory and send in one or a few writes.
-  - File(s): `src/http_client.c:911-964`
+- [x] **Fragmented HTTP request writes** — verified already fixed: `_afc_http_client_send_request()` builds the full request in one buffer and sends it in a single write.
+  - File(s): `src/http_client.c`
 
-- [ ] **Missing `afc_inet_client_get_binary` referenced by ftp_client** — the referenced function is not implemented; implement it or remove the reference cleanly.
-  - File(s): `src/ftp_client.c:992`
+- [x] **Missing `afc_inet_client_get_binary` referenced by ftp_client** — fixed: implemented the function (SSL-aware), added `ftp_client.o` to the library and `test_ftp_client` to the suite.
+  - File(s): `src/inet_client.c`, `src/ftp_client.c`, `src/Makefile`, `tests/Makefile`
 
-- [ ] **Duplicated build flags and includes** — `-O2` is added twice in the Makefile and `fileops.h` includes `stdio.h`/`errno.h` twice; also add `-MMD -MP` header dependency tracking.
-  - File(s): `src/Makefile:24,37`, `src/fileops.h:23-26`
+- [x] **Duplicated build flags and includes** — verified already fixed: single `-O2`, no duplicate includes in fileops.h.
+  - File(s): `src/Makefile`, `src/fileops.h`
 
 ## Low / Nice to have
 
-- [ ] **Broken documentation links in README** — README links to `ai/afc.md` and `ai/guidelines.md`, which do not exist in the checkout; restore the files or fix the links.
-  - File(s): `README.md:248-249`
+- [x] **Broken documentation links in README** — fixed: README points at CLAUDE.md; CLAUDE.md no longer references the deleted `ai/` docs.
+  - File(s): `README.md`, `CLAUDE.md`
 
-- [ ] **Suppressing useful warnings in CFLAGS** — `-Wno-unused-label -Wno-unused-parameter -Wno-unused-but-set-variable` hide real dead code; clean the code and re-enable the warnings.
-  - File(s): `src/Makefile:24`
+- [x] **Suppressing useful warnings in CFLAGS** — fixed: `-Wno-unused-*` flags removed, all warning sites cleaned (`(void)` casts, dead variables removed, pcre third-party warnings suppressed in pcre/Makefile only). Library builds with zero warnings under `-Wall -Wextra`.
+  - File(s): `src/Makefile`, `src/exceptions.h`, multiple `src/*.c`
 
-- [ ] **Stale TODO/FIXME comments** — a few long-standing TODO/FIXME notes remain (base64 error messages, cgi_manager null-key handling) that should be resolved or ticketed.
-  - File(s): `src/base64.c:207`, `src/cgi_manager.c:1038,1052`
+- [x] **Stale TODO/FIXME comments** — fixed: `afc_base64_fwrite()` reports empty-buffer errors, cgi_manager documents the valueless-key behavior and errors on invalid mode.
+  - File(s): `src/base64.c`, `src/cgi_manager.c`
